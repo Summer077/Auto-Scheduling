@@ -4,10 +4,10 @@ register = template.Library()
 
 @register.filter
 def ordinal(value):
-    """Converts 1 to 1st, 2 to 2nd, etc."""
+    """Convert integer to ordinal string (1 -> 1st, 2 -> 2nd, etc.)"""
     try:
         value = int(value)
-    except (TypeError, ValueError):
+    except (ValueError, TypeError):
         return value
     
     if 10 <= value % 100 <= 20:
@@ -15,4 +15,4 @@ def ordinal(value):
     else:
         suffix = {1: 'st', 2: 'nd', 3: 'rd'}.get(value % 10, 'th')
     
-    return f'{value}{suffix}'
+    return f"{value}{suffix}"

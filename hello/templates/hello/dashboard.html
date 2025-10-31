@@ -5,9 +5,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard - ASSIST</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@300;400;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{% static 'hello/css/dashboard.css' %}">
 </head>
 <body>
@@ -81,7 +78,7 @@
                 <h2>Summary</h2>
                 
                 <div class="summary-card">
-                    <div class="summary-number" id="facultyCount">0</div>
+                    <div class="summary-number">{{ faculty_count }}</div>
                     <div class="summary-label">FACULTY</div>
                     <svg class="summary-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
                         <path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/>
@@ -91,7 +88,7 @@
                 </div>
 
                 <div class="summary-card">
-                    <div class="summary-number" id="sectionCount">0</div>
+                    <div class="summary-number">{{ section_count }}</div>
                     <div class="summary-label">SECTIONS</div>
                     <svg class="summary-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
                         <path d="M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7zm-4 6h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z"/>
@@ -106,7 +103,39 @@
                 <h2>Recent Activity</h2>
                 
                 <div id="activityContainer">
-                    <div class="activity-empty">No recent activity</div>
+                    {% if today_activities or yesterday_activities %}
+                        {% if today_activities %}
+                        <div class="activity-day">
+                            <div class="activity-day-label">Today</div>
+                            {% for activity in today_activities %}
+                            <div class="activity-item">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                                    <path d="M19 3h-4.18C14.4 1.84 13.3 1 12 1c-1.3 0-2.4.84-2.82 2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 0c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm2 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/>
+                                </svg>
+                                <span>{{ activity.message }}</span>
+                                <span class="activity-time">{{ activity.timestamp|date:"m/d/Y g:i A" }}</span>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                        
+                        {% if yesterday_activities %}
+                        <div class="activity-day">
+                            <div class="activity-day-label">Yesterday</div>
+                            {% for activity in yesterday_activities %}
+                            <div class="activity-item">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                                    <path d="M19 3h-4.18C14.4 1.84 13.3 1 12 1c-1.3 0-2.4.84-2.82 2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 0c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm2 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/>
+                                </svg>
+                                <span>{{ activity.message }}</span>
+                                <span class="activity-time">{{ activity.timestamp|date:"m/d/Y g:i A" }}</span>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                    {% else %}
+                        <div class="activity-empty">No recent activity</div>
+                    {% endif %}
                 </div>
             </div>
         </div>
@@ -118,8 +147,17 @@
             <div class="schedule-wrapper">
                 <div class="schedule-left">
                     <div class="courses-label">Courses</div>
-                    <div class="courses-list" id="coursesList">
-                        <div class="courses-empty">No courses scheduled</div>
+                    <div class="courses-list">
+                        {% if scheduled_courses %}
+                            {% for course in scheduled_courses %}
+                            <div class="course-label">
+                                <div class="course-color" style="background: {{ course.color }};"></div>
+                                <span>{{ course.course_code }}</span>
+                            </div>
+                            {% endfor %}
+                        {% else %}
+                            <div class="courses-empty">No courses scheduled</div>
+                        {% endif %}
                     </div>
                 </div>
 
@@ -135,8 +173,24 @@
                                 <th>SATURDAY</th>
                             </tr>
                         </thead>
-                        <tbody id="scheduleTableBody">
-                            <!-- Time slots from 7:30 AM to 9:30 PM will be generated by JavaScript -->
+                        <tbody>
+                            {% for time in time_slots %}
+                            <tr class="time-row">
+                                {% for day in days %}
+                                <td data-time="{{ time }}" data-day="{{ forloop.counter0 }}">
+                                    {% for schedule in schedules %}
+                                        {% if schedule.day == forloop.counter0 and schedule.start_time == time %}
+                                        <div class="schedule-block" style="background: {{ schedule.course.color }};">
+                                            <div class="course-code">{{ schedule.course.course_code }}</div>
+                                            <div class="course-details">Room: {{ schedule.room|default:'TBA' }}</div>
+                                            <div class="course-details">{{ schedule.section.name|default:'No Section' }}</div>
+                                        </div>
+                                        {% endif %}
+                                    {% endfor %}
+                                </td>
+                                {% endfor %}
+                            </tr>
+                            {% endfor %}
                         </tbody>
                     </table>
                 </div>
@@ -156,203 +210,6 @@
                 document.getElementById('dropdownMenu').classList.remove('show');
             }
         }
-
-        // Generate time slots from 7:30 AM to 9:30 PM
-        function generateTimeSlots() {
-            const tbody = document.getElementById('scheduleTableBody');
-            tbody.innerHTML = '';
-            
-            const times = [];
-            for (let hour = 7; hour <= 21; hour++) {
-                times.push(`${hour}:00`);
-                if (hour < 21) {
-                    times.push(`${hour}:30`);
-                }
-            }
-            
-            times.forEach(time => {
-                const row = document.createElement('tr');
-                row.className = 'time-row';
-                
-                for (let day = 0; day < 6; day++) {
-                    const td = document.createElement('td');
-                    td.setAttribute('data-time', time);
-                    td.setAttribute('data-day', day);
-                    row.appendChild(td);
-                }
-                
-                tbody.appendChild(row);
-            });
-        }
-
-        // Load counts from localStorage
-        function loadCounts() {
-            const faculty = JSON.parse(localStorage.getItem('faculty') || '[]');
-            const sections = JSON.parse(localStorage.getItem('sections') || '[]');
-            
-            document.getElementById('facultyCount').textContent = faculty.length;
-            document.getElementById('sectionCount').textContent = sections.length;
-        }
-
-        // Load recent activity
-        function loadRecentActivity() {
-            const activities = JSON.parse(localStorage.getItem('activities') || '[]');
-            const container = document.getElementById('activityContainer');
-            
-            if (activities.length === 0) {
-                container.innerHTML = '<div class="activity-empty">No recent activity</div>';
-                return;
-            }
-            
-            // Group by date
-            const today = new Date().toDateString();
-            const yesterday = new Date(Date.now() - 86400000).toDateString();
-            
-            const todayActivities = activities.filter(a => new Date(a.timestamp).toDateString() === today);
-            const yesterdayActivities = activities.filter(a => new Date(a.timestamp).toDateString() === yesterday);
-            
-            let html = '';
-            
-            if (todayActivities.length > 0) {
-                html += '<div class="activity-day"><div class="activity-day-label">Today</div>';
-                todayActivities.forEach(activity => {
-                    const time = new Date(activity.timestamp).toLocaleString('en-US', {
-                        month: '2-digit',
-                        day: '2-digit',
-                        year: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit',
-                        hour12: true
-                    });
-                    html += `
-                        <div class="activity-item">
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                                <path d="M19 3h-4.18C14.4 1.84 13.3 1 12 1c-1.3 0-2.4.84-2.82 2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 0c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm2 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/>
-                            </svg>
-                            <span>${activity.message}</span>
-                            <span class="activity-time">${time}</span>
-                        </div>
-                    `;
-                });
-                html += '</div>';
-            }
-            
-            if (yesterdayActivities.length > 0) {
-                html += '<div class="activity-day"><div class="activity-day-label">Yesterday</div>';
-                yesterdayActivities.forEach(activity => {
-                    const time = new Date(activity.timestamp).toLocaleString('en-US', {
-                        month: '2-digit',
-                        day: '2-digit',
-                        year: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit',
-                        hour12: true
-                    });
-                    html += `
-                        <div class="activity-item">
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                                <path d="M19 3h-4.18C14.4 1.84 13.3 1 12 1c-1.3 0-2.4.84-2.82 2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 0c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm2 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/>
-                            </svg>
-                            <span>${activity.message}</span>
-                            <span class="activity-time">${time}</span>
-                        </div>
-                    `;
-                });
-                html += '</div>';
-            }
-            
-            container.innerHTML = html;
-        }
-
-        // Load courses and schedule
-        function loadSchedule() {
-            const courses = JSON.parse(localStorage.getItem('courses') || '[]');
-            const schedules = JSON.parse(localStorage.getItem('schedules') || '[]');
-            
-            const coursesList = document.getElementById('coursesList');
-            
-            // Filter courses that have schedules assigned
-            const scheduledCourses = courses.filter(course => 
-                schedules.some(s => s.courseId === course.id)
-            );
-            
-            if (scheduledCourses.length === 0) {
-                coursesList.innerHTML = '<div class="courses-empty">No courses scheduled</div>';
-                return;
-            }
-            
-            // Display courses in sidebar
-            coursesList.innerHTML = '';
-            scheduledCourses.forEach(course => {
-                const courseLabel = document.createElement('div');
-                courseLabel.className = 'course-label';
-                courseLabel.innerHTML = `
-                    <div class="course-color" style="background: ${course.color || '#FFA726'};"></div>
-                    <span>${course.course_code}</span>
-                `;
-                coursesList.appendChild(courseLabel);
-            });
-            
-            // Display schedules in table
-            schedules.forEach(schedule => {
-                const course = courses.find(c => c.id === schedule.courseId);
-                if (!course) return;
-                
-                const section = JSON.parse(localStorage.getItem('sections') || '[]')
-                    .find(s => s.id === schedule.sectionId);
-                
-                // Find the correct cell
-                const timeSlots = document.querySelectorAll(`td[data-day="${schedule.day}"][data-time="${schedule.startTime}"]`);
-                
-                timeSlots.forEach(cell => {
-                    const scheduleBlock = document.createElement('div');
-                    scheduleBlock.className = 'schedule-block';
-                    scheduleBlock.style.background = course.color || '#FFA726';
-                    scheduleBlock.innerHTML = `
-                        <div class="course-code">${course.course_code}</div>
-                        <div class="course-details">Room: ${schedule.room || 'TBA'}</div>
-                        <div class="course-details">${section ? section.name : 'No Section'}</div>
-                    `;
-                    
-                    cell.appendChild(scheduleBlock);
-                    cell.classList.add('schedule-cell');
-                    
-                    // Calculate rowspan based on duration
-                    if (schedule.duration) {
-                        const durationSlots = Math.ceil(schedule.duration / 30);
-                        cell.setAttribute('rowspan', durationSlots);
-                        
-                        // Remove cells that are covered by rowspan
-                        let nextRow = cell.parentElement.nextElementSibling;
-                        for (let i = 1; i < durationSlots && nextRow; i++) {
-                            const cellToRemove = nextRow.querySelector(`td[data-day="${schedule.day}"]`);
-                            if (cellToRemove) {
-                                cellToRemove.remove();
-                            }
-                            nextRow = nextRow.nextElementSibling;
-                        }
-                    }
-                });
-            });
-        }
-
-        // Initialize dashboard
-        window.addEventListener('DOMContentLoaded', function() {
-            generateTimeSlots();
-            loadCounts();
-            loadRecentActivity();
-            loadSchedule();
-        });
-
-        // Listen for storage changes from other tabs
-        window.addEventListener('storage', function(e) {
-            if (e.key === 'courses' || e.key === 'schedules' || e.key === 'faculty' || 
-                e.key === 'sections' || e.key === 'activities') {
-                loadCounts();
-                loadRecentActivity();
-                loadSchedule();
-            }
-        });
     </script>
 </body>
 </html>
