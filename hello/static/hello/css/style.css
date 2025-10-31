@@ -1,0 +1,261 @@
+/* Import Lexend Font */
+@import url('https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&display=swap');
+
+/* Reset and Base Styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Lexend', sans-serif;
+    background-color: #E9ECEF;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+}
+
+/* Login Container - Rectangle */
+.login-container {
+    background: #FFFFFF;
+    border: 1px solid #212529;
+    border-radius: 30px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+    display: flex;
+    max-width: 900px;
+    width: 100%;
+    overflow: hidden;
+}
+
+/* Form Section */
+.login-form-section {
+    flex: 1;
+    padding: 60px 50px;
+}
+
+.login-form-section h1 {
+    font-family: 'Lexend', sans-serif;
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #212529;
+    margin-bottom: 10px;
+}
+
+.login-form-section p {
+    font-family: 'Lexend', sans-serif;
+    color: #495057;
+    margin-bottom: 40px;
+    font-size: 0.95rem;
+    font-weight: 400;
+}
+
+/* Messages */
+.error-message {
+    background: #fee;
+    color: #c33;
+    padding: 12px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    font-size: 0.9rem;
+    font-family: 'Lexend', sans-serif;
+}
+
+.success-message {
+    background: #efe;
+    color: #3c3;
+    padding: 12px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    font-size: 0.9rem;
+    font-family: 'Lexend', sans-serif;
+}
+
+/* Input Groups - Frame(username) and Frame(password) */
+.input-group {
+    position: relative;
+    margin-bottom: 25px;
+}
+
+.input-group input {
+    width: 100%;
+    padding: 15px 15px 15px 45px;
+    border: 0.5px solid #FFFFFF;
+    background: linear-gradient(180deg, #E7EBF0 0%, #E7EBF0 40%, #E7EBF0 100%);
+    border-radius: 10px;
+    font-size: 1rem;
+    font-family: 'Lexend', sans-serif;
+    font-weight: 400;
+    transition: all 0.3s;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.input-group input:focus {
+    outline: none;
+    box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+.input-group input::placeholder {
+    color: #6C757D;
+    font-family: 'Lexend', sans-serif;
+    font-weight: 400;
+}
+
+.input-group svg {
+    position: absolute;
+    left: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 20px;
+    height: 20px;
+    fill: #495057;
+}
+
+/* Options Row */
+.options {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+    font-size: 0.9rem;
+}
+
+/* Remember Me - Checkbox with Frame styling */
+.remember-me {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #495057;
+    cursor: pointer;
+    font-family: 'Lexend', sans-serif;
+    font-weight: 400;
+}
+
+.remember-me input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+    appearance: none;
+    -webkit-appearance: none;
+    background: linear-gradient(180deg, #E7EBF0 0%, #E7EBF0 40%, #E7EBF0 100%);
+    border: 0.5px solid #FFFFFF;
+    border-radius: 4px;
+    position: relative;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s;
+}
+
+.remember-me input[type="checkbox"]:checked {
+    background: linear-gradient(180deg, #ADB5BD 0%, #ADB5BD 40%, #ADB5BD 100%);
+}
+
+.remember-me input[type="checkbox"]:checked::after {
+    content: "✓";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: #FFFFFF;
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.forgot-password {
+    color: #212529;
+    text-decoration: none;
+    transition: color 0.3s;
+    font-family: 'Lexend', sans-serif;
+    font-weight: 400;
+}
+
+.forgot-password:hover {
+    color: #495057;
+    text-decoration: underline;
+}
+
+/* Login Button */
+.login-btn {
+    width: 100%;
+    padding: 15px;
+    background: linear-gradient(180deg, #ADB5BD 0%, #ADB5BD 40%, #ADB5BD 100%);
+    border: 1px solid #FFFFFF;
+    border-radius: 10px;
+    color: #FFFFFF;
+    font-size: 1.1rem;
+    font-weight: 600;
+    font-family: 'Lexend', sans-serif;
+    cursor: pointer;
+    transition: all 0.3s;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.login-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+    background: linear-gradient(180deg, #96A0AA 0%, #96A0AA 40%, #96A0AA 100%);
+}
+
+.login-btn:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+}
+
+/* Decorative Section */
+.decorative-section {
+    flex: 1;
+    background: #FFFFFF;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    overflow: hidden;
+    padding: 30px;
+}
+
+.decorative-image {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    object-position: center;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .login-container {
+        flex-direction: column;
+    }
+
+    .decorative-section {
+        min-height: 200px;
+    }
+
+    .login-form-section {
+        padding: 40px 30px;
+    }
+
+    .login-form-section h1 {
+        font-size: 2rem;
+    }
+
+    .options {
+        flex-direction: column;
+        gap: 15px;
+        align-items: flex-start;
+    }
+}
+
+@media (max-width: 480px) {
+    .login-form-section {
+        padding: 30px 20px;
+    }
+
+    .login-form-section h1 {
+        font-size: 1.75rem;
+    }
+
+    .login-form-section p {
+        font-size: 0.9rem;
+    }
+}

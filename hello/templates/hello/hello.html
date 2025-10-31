@@ -1,0 +1,14 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Hello with Static Files</title>
+    <link rel="stylesheet" href="{% static 'hello/css/style.css' %}">
+</head>
+<body>
+    <h1>Hello, World!</h1>
+    <p>This page uses static CSS and an image.</p>
+    <img src="{% static 'hello/img/hello.png' %}" alt="Hello Image" width="300">
+</body>
+</html>

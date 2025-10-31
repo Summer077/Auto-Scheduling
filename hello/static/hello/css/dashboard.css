@@ -1,0 +1,596 @@
+/* Import Lexend Font */
+@import url('https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&display=swap');
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Lexend', sans-serif;
+    background-color: #E9ECEF;
+    min-height: 100vh;
+}
+
+/* Top Navigation Bar */
+.top-nav {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 70px;
+    background: #FFFFFF;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 40px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    z-index: 1000;
+}
+
+.page-title {
+    font-family: 'Lexend', sans-serif;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #212529;
+}
+
+.admin-section {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+    position: relative;
+    padding: 8px 12px;
+    border-radius: 8px;
+    transition: background 0.3s;
+}
+
+.admin-section:hover {
+    background: #F8F9FA;
+}
+
+.admin-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: #ADB5BD;
+}
+
+.admin-name {
+    font-family: 'Lexend', sans-serif;
+    font-size: 1rem;
+    font-weight: 500;
+    color: #212529;
+}
+
+.dropdown-icon {
+    width: 20px;
+    height: 20px;
+    fill: #495057;
+}
+
+/* Dropdown Menu */
+.dropdown-menu {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    margin-top: 8px;
+    background: #FFFFFF;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    min-width: 150px;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-10px);
+    transition: all 0.3s;
+    z-index: 1100;
+}
+
+.dropdown-menu.show {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.dropdown-menu a {
+    display: block;
+    padding: 12px 16px;
+    color: #212529;
+    text-decoration: none;
+    font-family: 'Lexend', sans-serif;
+    font-size: 0.95rem;
+    transition: background 0.3s;
+}
+
+.dropdown-menu a:hover {
+    background: #F8F9FA;
+}
+
+/* Sidebar Navigation */
+.sidebar {
+    position: fixed;
+    top: 70px;
+    left: 0;
+    width: 200px;
+    height: calc(100vh - 70px);
+    background: #E9ECEF;
+    padding: 20px 0;
+    overflow-y: auto;
+}
+
+.nav-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 24px;
+    color: #212529;
+    text-decoration: none;
+    font-family: 'Lexend', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 500;
+    transition: all 0.3s;
+    position: relative;
+    margin: 4px 12px;
+    border-radius: 12px;
+    background: transparent;
+}
+
+.nav-item svg {
+    width: 20px;
+    height: 20px;
+    fill: #495057;
+    transition: fill 0.3s;
+}
+
+.nav-item:hover {
+    background: rgba(248, 249, 250, 0.5);
+}
+
+.nav-item.active {
+    background: #F8F9FA;
+    color: #212529;
+    border: 1px solid rgba(255, 255, 255, 0.6);
+    box-shadow: 
+        0 6px 12px rgba(0, 0, 0, 0.12),
+        0 2px 4px rgba(0, 0, 0, 0.08),
+        inset 0 1px 0 rgba(255, 255, 255, 0.8);
+    padding-left: 19px;
+    transform: translateY(-1px);
+}
+
+.nav-item.active::before {
+    content: '';
+    position: absolute;
+    left: -12px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 5px;
+    height: 100%;
+    background: #212529;
+    border-radius: 2.5px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.nav-item.active svg {
+    fill: #212529;
+}
+
+/* Main Content Area */
+.main-content {
+    margin-left: 200px;
+    margin-top: 70px;
+    padding: 40px;
+    min-height: calc(100vh - 70px);
+}
+
+/* Welcome Card */
+.welcome-card {
+    background: #FFFFFF;
+    border-radius: 12px;
+    padding: 30px 40px;
+    margin-bottom: 30px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.welcome-card h1 {
+    font-family: 'Lexend', sans-serif;
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: #212529;
+    margin-bottom: 12px;
+}
+
+.semester-info {
+    font-family: 'Lexend', sans-serif;
+    font-size: 1rem;
+    font-weight: 500;
+    color: #495057;
+    line-height: 1.6;
+}
+
+/* Content Grid */
+.content-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 30px;
+    margin-bottom: 30px;
+}
+
+/* Summary Section */
+.summary-section {
+    background: transparent;
+}
+
+.summary-section h2 {
+    font-family: 'Lexend', sans-serif;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #212529;
+    margin-bottom: 20px;
+}
+
+.summary-card {
+    background: #FFFFFF;
+    border-radius: 12px;
+    padding: 30px;
+    margin-bottom: 20px;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.summary-number {
+    font-family: 'Lexend', sans-serif;
+    font-size: 4rem;
+    font-weight: 700;
+    color: #212529;
+    line-height: 1;
+    margin-bottom: 8px;
+}
+
+.summary-label {
+    font-family: 'Lexend', sans-serif;
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: #495057;
+    letter-spacing: 0.5px;
+}
+
+.summary-icon {
+    position: absolute;
+    right: 30px;
+    bottom: 30px;
+    width: 60px;
+    height: 60px;
+    fill: #212529;
+    opacity: 0.1;
+}
+
+.summary-decoration {
+    position: absolute;
+    width: 80px;
+    height: 80px;
+    border-radius: 12px;
+    background: #212529;
+    opacity: 0.05;
+}
+
+.summary-decoration.top-left {
+    top: -40px;
+    left: -40px;
+    transform: rotate(45deg);
+}
+
+.summary-decoration.bottom-right {
+    bottom: -40px;
+    right: -40px;
+    transform: rotate(45deg);
+}
+
+/* Activity Section */
+.activity-section {
+    background: #FFFFFF;
+    border-radius: 12px;
+    padding: 30px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.activity-section h2 {
+    font-family: 'Lexend', sans-serif;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #212529;
+    margin-bottom: 20px;
+}
+
+.activity-empty {
+    text-align: center;
+    padding: 40px 20px;
+    font-family: 'Lexend', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: #ADB5BD;
+}
+
+.activity-day {
+    margin-bottom: 20px;
+}
+
+.activity-day:last-child {
+    margin-bottom: 0;
+}
+
+.activity-day-label {
+    font-family: 'Lexend', sans-serif;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #212529;
+    margin-bottom: 12px;
+}
+
+.activity-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: #F8F9FA;
+    padding: 14px 18px;
+    border-radius: 8px;
+    font-family: 'Lexend', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: #212529;
+    margin-bottom: 8px;
+}
+
+.activity-item:last-child {
+    margin-bottom: 0;
+}
+
+.activity-item svg {
+    width: 20px;
+    height: 20px;
+    fill: #495057;
+    flex-shrink: 0;
+}
+
+.activity-time {
+    margin-left: auto;
+    font-family: 'Lexend', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: #6C757D;
+    white-space: nowrap;
+}
+
+/* Schedule Section */
+.schedule-section {
+    background: #FFFFFF;
+    border-radius: 12px;
+    padding: 30px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.schedule-section h2 {
+    font-family: 'Lexend', sans-serif;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #212529;
+    margin-bottom: 20px;
+}
+
+.schedule-wrapper {
+    display: flex;
+    gap: 20px;
+}
+
+.schedule-left {
+    display: flex;
+    flex-direction: column;
+    min-width: 120px;
+}
+
+.courses-label {
+    font-family: 'Lexend', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #212529;
+    margin-bottom: 12px;
+    padding: 0 8px;
+}
+
+.courses-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.courses-empty {
+    padding: 20px;
+    text-align: center;
+    font-family: 'Lexend', sans-serif;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #ADB5BD;
+    background: #F8F9FA;
+    border-radius: 8px;
+}
+
+.course-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 12px;
+    background: #F8F9FA;
+    border-radius: 8px;
+    font-family: 'Lexend', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #212529;
+}
+
+.course-color {
+    width: 16px;
+    height: 16px;
+    border-radius: 4px;
+    flex-shrink: 0;
+}
+
+.schedule-table-container {
+    flex: 1;
+    overflow-x: auto;
+    overflow-y: auto;
+    max-height: 600px;
+    border: 1px solid #DEE2E6;
+    border-radius: 8px;
+}
+
+.schedule-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    min-width: 800px;
+}
+
+.schedule-table thead {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: #FFFFFF;
+}
+
+.schedule-table thead th {
+    background: #F8F9FA;
+    padding: 12px 8px;
+    text-align: center;
+    font-family: 'Lexend', sans-serif;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: #495057;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    border-bottom: 2px solid #DEE2E6;
+    border-right: 1px solid #DEE2E6;
+}
+
+.schedule-table thead th:last-child {
+    border-right: none;
+}
+
+.schedule-table tbody td {
+    border-bottom: 1px solid #DEE2E6;
+    border-right: 1px solid #DEE2E6;
+    padding: 4px;
+    height: 50px;
+    min-width: 130px;
+    position: relative;
+    vertical-align: top;
+    background: #FFFFFF;
+}
+
+.schedule-table tbody td:last-child {
+    border-right: none;
+}
+
+.schedule-table tbody td[data-time]::before {
+    content: attr(data-time);
+    position: absolute;
+    left: 4px;
+    top: 4px;
+    font-family: 'Lexend', sans-serif;
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: #ADB5BD;
+}
+
+.schedule-cell {
+    padding: 4px;
+}
+
+.schedule-block {
+    height: 100%;
+    min-height: 100px;
+    border-radius: 8px;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    color: #FFFFFF;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.course-code {
+    font-family: 'Lexend', sans-serif;
+    font-size: 1rem;
+    font-weight: 700;
+    margin-bottom: 4px;
+}
+
+.course-details {
+    font-family: 'Lexend', sans-serif;
+    font-size: 0.8rem;
+    font-weight: 500;
+    opacity: 0.9;
+    line-height: 1.4;
+}
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+    .content-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    .sidebar {
+        width: 70px;
+    }
+
+    .nav-item span {
+        display: none;
+    }
+
+    .nav-item {
+        justify-content: center;
+        padding: 14px;
+    }
+
+    .nav-item.active {
+        padding-left: 14px;
+    }
+
+    .main-content {
+        margin-left: 70px;
+        padding: 20px;
+    }
+
+    .top-nav {
+        padding: 0 20px;
+    }
+
+    .page-title {
+        font-size: 1.25rem;
+    }
+
+    .schedule-wrapper {
+        flex-direction: column;
+    }
+
+    .courses-list {
+        flex-direction: row;
+        flex-wrap: wrap;
+    }
+
+    .schedule-table-container {
+        max-height: 400px;
+    }
+
+    .welcome-card h1 {
+        font-size: 1.5rem;
+    }
+
+    .summary-number {
+        font-size: 3rem;
+    }
+}

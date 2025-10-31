@@ -1,0 +1,609 @@
+{% load static %}
+{% load custom_filters %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Course Management - ASSIST</title>
+    <link rel="stylesheet" href="{% static 'hello/css/course.css' %}">
+</head>
+<body>
+    <!-- Top Navigation Bar -->
+    <nav class="top-nav">
+        <div class="page-title">COURSE MANAGEMENT</div>
+        <div class="admin-section" onclick="toggleDropdown()">
+            <span class="admin-name">ADMIN</span>
+            <svg class="dropdown-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                <path d="M7 10l5 5 5-5z"/>
+            </svg>
+            <div class="dropdown-menu" id="dropdownMenu">
+                <a href="{% url 'admin_logout' %}">Logout</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Sidebar (same as before) -->
+    <aside class="sidebar">
+        <a href="{% url 'admin_dashboard' %}" class="nav-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                <path d="M4 13h6c.55 0 1-.45 1-1V4c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v8c0 .55.45 1 1 1zm0 8h6c.55 0 1-.45 1-1v-4c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v4c0 .55.45 1 1 1zm10 0h6c.55 0 1-.45 1-1v-8c0-.55-.45-1-1-1h-6c-.55 0-1 .45-1 1v8c0 .55.45 1 1 1zM13 4v4c0 .55.45 1 1 1h6c.55 0 1-.45 1-1V4c0-.55-.45-1-1-1h-6c-.55 0-1 .45-1 1z"/>
+            </svg>
+            <span>Dashboard</span>
+        </a>
+        
+        <a href="{% url 'course_view' %}" class="nav-item active">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                <path d="M18 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM6 4h5v8l-2.5-1.5L6 12V4z"/>
+            </svg>
+            <span>Course</span>
+        </a>
+        
+        <a href="#" class="nav-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                <path d="M16.5 12c1.38 0 2.49-1.12 2.49-2.5S17.88 7 16.5 7C15.12 7 14 8.12 14 9.5s1.12 2.5 2.5 2.5zM9 11c1.66 0 2.99-1.34 2.99-3S10.66 5 9 5C7.34 5 6 6.34 6 8s1.34 3 3 3zm7.5 3c-1.83 0-5.5.92-5.5 2.75V19h11v-2.25c0-1.83-3.67-2.75-5.5-2.75zM9 13c-2.33 0-7 1.17-7 3.5V19h7v-2.25c0-.85.33-2.34 2.37-3.47C10.5 13.1 9.66 13 9 13z"/>
+            </svg>
+            <span>Faculty</span>
+        </a>
+        
+        <a href="#" class="nav-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                <path d="M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z"/>
+            </svg>
+            <span>Section</span>
+        </a>
+        
+        <a href="#" class="nav-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                <path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z"/>
+            </svg>
+            <span>Schedule</span>
+        </a>
+    </aside>
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Top Controls -->
+        <div class="top-controls">
+            <div class="left-controls">
+                <button class="btn" onclick="openAddCourseModal()">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                        <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+                    </svg>
+                    Add Course
+                </button>
+            </div>
+
+            <div class="right-controls">
+                <!-- Curriculum Filter -->
+                <div class="filter-dropdown">
+                    <button class="filter-btn" onclick="toggleCurriculumFilter()">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                            <path d="M10 18h4v-2h-4v2zM3 6v2h18V6H3zm3 7h12v-2H6v2z"/>
+                        </svg>
+                        <span id="selectedCurriculumText">
+                            {% if selected_curriculum %}
+                                {{ selected_curriculum.name }} ({{ selected_curriculum.year }})
+                            {% else %}
+                                Select Curriculum
+                            {% endif %}
+                        </span>
+                    </button>
+                    <div class="filter-options" id="curriculumFilter">
+                        <a href="javascript:void(0)" onclick="openAddCurriculumModal()" style="border-bottom: 2px solid #DEE2E6; font-weight: 600; color: #0d6efd;">
+                            + Add New Curriculum
+                        </a>
+                        {% for curriculum in curricula %}
+                        <div class="curriculum-option">
+                            <a href="?curriculum={{ curriculum.id }}" style="border: none; flex: 1;">
+                                <span>{{ curriculum.name }} ({{ curriculum.year }})</span>
+                            </a>
+                            <div class="curriculum-actions">
+                                <button class="action-btn-small edit-btn-small" onclick="openEditCurriculumModal({{ curriculum.id }}, '{{ curriculum.name }}', {{ curriculum.year }}); event.stopPropagation();">
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                                        <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
+                                    </svg>
+                                </button>
+                                <button class="action-btn-small delete-btn-small" onclick="deleteCurriculum({{ curriculum.id }}, '{{ curriculum.name }}'); event.stopPropagation();">
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                                        <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <!-- Year Level Filter -->
+                <div class="filter-dropdown">
+                    <button class="filter-btn" onclick="toggleYearFilter()">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                            <path d="M10 18h4v-2h-4v2zM3 6v2h18V6H3zm3 7h12v-2H6v2z"/>
+                        </svg>
+                        <span>
+                            {% if selected_year %}
+                                {{ selected_year|ordinal }} Year
+                            {% else %}
+                                All Years
+                            {% endif %}
+                        </span>
+                    </button>
+                    <div class="filter-options" id="yearFilter">
+                        <a href="?{% if selected_curriculum %}curriculum={{ selected_curriculum.id }}{% endif %}">All Years</a>
+                        {% for year in "1234" %}
+                        <a href="?{% if selected_curriculum %}curriculum={{ selected_curriculum.id }}&{% endif %}year={{ year }}">
+                            {{ year|ordinal }} Year
+                        </a>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <!-- Semester Filter -->
+                <div class="filter-dropdown">
+                    <button class="filter-btn" onclick="toggleSemesterFilter()">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                            <path d="M10 18h4v-2h-4v2zM3 6v2h18V6H3zm3 7h12v-2H6v2z"/>
+                        </svg>
+                        <span>
+                            {% if selected_semester %}
+                                {{ selected_semester|ordinal }} Semester
+                            {% else %}
+                                All Semesters
+                            {% endif %}
+                        </span>
+                    </button>
+                    <div class="filter-options" id="semesterFilter">
+                        <a href="?{% if selected_curriculum %}curriculum={{ selected_curriculum.id }}{% endif %}{% if selected_year %}&year={{ selected_year }}{% endif %}">All Semesters</a>
+                        <a href="?{% if selected_curriculum %}curriculum={{ selected_curriculum.id }}{% endif %}{% if selected_year %}&year={{ selected_year }}{% endif %}&semester=1">1st Semester</a>
+                        <a href="?{% if selected_curriculum %}curriculum={{ selected_curriculum.id }}{% endif %}{% if selected_year %}&year={{ selected_year }}{% endif %}&semester=2">2nd Semester</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Course Table -->
+        {% if selected_curriculum %}
+        <div class="course-table-wrapper">
+            <table class="course-table">
+                <thead>
+                    <tr>
+                        <th>COURSE CODE</th>
+                        <th>DESCRIPTIVE TITLE</th>
+                        <th>LAB HRS</th>
+                        <th>LEC HRS</th>
+                        <th>UNITS</th>
+                        <th>ACADEMIC LEVEL</th>
+                        <th>ACTIONS</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for key, group in grouped_courses.items %}
+                    <tr>
+                        <td colspan="7" class="semester-header">
+                            {{ group.display }} - Total Units: {{ group.total_units }}
+                        </td>
+                    </tr>
+                    {% for course in group.courses %}
+                    <tr>
+                        <td>{{ course.course_code }}</td>
+                        <td>{{ course.descriptive_title }}</td>
+                        <td>{{ course.laboratory_hours }}</td>
+                        <td>{{ course.lecture_hours }}</td>
+                        <td>{{ course.credit_units }}</td>
+                        <td>{{ course.get_year_semester_display }}</td>
+                        <td>
+                            <button class="action-btn edit-btn" onclick="editCourse({{ course.id }})">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                                    <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
+                                </svg>
+                            </button>
+                            <button class="action-btn delete-btn" onclick="deleteCourse({{ course.id }}, '{{ course.course_code }}')">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                                    <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
+                                </svg>
+                            </button>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" style="text-align: center; padding: 40px; color: #6C757D;">
+                            No courses found for this filter
+                        </td>
+                    </tr>
+                    {% endfor %}
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" style="text-align: center; padding: 40px; color: #6C757D;">
+                            No courses added yet
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div style="text-align: center; padding: 60px 20px; background: #FFFFFF; border-radius: 12px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);">
+            <p style="font-size: 1.1rem; color: #6C757D; margin-bottom: 20px;">Please select or add a curriculum to view courses</p>
+            <button class="btn" onclick="openAddCurriculumModal()">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                    <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+                </svg>
+                Add Curriculum
+            </button>
+        </div>
+        {% endif %}
+    </main>
+    <!-- Add/Edit Course Modal -->
+    <div id="courseModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="courseModalTitle">Add Course</h2>
+                <span class="close" onclick="closeCourseModal()">&times;</span>
+            </div>
+            <form id="courseForm" method="post">
+                {% csrf_token %}
+                <input type="hidden" id="courseId" name="course_id">
+                
+                <div class="form-group">
+                    <label for="curriculum">Curriculum *</label>
+                    <select id="curriculum" name="curriculum" required>
+                        {% for curriculum in curricula %}
+                        <option value="{{ curriculum.id }}" {% if curriculum.id == selected_curriculum.id %}selected{% endif %}>
+                            {{ curriculum.name }} ({{ curriculum.year }})
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="course_code">Course Code *</label>
+                    <input type="text" id="course_code" name="course_code" placeholder="e.g., CPE 001" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="descriptive_title">Descriptive Title *</label>
+                    <input type="text" id="descriptive_title" name="descriptive_title" placeholder="e.g., Software Design" required>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="laboratory_hours">Laboratory Hours *</label>
+                        <input type="number" id="laboratory_hours" name="laboratory_hours" min="0" value="0" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="lecture_hours">Lecture Hours *</label>
+                        <input type="number" id="lecture_hours" name="lecture_hours" min="0" value="0" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="credit_units">Credit Units *</label>
+                        <input type="number" id="credit_units" name="credit_units" min="0" value="0" required>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="year_level">Year Level *</label>
+                        <select id="year_level" name="year_level" required>
+                            <option value="1">1st Year</option>
+                            <option value="2">2nd Year</option>
+                            <option value="3">3rd Year</option>
+                            <option value="4">4th Year</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="semester">Semester *</label>
+                        <select id="semester" name="semester" required>
+                            <option value="1">1st Semester</option>
+                            <option value="2">2nd Semester</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn-secondary" onclick="closeCourseModal()">Cancel</button>
+                    <button type="submit" class="btn-primary">Save Course</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <!-- Add/Edit Curriculum Modal -->
+    <div id="curriculumModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="curriculumModalTitle">Add Curriculum</h2>
+                <span class="close" onclick="closeCurriculumModal()">&times;</span>
+            </div>
+            <form id="curriculumForm" method="post">
+                {% csrf_token %}
+                <input type="hidden" id="curriculumId" name="curriculum_id">
+                
+                <div class="form-group">
+                    <label for="curriculum_name">Curriculum Name *</label>
+                    <input type="text" id="curriculum_name" name="name" placeholder="e.g., BSCPE Curriculum" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="curriculum_year">Year *</label>
+                    <input type="number" id="curriculum_year" name="year" placeholder="e.g., 2025" min="2000" max="2100" required>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn-secondary" onclick="closeCurriculumModal()">Cancel</button>
+                    <button type="submit" class="btn-primary">Save Curriculum</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <script>
+        // Dropdown toggles
+        function toggleDropdown() {
+            document.getElementById('dropdownMenu').classList.toggle('show');
+        }
+
+        function toggleCurriculumFilter() {
+            const filter = document.getElementById('curriculumFilter');
+            const dropdown = filter.closest('.filter-dropdown');
+            
+            // Close other filters
+            document.querySelectorAll('.filter-dropdown').forEach(d => {
+                if (d !== dropdown) d.classList.remove('active');
+            });
+            document.querySelectorAll('.filter-options').forEach(f => {
+                if (f !== filter) f.classList.remove('show');
+            });
+            
+            dropdown.classList.toggle('active');
+            filter.classList.toggle('show');
+        }
+
+        function toggleYearFilter() {
+            const filter = document.getElementById('yearFilter');
+            const dropdown = filter.closest('.filter-dropdown');
+            
+            // Close other filters
+            document.querySelectorAll('.filter-dropdown').forEach(d => {
+                if (d !== dropdown) d.classList.remove('active');
+            });
+            document.querySelectorAll('.filter-options').forEach(f => {
+                if (f !== filter) f.classList.remove('show');
+            });
+            
+            dropdown.classList.toggle('active');
+            filter.classList.toggle('show');
+        }
+
+        function toggleSemesterFilter() {
+            const filter = document.getElementById('semesterFilter');
+            const dropdown = filter.closest('.filter-dropdown');
+            
+            // Close other filters
+            document.querySelectorAll('.filter-dropdown').forEach(d => {
+                if (d !== dropdown) d.classList.remove('active');
+            });
+            document.querySelectorAll('.filter-options').forEach(f => {
+                if (f !== filter) f.classList.remove('show');
+            });
+            
+            dropdown.classList.toggle('active');
+            filter.classList.toggle('show');
+        }
+
+        // Close dropdowns when clicking outside
+        window.onclick = function(event) {
+            if (!event.target.closest('.admin-section')) {
+                document.getElementById('dropdownMenu').classList.remove('show');
+            }
+            if (!event.target.closest('.filter-dropdown')) {
+                document.querySelectorAll('.filter-dropdown').forEach(d => d.classList.remove('active'));
+                document.querySelectorAll('.filter-options').forEach(f => f.classList.remove('show'));
+            }
+        }
+
+        // Course Modal Functions
+        function openAddCourseModal() {
+            document.getElementById('courseModalTitle').textContent = 'Add Course';
+            document.getElementById('courseForm').reset();
+            document.getElementById('courseId').value = '';
+            document.getElementById('courseModal').style.display = 'block';
+        }
+
+        function closeCourseModal() {
+            document.getElementById('courseModal').style.display = 'none';
+        }
+
+        async function editCourse(courseId) {
+            try {
+                const response = await fetch(`/admin/course/edit/${courseId}/`);
+                const data = await response.json();
+                
+                document.getElementById('courseModalTitle').textContent = 'Edit Course';
+                document.getElementById('courseId').value = data.id;
+                document.getElementById('curriculum').value = data.curriculum;
+                document.getElementById('course_code').value = data.course_code;
+                document.getElementById('descriptive_title').value = data.descriptive_title;
+                document.getElementById('laboratory_hours').value = data.laboratory_hours;
+                document.getElementById('lecture_hours').value = data.lecture_hours;
+                document.getElementById('credit_units').value = data.credit_units;
+                document.getElementById('year_level').value = data.year_level;
+                document.getElementById('semester').value = data.semester;
+                
+                document.getElementById('courseModal').style.display = 'block';
+            } catch (error) {
+                showNotification('Error loading course data', 'error');
+            }
+        }
+
+        async function deleteCourse(courseId, courseCode) {
+            if (!confirm(`Are you sure you want to delete ${courseCode}?`)) return;
+            
+            try {
+                const response = await fetch(`/admin/course/delete/${courseId}/`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': getCookie('csrftoken')
+                    }
+                });
+                
+                const data = await response.json();
+                if (data.success) {
+                    showNotification('Course deleted successfully', 'success');
+                    setTimeout(() => location.reload(), 1000);
+                } else {
+                    showNotification('Error deleting course', 'error');
+                }
+            } catch (error) {
+                showNotification('Error deleting course', 'error');
+            }
+        }
+
+        // Course Form Submit
+        document.getElementById('courseForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const courseId = document.getElementById('courseId').value;
+            const url = courseId ? `/admin/course/edit/${courseId}/` : '/admin/course/add/';
+            const formData = new FormData(this);
+            
+            try {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                if (data.success) {
+                    showNotification(courseId ? 'Course updated successfully' : 'Course added successfully', 'success');
+                    closeCourseModal();
+                    setTimeout(() => location.reload(), 1000);
+                } else {
+                    showNotification('Error saving course', 'error');
+                }
+            } catch (error) {
+                showNotification('Error saving course', 'error');
+            }
+        });
+
+        // Curriculum Modal Functions
+        function openAddCurriculumModal() {
+            document.getElementById('curriculumModalTitle').textContent = 'Add Curriculum';
+            document.getElementById('curriculumForm').reset();
+            document.getElementById('curriculumId').value = '';
+            document.getElementById('curriculumModal').style.display = 'block';
+            
+            // Close the curriculum filter dropdown
+            document.querySelectorAll('.filter-dropdown').forEach(d => d.classList.remove('active'));
+            document.querySelectorAll('.filter-options').forEach(f => f.classList.remove('show'));
+        }
+
+        function openEditCurriculumModal(id, name, year) {
+            document.getElementById('curriculumModalTitle').textContent = 'Edit Curriculum';
+            document.getElementById('curriculumId').value = id;
+            document.getElementById('curriculum_name').value = name;
+            document.getElementById('curriculum_year').value = year;
+            document.getElementById('curriculumModal').style.display = 'block';
+            
+            // Close the curriculum filter dropdown
+            document.querySelectorAll('.filter-dropdown').forEach(d => d.classList.remove('active'));
+            document.querySelectorAll('.filter-options').forEach(f => f.classList.remove('show'));
+        }
+
+        function closeCurriculumModal() {
+            document.getElementById('curriculumModal').style.display = 'none';
+        }
+
+        async function deleteCurriculum(curriculumId, curriculumName) {
+            if (!confirm(`Are you sure you want to delete ${curriculumName}? This will also delete all courses in this curriculum.`)) return;
+            
+            try {
+                const response = await fetch(`/admin/curriculum/delete/${curriculumId}/`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': getCookie('csrftoken')
+                    }
+                });
+                
+                const data = await response.json();
+                if (data.success) {
+                    showNotification('Curriculum deleted successfully', 'success');
+                    setTimeout(() => location.reload(), 1000);
+                } else {
+                    showNotification('Error deleting curriculum', 'error');
+                }
+            } catch (error) {
+                showNotification('Error deleting curriculum', 'error');
+            }
+        }
+
+        // Curriculum Form Submit
+        document.getElementById('curriculumForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const curriculumId = document.getElementById('curriculumId').value;
+            const url = curriculumId ? `/curriculum/edit/${curriculumId}/` : '/admin/curriculum/add/';
+            const formData = new FormData(this);
+            
+            try {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                if (data.success) {
+                    showNotification(curriculumId ? 'Curriculum updated successfully' : 'Curriculum added successfully', 'success');
+                    closeCurriculumModal();
+                    setTimeout(() => location.reload(), 1000);
+                } else {
+                    showNotification('Error saving curriculum', 'error');
+                }
+            } catch (error) {
+                showNotification('Error saving curriculum', 'error');
+            }
+        });
+
+        // Utility Functions
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+
+        function showNotification(message, type) {
+            const notification = document.createElement('div');
+            notification.className = `notification ${type} show`;
+            notification.textContent = message;
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+                setTimeout(() => notification.remove(), 300);
+            }, 3000);
+        }
+
+        // Close modals when clicking outside
+        window.addEventListener('click', function(event) {
+            const courseModal = document.getElementById('courseModal');
+            const curriculumModal = document.getElementById('curriculumModal');
+            
+            if (event.target == courseModal) {
+                closeCourseModal();
+            }
+            if (event.target == curriculumModal) {
+                closeCurriculumModal();
+            }
+        });
+    </script>
+</body>
+</html>
