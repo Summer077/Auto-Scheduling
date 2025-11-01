@@ -41,21 +41,10 @@ def admin_logout(request):
     messages.success(request, 'You have been logged out successfully.')
     return redirect('admin_login')
 
-def log_activity(user, action, entity_type, entity_name, message):
-    """Helper function to log activities"""
-    Activity.objects.create(
-        user=user,
-        action=action,
-        entity_type=entity_type,
-        entity_name=entity_name,
-        message=message
-    )
-
 @login_required(login_url='admin_login')
 def admin_dashboard(request):
     """
     Admin dashboard - displays summary statistics and recent activities
-    Fetches data directly from Django database
     """
     if not (request.user.is_staff or request.user.is_superuser):
         messages.error(request, 'You do not have permission to access this page.')
@@ -65,26 +54,55 @@ def admin_dashboard(request):
     faculty_count = Faculty.objects.count()
     section_count = Section.objects.count()
     
-    # Get recent activities (last 2 days)
-    recent_activities = get_recent_activities()
+    # Get all activities from last 2 days
+    today = timezone.now().date()
+    yesterday = today - timedelta(days=1)
     
-    # Get courses that have schedules assigned
-    scheduled_courses = Course.objects.filter(schedules__isnull=False).distinct()
+    # Get activities and separate by date
+    today_activities = Activity.objects.filter(
+        timestamp__date=today
+    ).order_by('-timestamp')[:10]  # Limit to 10 most recent
     
-    # Generate time slots from 7:30 AM to 9:30 PM
-    time_slots = generate_time_slots()
+    yesterday_activities = Activity.objects.filter(
+        timestamp__date=yesterday
+    ).order_by('-timestamp')[:10]  # Limit to 10 most recent
+    
+    # Get all courses (show all courses, not just scheduled ones)
+    scheduled_courses = Course.objects.all().order_by('course_code')
+    
+    # Generate time slots from 7:30 AM to 9:30 PM (30-minute intervals)
+    time_slots = []
+    # Start at 7:30
+    time_slots.append("07:30")
+    # Then 8:00 onwards
+    for hour in range(8, 22):
+        for minute in ['00', '30']:
+            if hour == 21 and minute == '30':
+                break
+            time_slots.append(f"{hour:02d}:{minute}")
+    time_slots.append("21:30")
     
     # Days of the week
-    days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
+    days = [
+    (0, 'Monday'),
+    (1, 'Tuesday'),
+    (2, 'Wednesday'),
+    (3, 'Thursday'),
+    (4, 'Friday'),
+    (5, 'Saturday')
+    ]
     
-    # Get schedules
-    schedules = Schedule.objects.all().select_related('course', 'section', 'room', 'faculty')
+    # Get all schedules
+    schedules = Schedule.objects.select_related(
+        'course', 'section', 'faculty', 'room'
+    ).all()
     
     context = {
         'user': request.user,
         'faculty_count': faculty_count,
         'section_count': section_count,
-        'recent_activities': recent_activities,
+        'today_activities': today_activities,
+        'yesterday_activities': yesterday_activities,
         'scheduled_courses': scheduled_courses,
         'time_slots': time_slots,
         'days': days,
@@ -93,54 +111,15 @@ def admin_dashboard(request):
     
     return render(request, 'hello/dashboard.html', context)
 
-def generate_time_slots():
-    """Generate time slots from 7:30 AM to 9:30 PM in 30-minute intervals"""
-    time_slots = []
-    current_hour = 7
-    current_minute = 30
-    
-    while current_hour < 21 or (current_hour == 21 and current_minute == 0):
-        time_str = f"{current_hour}:{current_minute:02d}"
-        time_slots.append(time_str)
-        
-        # Increment by 30 minutes
-        current_minute += 30
-        if current_minute >= 60:
-            current_minute = 0
-            current_hour += 1
-    
-    # Add final 9:30 PM slot
-    time_slots.append("21:30")
-    
-    return time_slots
-
-def get_recent_activities():
-    """
-    Get recent activities grouped by day (Today, Yesterday)
-    Returns activities from Activity model
-    """
-    today = timezone.now().date()
-    yesterday = today - timedelta(days=1)
-    
-    activities_dict = {}
-    
-    # Get activities from today
-    today_activities = Activity.objects.filter(
-        timestamp__date=today
-    ).order_by('-timestamp')
-    
-    if today_activities.exists():
-        activities_dict['Today'] = list(today_activities)
-    
-    # Get activities from yesterday
-    yesterday_activities = Activity.objects.filter(
-        timestamp__date=yesterday
-    ).order_by('-timestamp')
-    
-    if yesterday_activities.exists():
-        activities_dict['Yesterday'] = list(yesterday_activities)
-    
-    return activities_dict
+def log_activity(user, action, entity_type, entity_name, message):
+    """Helper function to log activities"""
+    Activity.objects.create(
+        user=user,
+        action=action,
+        entity_type=entity_type,
+        entity_name=entity_name,
+        message=message
+    )
 
 @login_required(login_url='admin_login')
 def course_view(request):
@@ -206,7 +185,7 @@ def course_view(request):
         'selected_year': int(selected_year) if selected_year else None,
         'selected_semester': int(selected_semester) if selected_semester else None,
     }
-    return render(request, 'hello/course_management.html', context)
+    return render(request, 'hello/course.html', context)
 
 @login_required(login_url='admin_login')
 def add_course(request):
@@ -239,15 +218,15 @@ def edit_course(request, course_id):
     if request.method == 'POST':
         form = CourseForm(request.POST, instance=course)
         if form.is_valid():
-            course = form.save()
+            updated_course = form.save()
             
             # Log activity
             log_activity(
                 user=request.user,
                 action='edit',
                 entity_type='course',
-                entity_name=course.course_code,
-                message=f'Edited course: {course.course_code} - {course.descriptive_title}'
+                entity_name=updated_course.course_code,
+                message=f'Edited course: {updated_course.course_code} - {updated_course.descriptive_title}'
             )
             
             return JsonResponse({'success': True})
@@ -303,7 +282,7 @@ def add_curriculum(request):
                 user=request.user,
                 action='add',
                 entity_type='curriculum',
-                entity_name=f'{curriculum.name} ({curriculum.year})',
+                entity_name=curriculum.name,
                 message=f'Added curriculum: {curriculum.name} ({curriculum.year})'
             )
             
@@ -318,7 +297,8 @@ def delete_curriculum(request, curriculum_id):
     """Delete curriculum"""
     if request.method == 'POST':
         curriculum = get_object_or_404(Curriculum, id=curriculum_id)
-        curriculum_name = f'{curriculum.name} ({curriculum.year})'
+        curriculum_name = curriculum.name
+        curriculum_year = curriculum.year
         
         curriculum.delete()
         
@@ -328,7 +308,7 @@ def delete_curriculum(request, curriculum_id):
             action='delete',
             entity_type='curriculum',
             entity_name=curriculum_name,
-            message=f'Deleted curriculum: {curriculum_name}'
+            message=f'Deleted curriculum: {curriculum_name} ({curriculum_year})'
         )
         
         return JsonResponse({'success': True})
@@ -350,8 +330,6 @@ def edit_curriculum(request, curriculum_id):
     elif request.method == 'POST':
         try:
             curriculum = Curriculum.objects.get(id=curriculum_id)
-            old_name = f'{curriculum.name} ({curriculum.year})'
-            
             curriculum.name = request.POST.get('name')
             curriculum.year = request.POST.get('year')
             curriculum.save()
@@ -361,8 +339,8 @@ def edit_curriculum(request, curriculum_id):
                 user=request.user,
                 action='edit',
                 entity_type='curriculum',
-                entity_name=f'{curriculum.name} ({curriculum.year})',
-                message=f'Edited curriculum: {old_name} → {curriculum.name} ({curriculum.year})'
+                entity_name=curriculum.name,
+                message=f'Edited curriculum: {curriculum.name} ({curriculum.year})'
             )
             
             return JsonResponse({'success': True})

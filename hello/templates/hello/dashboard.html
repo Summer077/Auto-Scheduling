@@ -140,7 +140,7 @@
                         {% if scheduled_courses %}
                             {% for course in scheduled_courses %}
                             <div class="course-label">
-                                <div class="course-color" style="background: {{ course.course_code|auto_color }};"></div>
+                                <div class="course-color" style="background: {{ course.color }};"></div>
                                 <span>{{ course.course_code }}</span>
                             </div>
                             {% endfor %}
@@ -165,15 +165,15 @@
                         <tbody>
                             {% for time in time_slots %}
                             <tr class="time-row">
-                                {% for day in days %}
-                                <td data-time="{{ time }}" data-day="{{ forloop.counter0 }}">
+                                {% for day_num, day_name in days %}
+                                <td data-time="{{ time }}" data-day="{{ day_num }}">
                                     {% for schedule in schedules %}
-                                        {% if schedule.day == forloop.counter0 and schedule.start_time == time %}
-                                        <div class="schedule-block" style="background: {{ schedule.course.course_code|auto_color }};">
-                                            <div class="course-code">{{ schedule.course.course_code }}</div>
-                                            <div class="course-details">Room: {{ schedule.room|default:'TBA' }}</div>
-                                            <div class="course-details">{{ schedule.section.name|default:'No Section' }}</div>
-                                        </div>
+                                        {% if schedule.day == day_num and schedule.start_time == time %}
+                                        <div class="schedule-block" style="background: {{ schedule.course.color }}; height: {{ schedule.duration|schedule_height }}px;">
+    <div class="course-code">{{ schedule.course.course_code }}</div>
+    <div class="course-details">Room: {{ schedule.room.name|default:'TBA' }}</div>
+    <div class="course-details">{{ schedule.section.name|default:'No Section' }}</div>
+</div>
                                         {% endif %}
                                     {% endfor %}
                                 </td>

@@ -3,12 +3,14 @@ import hashlib
 
 register = template.Library()
 
+register = template.Library()
+
 @register.filter
 def ordinal(value):
-    """Converts 1 to 1st, 2 to 2nd, etc."""
+    """Convert integer to ordinal string (1 -> 1st, 2 -> 2nd, etc.)"""
     try:
         value = int(value)
-    except (TypeError, ValueError):
+    except (ValueError, TypeError):
         return value
     
     if 10 <= value % 100 <= 20:
@@ -16,7 +18,23 @@ def ordinal(value):
     else:
         suffix = {1: 'st', 2: 'nd', 3: 'rd'}.get(value % 10, 'th')
     
-    return f'{value}{suffix}'
+    return f"{value}{suffix}"
+
+@register.filter
+def schedule_height(duration_minutes):
+    """Calculate the height in pixels for a schedule block.
+    Each 30-minute slot = 50px height"""
+    if not duration_minutes:
+        return 50
+    
+    slot_height = 50
+    slot_minutes = 30
+    num_slots = duration_minutes / slot_minutes
+    total_height = (num_slots * slot_height) + 40
+    
+    return int(total_height)
+    
+    return int(total_height)
 
 @register.filter
 def auto_color(value):

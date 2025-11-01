@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
+import random
 
 class Curriculum(models.Model):
     name = models.CharField(max_length=100)
@@ -26,6 +27,30 @@ class Course(models.Model):
         (2, '2nd Semester'),
     ]
     
+    # Predefined color palette for courses
+    COLOR_PALETTE = [
+        '#FF6B6B',  # Red
+        '#4ECDC4',  # Teal
+        '#45B7D1',  # Blue
+        '#96CEB4',  # Green
+        '#FFEAA7',  # Yellow
+        '#DFE6E9',  # Light Gray
+        '#74B9FF',  # Light Blue
+        '#A29BFE',  # Purple
+        '#FD79A8',  # Pink
+        '#FDCB6E',  # Orange
+        '#6C5CE7',  # Violet
+        '#00B894',  # Emerald
+        '#E17055',  # Salmon
+        '#0984E3',  # Ocean Blue
+        '#00CEC9',  # Cyan
+        '#B2BEC3',  # Gray
+        '#FF7675',  # Coral
+        '#55EFC4',  # Mint
+        '#FAB1A0',  # Peach
+        '#A29BFE',  # Lavender
+    ]
+    
     curriculum = models.ForeignKey(Curriculum, on_delete=models.CASCADE, related_name='courses')
     course_code = models.CharField(max_length=20)
     descriptive_title = models.CharField(max_length=200)
@@ -34,13 +59,32 @@ class Course(models.Model):
     credit_units = models.IntegerField(default=0)
     year_level = models.IntegerField(choices=YEAR_CHOICES)
     semester = models.IntegerField(choices=SEMESTER_CHOICES)
-    color = models.CharField(max_length=7, default='#FFA726')  # Hex color for schedule display
+    color = models.CharField(max_length=7, default='#FFA726')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     
     class Meta:
         ordering = ['year_level', 'semester', 'course_code']
         unique_together = ['curriculum', 'course_code']
+    
+    def save(self, *args, **kwargs):
+        """Auto-assign a unique color if not set"""
+        if not self.color or self.color == '#FFA726':
+            # Get all existing colors in this curriculum
+            existing_colors = Course.objects.filter(
+                curriculum=self.curriculum
+            ).exclude(id=self.id).values_list('color', flat=True)
+            
+            # Find available colors
+            available_colors = [c for c in self.COLOR_PALETTE if c not in existing_colors]
+            
+            # Assign a random available color, or random from palette if all used
+            if available_colors:
+                self.color = random.choice(available_colors)
+            else:
+                self.color = random.choice(self.COLOR_PALETTE)
+        
+        super().save(*args, **kwargs)
     
     def __str__(self):
         return f"{self.course_code} - {self.descriptive_title}"
@@ -111,13 +155,29 @@ class Schedule(models.Model):
     faculty = models.ForeignKey(Faculty, on_delete=models.SET_NULL, null=True, blank=True, related_name='schedules')
     room = models.ForeignKey(Room, on_delete=models.SET_NULL, null=True, blank=True, related_name='schedules')
     day = models.IntegerField(choices=DAY_CHOICES)
-    start_time = models.CharField(max_length=5)  # Format: "HH:MM" (e.g., "8:30")
-    end_time = models.CharField(max_length=5)    # Format: "HH:MM" (e.g., "10:30")
-    duration = models.IntegerField(help_text="Duration in minutes")  # e.g., 120 for 2 hours
+    start_time = models.CharField(max_length=5)
+    end_time = models.CharField(max_length=5)
+    duration = models.IntegerField(default=0, help_text="Duration in minutes")  # ADD default=0
     created_at = models.DateTimeField(auto_now_add=True)
     
     class Meta:
         ordering = ['day', 'start_time']
+    
+    def save(self, *args, **kwargs):
+        """Auto-calculate duration from start_time and end_time"""
+        if self.start_time and self.end_time:
+            # Parse start time
+            start_hour, start_min = map(int, self.start_time.split(':'))
+            start_total_mins = start_hour * 60 + start_min
+            
+            # Parse end time
+            end_hour, end_min = map(int, self.end_time.split(':'))
+            end_total_mins = end_hour * 60 + end_min
+            
+            # Calculate duration
+            self.duration = end_total_mins - start_total_mins
+        
+        super().save(*args, **kwargs)
     
     def __str__(self):
         day_name = dict(self.DAY_CHOICES)[self.day]
