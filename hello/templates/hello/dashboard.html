@@ -1,10 +1,14 @@
 {% load static %}
+{% load custom_filters %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard - ASSIST</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@300;400;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{% static 'hello/css/dashboard.css' %}">
 </head>
 <body>
@@ -103,11 +107,11 @@
                 <h2>Recent Activity</h2>
                 
                 <div id="activityContainer">
-                    {% if today_activities or yesterday_activities %}
-                        {% if today_activities %}
+                    {% if recent_activities %}
+                        {% for day, activities in recent_activities.items %}
                         <div class="activity-day">
-                            <div class="activity-day-label">Today</div>
-                            {% for activity in today_activities %}
+                            <div class="activity-day-label">{{ day }}</div>
+                            {% for activity in activities %}
                             <div class="activity-item">
                                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
                                     <path d="M19 3h-4.18C14.4 1.84 13.3 1 12 1c-1.3 0-2.4.84-2.82 2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 0c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm2 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/>
@@ -117,22 +121,7 @@
                             </div>
                             {% endfor %}
                         </div>
-                        {% endif %}
-                        
-                        {% if yesterday_activities %}
-                        <div class="activity-day">
-                            <div class="activity-day-label">Yesterday</div>
-                            {% for activity in yesterday_activities %}
-                            <div class="activity-item">
-                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                                    <path d="M19 3h-4.18C14.4 1.84 13.3 1 12 1c-1.3 0-2.4.84-2.82 2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 0c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm2 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/>
-                                </svg>
-                                <span>{{ activity.message }}</span>
-                                <span class="activity-time">{{ activity.timestamp|date:"m/d/Y g:i A" }}</span>
-                            </div>
-                            {% endfor %}
-                        </div>
-                        {% endif %}
+                        {% endfor %}
                     {% else %}
                         <div class="activity-empty">No recent activity</div>
                     {% endif %}
@@ -151,7 +140,7 @@
                         {% if scheduled_courses %}
                             {% for course in scheduled_courses %}
                             <div class="course-label">
-                                <div class="course-color" style="background: {{ course.color }};"></div>
+                                <div class="course-color" style="background: {{ course.course_code|auto_color }};"></div>
                                 <span>{{ course.course_code }}</span>
                             </div>
                             {% endfor %}
@@ -180,7 +169,7 @@
                                 <td data-time="{{ time }}" data-day="{{ forloop.counter0 }}">
                                     {% for schedule in schedules %}
                                         {% if schedule.day == forloop.counter0 and schedule.start_time == time %}
-                                        <div class="schedule-block" style="background: {{ schedule.course.color }};">
+                                        <div class="schedule-block" style="background: {{ schedule.course.course_code|auto_color }};">
                                             <div class="course-code">{{ schedule.course.course_code }}</div>
                                             <div class="course-details">Room: {{ schedule.room|default:'TBA' }}</div>
                                             <div class="course-details">{{ schedule.section.name|default:'No Section' }}</div>

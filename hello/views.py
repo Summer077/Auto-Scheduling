@@ -5,7 +5,7 @@ from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from django.utils import timezone
 from datetime import datetime, timedelta
-from .models import Course, Curriculum, Activity
+from .models import Course, Curriculum, Activity, Faculty, Section, Schedule
 from .forms import CourseForm, CurriculumForm
 
 def admin_login(request):
@@ -41,71 +41,6 @@ def admin_logout(request):
     messages.success(request, 'You have been logged out successfully.')
     return redirect('admin_login')
 
-@login_required(login_url='admin_login')
-def admin_dashboard(request):
-    """
-    Admin dashboard - displays summary statistics and recent activities
-    """
-    if not (request.user.is_staff or request.user.is_superuser):
-        messages.error(request, 'You do not have permission to access this page.')
-        return redirect('admin_login')
-    
-    # Get counts from database
-    faculty_count = 0  # TODO: Implement when Faculty model is used
-    section_count = 0  # TODO: Implement when Section model is used
-    
-    # Get all activities from last 2 days
-    today = timezone.now().date()
-    yesterday = today - timedelta(days=1)
-    two_days_ago = today - timedelta(days=2)
-    
-    all_activities = Activity.objects.filter(
-        timestamp__date__gte=yesterday
-    ).order_by('-timestamp')
-    
-    # Group activities by day
-    today_activities = []
-    yesterday_activities = []
-    
-    for activity in all_activities:
-        activity_date = activity.timestamp.date()
-        if activity_date == today:
-            today_activities.append(activity)
-        elif activity_date == yesterday:
-            yesterday_activities.append(activity)
-    
-    # Get all courses
-    all_courses = Course.objects.all().order_by('course_code')
-    
-    # Generate time slots from 7:30 AM to 9:30 PM
-    time_slots = []
-    for hour in range(7, 22):
-        for minute in ['00', '30']:
-            if hour == 21 and minute == '30':
-                break
-            time_slots.append(f"{hour:02d}:{minute}")
-    time_slots.append("21:30")
-    
-    # Days of the week
-    days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
-    
-    # Get schedules (empty for now until Schedule model is fully implemented)
-    schedules = []
-    
-    context = {
-        'user': request.user,
-        'faculty_count': faculty_count,
-        'section_count': section_count,
-        'today_activities': today_activities,
-        'yesterday_activities': yesterday_activities,
-        'scheduled_courses': all_courses,
-        'time_slots': time_slots,
-        'days': days,
-        'schedules': schedules,
-    }
-    
-    return render(request, 'hello/dashboard.html', context)
-
 def log_activity(user, action, entity_type, entity_name, message):
     """Helper function to log activities"""
     Activity.objects.create(
@@ -115,6 +50,97 @@ def log_activity(user, action, entity_type, entity_name, message):
         entity_name=entity_name,
         message=message
     )
+
+@login_required(login_url='admin_login')
+def admin_dashboard(request):
+    """
+    Admin dashboard - displays summary statistics and recent activities
+    Fetches data directly from Django database
+    """
+    if not (request.user.is_staff or request.user.is_superuser):
+        messages.error(request, 'You do not have permission to access this page.')
+        return redirect('admin_login')
+    
+    # Get counts from database
+    faculty_count = Faculty.objects.count()
+    section_count = Section.objects.count()
+    
+    # Get recent activities (last 2 days)
+    recent_activities = get_recent_activities()
+    
+    # Get courses that have schedules assigned
+    scheduled_courses = Course.objects.filter(schedules__isnull=False).distinct()
+    
+    # Generate time slots from 7:30 AM to 9:30 PM
+    time_slots = generate_time_slots()
+    
+    # Days of the week
+    days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
+    
+    # Get schedules
+    schedules = Schedule.objects.all().select_related('course', 'section', 'room', 'faculty')
+    
+    context = {
+        'user': request.user,
+        'faculty_count': faculty_count,
+        'section_count': section_count,
+        'recent_activities': recent_activities,
+        'scheduled_courses': scheduled_courses,
+        'time_slots': time_slots,
+        'days': days,
+        'schedules': schedules,
+    }
+    
+    return render(request, 'hello/dashboard.html', context)
+
+def generate_time_slots():
+    """Generate time slots from 7:30 AM to 9:30 PM in 30-minute intervals"""
+    time_slots = []
+    current_hour = 7
+    current_minute = 30
+    
+    while current_hour < 21 or (current_hour == 21 and current_minute == 0):
+        time_str = f"{current_hour}:{current_minute:02d}"
+        time_slots.append(time_str)
+        
+        # Increment by 30 minutes
+        current_minute += 30
+        if current_minute >= 60:
+            current_minute = 0
+            current_hour += 1
+    
+    # Add final 9:30 PM slot
+    time_slots.append("21:30")
+    
+    return time_slots
+
+def get_recent_activities():
+    """
+    Get recent activities grouped by day (Today, Yesterday)
+    Returns activities from Activity model
+    """
+    today = timezone.now().date()
+    yesterday = today - timedelta(days=1)
+    
+    activities_dict = {}
+    
+    # Get activities from today
+    today_activities = Activity.objects.filter(
+        timestamp__date=today
+    ).order_by('-timestamp')
+    
+    if today_activities.exists():
+        activities_dict['Today'] = list(today_activities)
+    
+    # Get activities from yesterday
+    yesterday_activities = Activity.objects.filter(
+        timestamp__date=yesterday
+    ).order_by('-timestamp')
+    
+    if yesterday_activities.exists():
+        activities_dict['Yesterday'] = list(yesterday_activities)
+    
+    return activities_dict
 
 @login_required(login_url='admin_login')
 def course_view(request):
@@ -180,7 +206,7 @@ def course_view(request):
         'selected_year': int(selected_year) if selected_year else None,
         'selected_semester': int(selected_semester) if selected_semester else None,
     }
-    return render(request, 'hello/course.html', context)
+    return render(request, 'hello/course_management.html', context)
 
 @login_required(login_url='admin_login')
 def add_course(request):
@@ -213,15 +239,15 @@ def edit_course(request, course_id):
     if request.method == 'POST':
         form = CourseForm(request.POST, instance=course)
         if form.is_valid():
-            updated_course = form.save()
+            course = form.save()
             
             # Log activity
             log_activity(
                 user=request.user,
                 action='edit',
                 entity_type='course',
-                entity_name=updated_course.course_code,
-                message=f'Edited course: {updated_course.course_code} - {updated_course.descriptive_title}'
+                entity_name=course.course_code,
+                message=f'Edited course: {course.course_code} - {course.descriptive_title}'
             )
             
             return JsonResponse({'success': True})
@@ -277,7 +303,7 @@ def add_curriculum(request):
                 user=request.user,
                 action='add',
                 entity_type='curriculum',
-                entity_name=curriculum.name,
+                entity_name=f'{curriculum.name} ({curriculum.year})',
                 message=f'Added curriculum: {curriculum.name} ({curriculum.year})'
             )
             
@@ -292,8 +318,7 @@ def delete_curriculum(request, curriculum_id):
     """Delete curriculum"""
     if request.method == 'POST':
         curriculum = get_object_or_404(Curriculum, id=curriculum_id)
-        curriculum_name = curriculum.name
-        curriculum_year = curriculum.year
+        curriculum_name = f'{curriculum.name} ({curriculum.year})'
         
         curriculum.delete()
         
@@ -303,7 +328,7 @@ def delete_curriculum(request, curriculum_id):
             action='delete',
             entity_type='curriculum',
             entity_name=curriculum_name,
-            message=f'Deleted curriculum: {curriculum_name} ({curriculum_year})'
+            message=f'Deleted curriculum: {curriculum_name}'
         )
         
         return JsonResponse({'success': True})
@@ -325,6 +350,8 @@ def edit_curriculum(request, curriculum_id):
     elif request.method == 'POST':
         try:
             curriculum = Curriculum.objects.get(id=curriculum_id)
+            old_name = f'{curriculum.name} ({curriculum.year})'
+            
             curriculum.name = request.POST.get('name')
             curriculum.year = request.POST.get('year')
             curriculum.save()
@@ -334,8 +361,8 @@ def edit_curriculum(request, curriculum_id):
                 user=request.user,
                 action='edit',
                 entity_type='curriculum',
-                entity_name=curriculum.name,
-                message=f'Edited curriculum: {curriculum.name} ({curriculum.year})'
+                entity_name=f'{curriculum.name} ({curriculum.year})',
+                message=f'Edited curriculum: {old_name} → {curriculum.name} ({curriculum.year})'
             )
             
             return JsonResponse({'success': True})
