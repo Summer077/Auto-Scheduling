@@ -141,7 +141,7 @@
                             {% for course in scheduled_courses %}
                             <div class="course-label">
                                 <div class="course-color" style="background: {{ course.color }};"></div>
-                                <span>{{ course.course_code }}</span>
+                                <span>{{ course.course_code }} - {{ course.descriptive_title }}</span>
                             </div>
                             {% endfor %}
                         {% else %}

@@ -412,34 +412,43 @@ body {
 .schedule-wrapper {
     display: flex;
     gap: 0;
-    border: 1px solid #DEE2E6;
-    border-radius: 8px;
+    border: 1px solid #CED4DA;
+    border-radius: 12px;
     overflow: hidden;
+    background: #FFFFFF;
+    position: relative;
 }
 
 .schedule-left {
     display: flex;
     flex-direction: column;
-    min-width: 200px;
-    background: #F8F9FA;
-    border-right: 1px solid #DEE2E6;
+    width: 225px;
+    min-width: 225px;
+    background: #E9ECEF;
+    border-right: 1px solid #CED4DA;
 }
 
 .courses-label {
     font-family: 'Lexend', sans-serif;
-    font-size: 1rem;
+    font-size: 0.9rem;
     font-weight: 700;
     color: #212529;
-    padding: 20px;
-    border-bottom: 1px solid #DEE2E6;
+    padding: 14px 20px;
     background: #FFFFFF;
+    border-bottom: 1px solid #CED4DA;
+    height: 48px;
+    display: flex;
+    align-items: center;
 }
 
 .courses-list {
     display: flex;
     flex-direction: column;
-    gap: 0;
-    padding: 20px;
+    gap: 12px;
+    padding: 20px 15px;
+    background: #E9ECEF;
+    flex: 1;
+    min-height: 100%;
 }
 
 .courses-empty {
@@ -454,117 +463,148 @@ body {
 .course-label {
     display: flex;
     align-items: flex-start;
-    gap: 12px;
-    padding: 12px 0;
+    gap: 10px;
     font-family: 'Lexend', sans-serif;
-    font-size: 0.9rem;
+    font-size: 0.875rem;
     font-weight: 500;
     color: #212529;
     line-height: 1.4;
 }
 
+.course-label span {
+    flex: 1;
+    word-wrap: break-word;
+}
+
 .course-color {
-    width: 12px;
-    height: 12px;
-    border-radius: 50%;
+    width: 14px;
+    height: 14px;
+    border-radius: 2px;
     flex-shrink: 0;
-    margin-top: 3px;
 }
 
 .schedule-table-container {
     flex: 1;
     overflow-x: auto;
     overflow-y: auto;
-    max-height: 600px;
+    max-height: 650px;
     background: #FFFFFF;
+    position: relative;
 }
 
 .schedule-table {
     width: 100%;
     border-collapse: collapse;
-    min-width: 800px;
+    min-width: 900px;
 }
 
 .schedule-table thead {
     position: sticky;
     top: 0;
-    z-index: 10;
+    z-index: 100;
     background: #FFFFFF;
 }
 
 .schedule-table thead th {
     background: #FFFFFF;
-    padding: 20px 16px;
+    padding: 14px 12px;
     text-align: center;
     font-family: 'Lexend', sans-serif;
-    font-size: 0.875rem;
+    font-size: 0.75rem;
     font-weight: 700;
-    color: #212529;
+    color: #495057;
     letter-spacing: 0.5px;
     text-transform: uppercase;
-    border-bottom: 1px solid #DEE2E6;
+    border-bottom: 1px solid #CED4DA;
     border-right: 1px solid #DEE2E6;
+}
+
+.schedule-table thead th:first-child {
+    width: 70px;
+    min-width: 70px;
+    background: #FFFFFF;
+    position: sticky;
+    left: 0;
+    z-index: 101;
+    border-right: 1px solid #CED4DA;
 }
 
 .schedule-table thead th:last-child {
     border-right: none;
 }
 
+.schedule-table tbody {
+    background: #FFFFFF;
+}
+
+.schedule-table tbody tr {
+    height: 60px;
+}
+
 .schedule-table tbody td {
     border-bottom: 1px solid #DEE2E6;
     border-right: 1px solid #DEE2E6;
     padding: 0;
-    height: 80px;
-    min-width: 140px;
     position: relative;
     vertical-align: top;
     background: #FFFFFF;
+    height: 60px;
 }
 
 .schedule-table tbody td:first-child {
     background: #F8F9FA;
     text-align: center;
     font-family: 'Lexend', sans-serif;
-    font-size: 0.875rem;
+    font-size: 0.75rem;
     font-weight: 600;
-    color: #495057;
-    padding: 10px;
-    min-width: 80px;
+    color: #6C757D;
+    padding: 8px 5px;
+    width: 70px;
+    min-width: 70px;
+    border-right: 1px solid #CED4DA;
+    vertical-align: middle;
+    position: sticky;
+    left: 0;
+    z-index: 50;
 }
 
 .schedule-table tbody td:last-child {
     border-right: none;
 }
 
+.schedule-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
 .schedule-block {
     position: absolute;
-    top: 8px;
-    left: 8px;
-    right: 8px;
-    border-radius: 8px;
-    padding: 16px;
+    top: 2px;
+    left: 6px;
+    right: 6px;
+    border-radius: 6px;
+    padding: 12px 10px;
     display: flex;
     flex-direction: column;
     justify-content: flex-start;
-    gap: 6px;
-    color: #212529;
-    border-left: 4px solid rgba(0, 0, 0, 0.2);
+    gap: 4px;
+    border-left: 3px solid rgba(0, 0, 0, 0.15);
     z-index: 10;
 }
 
 .course-code {
     font-family: 'Lexend', sans-serif;
-    font-size: 1.125rem;
+    font-size: 0.95rem;
     font-weight: 700;
     color: #212529;
+    line-height: 1.2;
 }
 
 .course-details {
     font-family: 'Lexend', sans-serif;
-    font-size: 0.8rem;
+    font-size: 0.7rem;
     font-weight: 500;
-    color: #495057;
-    line-height: 1.5;
+    color: #2d3436;
+    line-height: 1.4;
 }
 
 /* Responsive Design */
@@ -626,4 +666,3 @@ body {
         font-size: 3rem;
     }
 }
-
