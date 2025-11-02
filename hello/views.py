@@ -61,11 +61,18 @@ def admin_dashboard(request):
     # Get activities and separate by date
     today_activities = Activity.objects.filter(
         timestamp__date=today
-    ).order_by('-timestamp')[:10]  # Limit to 10 most recent
-    
+    ).order_by('-timestamp')[:10]
+
     yesterday_activities = Activity.objects.filter(
         timestamp__date=yesterday
-    ).order_by('-timestamp')[:10]  # Limit to 10 most recent
+    ).order_by('-timestamp')[:10]
+
+    # Create recent_activities dictionary for template
+    recent_activities = {}
+    if today_activities:
+        recent_activities['Today'] = today_activities
+    if yesterday_activities:
+        recent_activities['Yesterday'] = yesterday_activities
     
     # Get all courses (show all courses, not just scheduled ones)
     scheduled_courses = Course.objects.all().order_by('course_code')
@@ -101,8 +108,7 @@ def admin_dashboard(request):
         'user': request.user,
         'faculty_count': faculty_count,
         'section_count': section_count,
-        'today_activities': today_activities,
-        'yesterday_activities': yesterday_activities,
+        'recent_activities': recent_activities,
         'scheduled_courses': scheduled_courses,
         'time_slots': time_slots,
         'days': days,

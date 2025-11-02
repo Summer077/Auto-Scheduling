@@ -295,6 +295,9 @@ body {
     border-radius: 12px;
     padding: 30px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    max-height: 600px;  
+    display: flex;       
+    flex-direction: column;  
 }
 
 .activity-section h2 {
@@ -303,6 +306,32 @@ body {
     font-weight: 700;
     color: #212529;
     margin-bottom: 20px;
+    flex-shrink: 0;
+}
+
+#activityContainer {
+    overflow-y: auto; 
+    overflow-x: hidden; 
+    flex: 1; 
+    padding-right: 10px; 
+}
+
+#activityContainer::-webkit-scrollbar {
+    width: 8px;
+}
+
+#activityContainer::-webkit-scrollbar-track {
+    background: #F8F9FA;
+    border-radius: 4px;
+}
+
+#activityContainer::-webkit-scrollbar-thumb {
+    background: #ADB5BD;
+    border-radius: 4px;
+}
+
+#activityContainer::-webkit-scrollbar-thumb:hover {
+    background: #6C757D;
 }
 
 .activity-empty {
@@ -382,28 +411,35 @@ body {
 
 .schedule-wrapper {
     display: flex;
-    gap: 20px;
+    gap: 0;
+    border: 1px solid #DEE2E6;
+    border-radius: 8px;
+    overflow: hidden;
 }
 
 .schedule-left {
     display: flex;
     flex-direction: column;
-    min-width: 120px;
+    min-width: 200px;
+    background: #F8F9FA;
+    border-right: 1px solid #DEE2E6;
 }
 
 .courses-label {
     font-family: 'Lexend', sans-serif;
-    font-size: 0.9rem;
-    font-weight: 600;
+    font-size: 1rem;
+    font-weight: 700;
     color: #212529;
-    margin-bottom: 12px;
-    padding: 0 8px;
+    padding: 20px;
+    border-bottom: 1px solid #DEE2E6;
+    background: #FFFFFF;
 }
 
 .courses-list {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 0;
+    padding: 20px;
 }
 
 .courses-empty {
@@ -413,28 +449,26 @@ body {
     font-size: 0.875rem;
     font-weight: 500;
     color: #ADB5BD;
-    background: #F8F9FA;
-    border-radius: 8px;
 }
 
 .course-label {
     display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 10px 12px;
-    background: #F8F9FA;
-    border-radius: 8px;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 12px 0;
     font-family: 'Lexend', sans-serif;
     font-size: 0.9rem;
-    font-weight: 600;
+    font-weight: 500;
     color: #212529;
+    line-height: 1.4;
 }
 
 .course-color {
-    width: 16px;
-    height: 16px;
-    border-radius: 4px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
     flex-shrink: 0;
+    margin-top: 3px;
 }
 
 .schedule-table-container {
@@ -442,14 +476,12 @@ body {
     overflow-x: auto;
     overflow-y: auto;
     max-height: 600px;
-    border: 1px solid #DEE2E6;
-    border-radius: 8px;
+    background: #FFFFFF;
 }
 
 .schedule-table {
     width: 100%;
-    border-collapse: separate;
-    border-spacing: 0;
+    border-collapse: collapse;
     min-width: 800px;
 }
 
@@ -461,16 +493,16 @@ body {
 }
 
 .schedule-table thead th {
-    background: #F8F9FA;
-    padding: 12px 8px;
+    background: #FFFFFF;
+    padding: 20px 16px;
     text-align: center;
     font-family: 'Lexend', sans-serif;
-    font-size: 0.8rem;
+    font-size: 0.875rem;
     font-weight: 700;
-    color: #495057;
+    color: #212529;
     letter-spacing: 0.5px;
     text-transform: uppercase;
-    border-bottom: 2px solid #DEE2E6;
+    border-bottom: 1px solid #DEE2E6;
     border-right: 1px solid #DEE2E6;
 }
 
@@ -482,63 +514,57 @@ body {
     border-bottom: 1px solid #DEE2E6;
     border-right: 1px solid #DEE2E6;
     padding: 0;
-    padding-left: 45px;  /* Make space for time on left */
-    height: 50px;
-    min-width: 130px;
+    height: 80px;
+    min-width: 140px;
     position: relative;
     vertical-align: top;
     background: #FFFFFF;
+}
+
+.schedule-table tbody td:first-child {
+    background: #F8F9FA;
+    text-align: center;
+    font-family: 'Lexend', sans-serif;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #495057;
+    padding: 10px;
+    min-width: 80px;
 }
 
 .schedule-table tbody td:last-child {
     border-right: none;
 }
 
-.schedule-table tbody td[data-time]::before {
-    content: attr(data-time);
-    position: absolute;
-    left: 2px;
-    top: 4px;
-    font-family: 'Lexend', sans-serif;
-    font-size: 0.7rem;
-    font-weight: 500;
-    color: #ADB5BD;
-    width: 40px;
-    z-index: 1;
-}
-
 .schedule-block {
     position: absolute;
-    top: 4px;
-    left: 45px;      /* Start after time label space */
-    right: 4px;
+    top: 8px;
+    left: 8px;
+    right: 8px;
     border-radius: 8px;
-    padding: 12px;
+    padding: 16px;
     display: flex;
     flex-direction: column;
     justify-content: flex-start;
-    color: #FFFFFF;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    gap: 6px;
+    color: #212529;
+    border-left: 4px solid rgba(0, 0, 0, 0.2);
     z-index: 10;
-}
-
-.schedule-cell {
-    padding: 4px;
 }
 
 .course-code {
     font-family: 'Lexend', sans-serif;
-    font-size: 1rem;
+    font-size: 1.125rem;
     font-weight: 700;
-    margin-bottom: 4px;
+    color: #212529;
 }
 
 .course-details {
     font-family: 'Lexend', sans-serif;
     font-size: 0.8rem;
     font-weight: 500;
-    opacity: 0.9;
-    line-height: 1.4;
+    color: #495057;
+    line-height: 1.5;
 }
 
 /* Responsive Design */

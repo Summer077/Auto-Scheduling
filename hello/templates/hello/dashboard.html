@@ -154,6 +154,7 @@
                     <table class="schedule-table">
                         <thead>
                             <tr>
+                                <th></th>
                                 <th>MONDAY</th>
                                 <th>TUESDAY</th>
                                 <th>WEDNESDAY</th>
@@ -165,15 +166,17 @@
                         <tbody>
                             {% for time in time_slots %}
                             <tr class="time-row">
+                                <td>{{ time }}</td>
                                 {% for day_num, day_name in days %}
-                                <td data-time="{{ time }}" data-day="{{ day_num }}">
+                                <td data-day="{{ day_num }}">
                                     {% for schedule in schedules %}
                                         {% if schedule.day == day_num and schedule.start_time == time %}
-                                        <div class="schedule-block" style="background: {{ schedule.course.color }}; height: {{ schedule.duration|schedule_height }}px;">
-    <div class="course-code">{{ schedule.course.course_code }}</div>
-    <div class="course-details">Room: {{ schedule.room.name|default:'TBA' }}</div>
-    <div class="course-details">{{ schedule.section.name|default:'No Section' }}</div>
-</div>
+                                        <div class="schedule-block" style="background: {{ schedule.course.color }}; height: {{ schedule.duration|schedule_height }}px; border-left-color: {{ schedule.course.color }};">
+                                            <div class="course-code">{{ schedule.course.course_code }}</div>
+                                            <div class="course-details">{{ schedule.start_time }} - {{ schedule.end_time }}</div>
+                                            <div class="course-details">Room: {{ schedule.room.name|default:'TBA' }}</div>
+                                            <div class="course-details">Section: {{ schedule.section.name|default:'No Section' }}</div>
+                                        </div>
                                         {% endif %}
                                     {% endfor %}
                                 </td>
