@@ -492,9 +492,28 @@ body {
     position: relative;
 }
 
+.schedule-table-container::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+
+.schedule-table-container::-webkit-scrollbar-track {
+    background: #F8F9FA;
+}
+
+.schedule-table-container::-webkit-scrollbar-thumb {
+    background: #ADB5BD;
+    border-radius: 5px;
+}
+
+.schedule-table-container::-webkit-scrollbar-thumb:hover {
+    background: #6C757D;
+}
+
 .schedule-table {
     width: 100%;
-    border-collapse: collapse;
+    border-collapse: separate;
+    border-spacing: 0;
     min-width: 900px;
 }
 
@@ -517,16 +536,19 @@ body {
     text-transform: uppercase;
     border-bottom: 1px solid #CED4DA;
     border-right: 1px solid #DEE2E6;
+    min-width: 130px;
 }
 
 .schedule-table thead th:first-child {
-    width: 70px;
-    min-width: 70px;
-    background: #FFFFFF;
+    width: 80px;
+    min-width: 80px;
+    max-width: 80px;
+    height: 47px;
+    background: #F8F9FA;
     position: sticky;
     left: 0;
     z-index: 101;
-    border-right: 1px solid #CED4DA;
+    border-right: 2px solid #CED4DA;
 }
 
 .schedule-table thead th:last-child {
@@ -549,6 +571,7 @@ body {
     vertical-align: top;
     background: #FFFFFF;
     height: 60px;
+    min-width: 130px;
 }
 
 .schedule-table tbody td:first-child {
@@ -559,9 +582,10 @@ body {
     font-weight: 600;
     color: #6C757D;
     padding: 8px 5px;
-    width: 70px;
-    min-width: 70px;
-    border-right: 1px solid #CED4DA;
+    width: 80px;
+    min-width: 80px;
+    max-width: 80px;
+    border-right: 2px solid #CED4DA;
     vertical-align: middle;
     position: sticky;
     left: 0;

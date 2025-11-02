@@ -3,8 +3,6 @@ import hashlib
 
 register = template.Library()
 
-register = template.Library()
-
 @register.filter
 def ordinal(value):
     """Convert integer to ordinal string (1 -> 1st, 2 -> 2nd, etc.)"""
@@ -20,21 +18,38 @@ def ordinal(value):
     
     return f"{value}{suffix}"
 
+
 @register.filter
 def schedule_height(duration_minutes):
-    """Calculate the height in pixels for a schedule block.
-    Each 30-minute slot = 50px height"""
-    if not duration_minutes:
-        return 50
-    
-    slot_height = 50
-    slot_minutes = 30
-    num_slots = duration_minutes / slot_minutes
-    total_height = (num_slots * slot_height) + 40
-    
+    """Calculate height in pixels for a schedule block (30 min = 60px), always add +30 min."""
+    try:
+        duration_minutes = int(duration_minutes)
+    except (ValueError, TypeError):
+        duration_minutes = 0
+
+    duration_minutes += 30  # always add one 30-min slot
+    px_per_minute = 60 / 30  # 2 px per minute
+    total_height = (duration_minutes * px_per_minute) - 2  # offset for borders
     return int(total_height)
-    
-    return int(total_height)
+
+
+@register.filter
+def schedule_top(start_time):
+    """
+    Convert start time (e.g., '07:30') into vertical position in pixels.
+    Each 30-minute slot = 60px height.
+    The base time is 7:00 AM.
+    """
+    try:
+        hours, minutes = map(int, str(start_time).split(':'))
+        total_minutes = (hours * 60) + minutes
+        base_minutes = 7 * 60  # starting point = 7:00 AM
+        minutes_from_start = total_minutes - base_minutes
+        px_per_minute = 60 / 30  # 2 px per minute
+        return int(minutes_from_start * px_per_minute)
+    except Exception:
+        return 0
+
 
 @register.filter
 def auto_color(value):
@@ -42,7 +57,6 @@ def auto_color(value):
     Generate a distinct color for a course based on its code.
     Returns a hex color code.
     """
-    # Predefined palette of distinct, visually appealing colors
     color_palette = [
         '#FF6B6B',  # Red
         '#4ECDC4',  # Teal
@@ -66,13 +80,9 @@ def auto_color(value):
         '#00B4D8',  # Bright Blue
     ]
     
-    # Generate a hash from the value (course code)
     if value:
-        # Create a hash of the course code
         hash_object = hashlib.md5(str(value).encode())
         hash_int = int(hash_object.hexdigest(), 16)
-        # Use modulo to select from palette
         return color_palette[hash_int % len(color_palette)]
     
-    # Default fallback color
     return '#FFA726'
