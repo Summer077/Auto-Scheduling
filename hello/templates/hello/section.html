@@ -1,0 +1,429 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Section Management - ASSIST</title>
+    <link rel="stylesheet" href="{% static 'hello/css/section.css' %}">
+</head>
+<body>
+    <!-- Top Navigation Bar -->
+    <nav class="top-nav">
+        <div class="page-title">Section</div>
+        <div class="admin-section" onclick="toggleDropdown()">
+            <span class="admin-name">ADMIN</span>
+            <svg class="dropdown-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                <path d="M7 10l5 5 5-5z"/>
+            </svg>
+            <div class="dropdown-menu" id="dropdownMenu">
+                <a href="{% url 'admin_logout' %}">Logout</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar">
+        <a href="{% url 'admin_dashboard' %}" class="nav-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                <path d="M4 13h6c.55 0 1-.45 1-1V4c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v8c0 .55.45 1 1 1zm0 8h6c.55 0 1-.45 1-1v-4c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v4c0 .55.45 1 1 1zm10 0h6c.55 0 1-.45 1-1v-8c0-.55-.45-1-1-1h-6c-.55 0-1 .45-1 1v8c0 .55.45 1 1 1zM13 4v4c0 .55.45 1 1 1h6c.55 0 1-.45 1-1V4c0-.55-.45-1-1-1h-6c-.55 0-1 .45-1 1z"/>
+            </svg>
+            <span>Dashboard</span>
+        </a>
+        
+        <a href="{% url 'course_view' %}" class="nav-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                <path d="M18 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM6 4h5v8l-2.5-1.5L6 12V4z"/>
+            </svg>
+            <span>Course</span>
+        </a>
+        
+        <a href="#" class="nav-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                <path d="M16.5 12c1.38 0 2.49-1.12 2.49-2.5S17.88 7 16.5 7C15.12 7 14 8.12 14 9.5s1.12 2.5 2.5 2.5zM9 11c1.66 0 2.99-1.34 2.99-3S10.66 5 9 5C7.34 5 6 6.34 6 8s1.34 3 3 3zm7.5 3c-1.83 0-5.5.92-5.5 2.75V19h11v-2.25c0-1.83-3.67-2.75-5.5-2.75zM9 13c-2.33 0-7 1.17-7 3.5V19h7v-2.25c0-.85.33-2.34 2.37-3.47C10.5 13.1 9.66 13 9 13z"/>
+            </svg>
+            <span>Faculty</span>
+        </a>
+        
+        <a href="#" class="nav-item active">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                <path d="M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z"/>
+            </svg>
+            <span>Section</span>
+        </a>
+        
+        <a href="#" class="nav-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                <path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z"/>
+            </svg>
+            <span>Schedule</span>
+        </a>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="main-content">
+        <!-- Top Controls -->
+        <div class="top-controls">
+            <div class="left-controls">
+                <div class="search-bar">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                        <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
+                    </svg>
+                    <input type="text" id="searchInput" placeholder="Search" onkeyup="filterSections()">
+                </div>
+            </div>
+            
+            <div class="right-controls">
+                <button class="btn" onclick="openAddSectionModal()">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                        <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+                    </svg>
+                    Add Section
+                </button>
+            </div>
+        </div>
+
+        <!-- Section Cards Grid -->
+        <div class="section-grid" id="sectionGrid">
+            {% if sections %}
+                {% for section in sections %}
+                <div class="section-card" data-section-name="{{ section.name|lower }}" data-curriculum="{{ section.curriculum.name|lower }}">
+                    <div class="section-header">
+                        <div class="section-info">
+                            <h3>{{ section.name }}</h3>
+                            <div class="section-meta">
+                                {% if section.year_level == 1 %}First Year{% elif section.year_level == 2 %}Second Year{% elif section.year_level == 3 %}Third Year{% else %}Fourth Year{% endif %}
+                            </div>
+                        </div>
+                        <div class="section-actions">
+                            <button class="action-btn view-schedule-btn" onclick="viewSchedule({{ section.id }}); event.stopPropagation();">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                                    <path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z"/>
+                                </svg>
+                            </button>
+                            <button class="action-btn edit-btn" onclick="openEditSectionModal({{ section.id }}); event.stopPropagation();">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                                    <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
+                                </svg>
+                            </button>
+                            <button class="action-btn delete-btn" onclick="deleteSection({{ section.id }}, '{{ section.name }}'); event.stopPropagation();">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                                    <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="section-details">
+                        <div class="detail-row">
+                            <span class="detail-label">Year Level</span>
+                            <span class="detail-value">
+                                {% if section.year_level == 1 %}1st Year{% elif section.year_level == 2 %}2nd Year{% elif section.year_level == 3 %}3rd Year{% else %}4th Year{% endif %}
+                            </span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Semester</span>
+                            <span class="detail-value">
+                                {% if section.semester == 1 %}1st Semester{% else %}2nd Semester{% endif %}
+                            </span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Curriculum</span>
+                            <span class="detail-value">{{ section.curriculum.name }} ({{ section.curriculum.year }})</span>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="empty-state" style="grid-column: 1 / -1;">
+                    <p>No sections available. Add a section to get started.</p>
+                    <button class="btn" onclick="openAddSectionModal()">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                            <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+                        </svg>
+                        Add Section
+                    </button>
+                </div>
+            {% endif %}
+        </div>
+    </main>
+
+    <!-- Add Section Modal -->
+    <div id="addSectionModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Add New Section</h2>
+                <span class="close" onclick="closeModal('addSectionModal')">&times;</span>
+            </div>
+            <form id="addSectionForm" onsubmit="submitAddSection(event)">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label>Section Name</label>
+                    <input type="text" name="name" placeholder="e.g., CPE11S1" required>
+                </div>
+                <div class="form-group">
+                    <label>Curriculum</label>
+                    <select name="curriculum" required>
+                        {% for curriculum in curricula %}
+                        <option value="{{ curriculum.id }}">{{ curriculum.name }} ({{ curriculum.year }})</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Year Level</label>
+                        <select name="year_level" required>
+                            <option value="1">1st Year</option>
+                            <option value="2">2nd Year</option>
+                            <option value="3">3rd Year</option>
+                            <option value="4">4th Year</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Semester</label>
+                        <select name="semester" required>
+                            <option value="1">1st Semester</option>
+                            <option value="2">2nd Semester</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Max Students</label>
+                    <input type="number" name="max_students" min="1" value="40" required>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-secondary" onclick="closeModal('addSectionModal')">Cancel</button>
+                    <button type="submit" class="btn-primary">Add Section</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Edit Section Modal -->
+    <div id="editSectionModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Edit Section</h2>
+                <span class="close" onclick="closeModal('editSectionModal')">&times;</span>
+            </div>
+            <form id="editSectionForm" onsubmit="submitEditSection(event)">
+                {% csrf_token %}
+                <input type="hidden" id="edit_section_id" name="section_id">
+                <div class="form-group">
+                    <label>Section Name</label>
+                    <input type="text" name="name" id="edit_name" required>
+                </div>
+                <div class="form-group">
+                    <label>Curriculum</label>
+                    <select name="curriculum" id="edit_curriculum" required>
+                        {% for curriculum in curricula %}
+                        <option value="{{ curriculum.id }}">{{ curriculum.name }} ({{ curriculum.year }})</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Year Level</label>
+                        <select name="year_level" id="edit_year_level" required>
+                            <option value="1">1st Year</option>
+                            <option value="2">2nd Year</option>
+                            <option value="3">3rd Year</option>
+                            <option value="4">4th Year</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Semester</label>
+                        <select name="semester" id="edit_semester" required>
+                            <option value="1">1st Semester</option>
+                            <option value="2">2nd Semester</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Max Students</label>
+                    <input type="number" name="max_students" id="edit_max_students" min="1" required>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-secondary" onclick="closeModal('editSectionModal')">Cancel</button>
+                    <button type="submit" class="btn-primary">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // CSRF token helper
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+
+        // Dropdown toggle
+        function toggleDropdown() {
+            document.getElementById('dropdownMenu').classList.toggle('show');
+        }
+
+        // Close dropdown when clicking outside
+        window.onclick = function(event) {
+            if (!event.target.matches('.admin-section') && !event.target.closest('.admin-section')) {
+                document.getElementById('dropdownMenu').classList.remove('show');
+            }
+            // Close modal when clicking outside
+            if (event.target.classList.contains('modal')) {
+                event.target.style.display = 'none';
+            }
+        }
+
+        // Search/Filter sections
+        function filterSections() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const cards = document.querySelectorAll('.section-card');
+            
+            cards.forEach(card => {
+                const sectionName = card.dataset.sectionName;
+                const curriculum = card.dataset.curriculum;
+                
+                if (sectionName.includes(searchTerm) || curriculum.includes(searchTerm)) {
+                    card.style.display = 'block';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        }
+
+        // Modal functions
+        function openModal(modalId) {
+            document.getElementById(modalId).style.display = 'block';
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+        }
+
+        function openAddSectionModal() {
+            openModal('addSectionModal');
+        }
+
+        function openEditSectionModal(sectionId) {
+            fetch(`/admin/section/edit/${sectionId}/`)
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('edit_section_id').value = data.id;
+                    document.getElementById('edit_name').value = data.name;
+                    document.getElementById('edit_curriculum').value = data.curriculum;
+                    document.getElementById('edit_year_level').value = data.year_level;
+                    document.getElementById('edit_semester').value = data.semester;
+                    document.getElementById('edit_max_students').value = data.max_students;
+                    openModal('editSectionModal');
+                })
+                .catch(error => {
+                    showNotification('Error loading section data', 'error');
+                });
+        }
+
+        // Submit add section form
+        function submitAddSection(event) {
+            event.preventDefault();
+            const formData = new FormData(event.target);
+            
+            fetch('/admin/section/add/', {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: formData,
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showNotification('Section added successfully!', 'success');
+                    setTimeout(() => window.location.reload(), 1000);
+                } else {
+                    showNotification('Error adding section: ' + JSON.stringify(data.errors), 'error');
+                }
+            })
+            .catch(error => {
+                showNotification('Error adding section', 'error');
+            });
+        }
+
+        // Submit edit section form
+        function submitEditSection(event) {
+            event.preventDefault();
+            const formData = new FormData(event.target);
+            const sectionId = document.getElementById('edit_section_id').value;
+            
+            fetch(`/admin/section/edit/${sectionId}/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: formData,
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showNotification('Section updated successfully!', 'success');
+                    setTimeout(() => window.location.reload(), 1000);
+                } else {
+                    showNotification('Error updating section: ' + JSON.stringify(data.errors), 'error');
+                }
+            })
+            .catch(error => {
+                showNotification('Error updating section', 'error');
+            });
+        }
+
+        // Delete section
+        function deleteSection(sectionId, sectionName) {
+            if (confirm(`Are you sure you want to delete ${sectionName}?`)) {
+                fetch(`/admin/section/delete/${sectionId}/`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': getCookie('csrftoken')
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        showNotification('Section deleted successfully!', 'success');
+                        setTimeout(() => window.location.reload(), 1000);
+                    } else {
+                        showNotification('Error deleting section', 'error');
+                    }
+                })
+                .catch(error => {
+                    showNotification('Error deleting section', 'error');
+                });
+            }
+        }
+
+        // View schedule
+        function viewSchedule(sectionId) {
+            window.location.href = `/admin/section/${sectionId}/schedule/`;
+        }
+
+        // Show notification
+        function showNotification(message, type) {
+            const notification = document.createElement('div');
+            notification.className = `notification ${type} show`;
+            notification.textContent = message;
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+                setTimeout(() => notification.remove(), 300);
+            }, 3000);
+        }
+    </script>
+</body>
+</html>
