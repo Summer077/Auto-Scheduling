@@ -372,3 +372,107 @@ def edit_curriculum(request, curriculum_id):
             return JsonResponse({'success': False, 'error': 'Curriculum not found'}, status=404)
         except Exception as e:
             return JsonResponse({'success': False, 'errors': str(e)})
+        
+@login_required(login_url='admin_login')
+def section_view(request):
+    """Section management page"""
+    if not (request.user.is_staff or request.user.is_superuser):
+        messages.error(request, 'You do not have permission to access this page.')
+        return redirect('admin_login')
+    
+    # Get all sections with related data
+    sections = Section.objects.select_related('curriculum').all()
+    
+    # Get all curricula for the add/edit form
+    curricula = Curriculum.objects.all()
+    
+    context = {
+        'user': request.user,
+        'sections': sections,
+        'curricula': curricula,
+    }
+    
+    return render(request, 'hello/section.html', context)
+
+@login_required(login_url='admin_login')
+def add_section(request):
+    """Add new section"""
+    if request.method == 'POST':
+        try:
+            section = Section.objects.create(
+                name=request.POST.get('name'),
+                curriculum_id=request.POST.get('curriculum'),
+                year_level=request.POST.get('year_level'),
+                semester=request.POST.get('semester'),
+                max_students=request.POST.get('max_students', 40)
+            )
+            
+            log_activity(
+                user=request.user,
+                action='add',
+                entity_type='section',
+                entity_name=section.name,
+                message=f'Added section: {section.name}'
+            )
+            
+            return JsonResponse({'success': True})
+        except Exception as e:
+            return JsonResponse({'success': False, 'errors': str(e)})
+    
+    return JsonResponse({'success': False})
+
+@login_required(login_url='admin_login')
+def edit_section(request, section_id):
+    """Edit existing section"""
+    section = get_object_or_404(Section, id=section_id)
+    
+    if request.method == 'POST':
+        try:
+            section.name = request.POST.get('name')
+            section.curriculum_id = request.POST.get('curriculum')
+            section.year_level = request.POST.get('year_level')
+            section.semester = request.POST.get('semester')
+            section.max_students = request.POST.get('max_students')
+            section.save()
+            
+            log_activity(
+                user=request.user,
+                action='edit',
+                entity_type='section',
+                entity_name=section.name,
+                message=f'Edited section: {section.name}'
+            )
+            
+            return JsonResponse({'success': True})
+        except Exception as e:
+            return JsonResponse({'success': False, 'errors': str(e)})
+    
+    # Return section data for editing
+    return JsonResponse({
+        'id': section.id,
+        'name': section.name,
+        'curriculum': section.curriculum.id,
+        'year_level': section.year_level,
+        'semester': section.semester,
+        'max_students': section.max_students,
+    })
+
+@login_required(login_url='admin_login')
+def delete_section(request, section_id):
+    """Delete section"""
+    if request.method == 'POST':
+        section = get_object_or_404(Section, id=section_id)
+        section_name = section.name
+        
+        section.delete()
+        
+        log_activity(
+            user=request.user,
+            action='delete',
+            entity_type='section',
+            entity_name=section_name,
+            message=f'Deleted section: {section_name}'
+        )
+        
+        return JsonResponse({'success': True})
+    return JsonResponse({'success': False})

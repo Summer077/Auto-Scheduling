@@ -45,7 +45,7 @@
             <span>Faculty</span>
         </a>
         
-        <a href="#" class="nav-item active">
+        <a href="{% url 'section_view' %}" class="nav-item active">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
                 <path d="M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z"/>
             </svg>
@@ -84,67 +84,70 @@
         </div>
 
         <!-- Section Cards Grid -->
+        {% if sections %}
         <div class="section-grid" id="sectionGrid">
-            {% if sections %}
-                {% for section in sections %}
-                <div class="section-card" data-section-name="{{ section.name|lower }}" data-curriculum="{{ section.curriculum.name|lower }}">
-                    <div class="section-header">
-                        <div class="section-info">
-                            <h3>{{ section.name }}</h3>
-                            <div class="section-meta">
-                                {% if section.year_level == 1 %}First Year{% elif section.year_level == 2 %}Second Year{% elif section.year_level == 3 %}Third Year{% else %}Fourth Year{% endif %}
-                            </div>
-                        </div>
-                        <div class="section-actions">
-                            <button class="action-btn view-schedule-btn" onclick="viewSchedule({{ section.id }}); event.stopPropagation();">
-                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                                    <path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z"/>
-                                </svg>
-                            </button>
-                            <button class="action-btn edit-btn" onclick="openEditSectionModal({{ section.id }}); event.stopPropagation();">
-                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                                    <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
-                                </svg>
-                            </button>
-                            <button class="action-btn delete-btn" onclick="deleteSection({{ section.id }}, '{{ section.name }}'); event.stopPropagation();">
-                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                                    <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
-                                </svg>
-                            </button>
+            {% for section in sections %}
+            <div class="section-card" data-section-name="{{ section.name|lower }}" data-curriculum="{{ section.curriculum.name|lower }}">
+                <div class="section-header">
+                    <div class="section-info">
+                        <h3>{{ section.name }}</h3>
+                        <div class="section-meta">
+                            {% if section.year_level == 1 %}First Year{% elif section.year_level == 2 %}Second Year{% elif section.year_level == 3 %}Third Year{% else %}Fourth Year{% endif %}
                         </div>
                     </div>
-                    <div class="section-details">
-                        <div class="detail-row">
-                            <span class="detail-label">Year Level</span>
-                            <span class="detail-value">
-                                {% if section.year_level == 1 %}1st Year{% elif section.year_level == 2 %}2nd Year{% elif section.year_level == 3 %}3rd Year{% else %}4th Year{% endif %}
-                            </span>
-                        </div>
-                        <div class="detail-row">
-                            <span class="detail-label">Semester</span>
-                            <span class="detail-value">
-                                {% if section.semester == 1 %}1st Semester{% else %}2nd Semester{% endif %}
-                            </span>
-                        </div>
-                        <div class="detail-row">
-                            <span class="detail-label">Curriculum</span>
-                            <span class="detail-value">{{ section.curriculum.name }} ({{ section.curriculum.year }})</span>
-                        </div>
+                    <div class="section-actions">
+                        <button class="action-btn view-schedule-btn" onclick="viewSchedule({{ section.id }}); event.stopPropagation();" title="View Schedule">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                                <path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z"/>
+                            </svg>
+                        </button>
+                        <button class="action-btn edit-btn" onclick="openEditSectionModal({{ section.id }}); event.stopPropagation();" title="Edit">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                                <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
+                            </svg>
+                        </button>
+                        <button class="action-btn delete-btn" onclick="deleteSection({{ section.id }}, '{{ section.name }}'); event.stopPropagation();" title="Delete">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                                <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
+                            </svg>
+                        </button>
                     </div>
                 </div>
-                {% endfor %}
-            {% else %}
-                <div class="empty-state" style="grid-column: 1 / -1;">
-                    <p>No sections available. Add a section to get started.</p>
-                    <button class="btn" onclick="openAddSectionModal()">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                            <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
-                        </svg>
-                        Add Section
-                    </button>
+                <div class="section-details">
+                    <div class="detail-row">
+                        <span class="detail-label">YEAR LEVEL</span>
+                        <span class="detail-value">
+                            {% if section.year_level == 1 %}1st Year{% elif section.year_level == 2 %}2nd Year{% elif section.year_level == 3 %}3rd Year{% else %}4th Year{% endif %}
+                        </span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">SEMESTER</span>
+                        <span class="detail-value">
+                            {% if section.semester == 1 %}1st Semester{% else %}2nd Semester{% endif %}
+                        </span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">CURRICULUM</span>
+                        <span class="detail-value">{{ section.curriculum.name }} ({{ section.curriculum.year }})</span>
+                    </div>
                 </div>
-            {% endif %}
+            </div>
+            {% endfor %}
         </div>
+        {% else %}
+        <div class="empty-state">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" style="width: 80px; height: 80px; fill: #ADB5BD; margin-bottom: 20px;">
+                <path d="M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z"/>
+            </svg>
+            <p>No sections available. Add a section to get started.</p>
+            <button class="btn" onclick="openAddSectionModal()" style="margin-top: 20px;">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                    <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+                </svg>
+                Add Section
+            </button>
+        </div>
+        {% endif %}
     </main>
 
     <!-- Add Section Modal -->
@@ -158,7 +161,7 @@
                 {% csrf_token %}
                 <div class="form-group">
                     <label>Section Name</label>
-                    <input type="text" name="name" placeholder="e.g., CPE11S1" required>
+                    <input type="text" name="name" placeholder="e.g., CPE21S2" required>
                 </div>
                 <div class="form-group">
                     <label>Curriculum</label>
@@ -251,7 +254,6 @@
     </div>
 
     <script>
-        // CSRF token helper
         function getCookie(name) {
             let cookieValue = null;
             if (document.cookie && document.cookie !== '') {
@@ -267,23 +269,19 @@
             return cookieValue;
         }
 
-        // Dropdown toggle
         function toggleDropdown() {
             document.getElementById('dropdownMenu').classList.toggle('show');
         }
 
-        // Close dropdown when clicking outside
         window.onclick = function(event) {
             if (!event.target.matches('.admin-section') && !event.target.closest('.admin-section')) {
                 document.getElementById('dropdownMenu').classList.remove('show');
             }
-            // Close modal when clicking outside
             if (event.target.classList.contains('modal')) {
                 event.target.style.display = 'none';
             }
         }
 
-        // Search/Filter sections
         function filterSections() {
             const searchTerm = document.getElementById('searchInput').value.toLowerCase();
             const cards = document.querySelectorAll('.section-card');
@@ -300,7 +298,6 @@
             });
         }
 
-        // Modal functions
         function openModal(modalId) {
             document.getElementById(modalId).style.display = 'block';
         }
@@ -330,7 +327,6 @@
                 });
         }
 
-        // Submit add section form
         function submitAddSection(event) {
             event.preventDefault();
             const formData = new FormData(event.target);
@@ -356,7 +352,6 @@
             });
         }
 
-        // Submit edit section form
         function submitEditSection(event) {
             event.preventDefault();
             const formData = new FormData(event.target);
@@ -383,7 +378,6 @@
             });
         }
 
-        // Delete section
         function deleteSection(sectionId, sectionName) {
             if (confirm(`Are you sure you want to delete ${sectionName}?`)) {
                 fetch(`/admin/section/delete/${sectionId}/`, {
@@ -407,12 +401,10 @@
             }
         }
 
-        // View schedule
         function viewSchedule(sectionId) {
             window.location.href = `/admin/section/${sectionId}/schedule/`;
         }
 
-        // Show notification
         function showNotification(message, type) {
             const notification = document.createElement('div');
             notification.className = `notification ${type} show`;
