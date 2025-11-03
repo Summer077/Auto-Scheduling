@@ -87,9 +87,11 @@
             <div class="section-card" data-section-name="{{ section.name|lower }}" data-curriculum="{{ section.curriculum.name|lower }}">
                 <!-- Card Header -->
                 <div class="card-header">
-                    <div class="card-title">{{ section.name }}</div>
-                    <div class="card-subtitle">
-                        {% if section.year_level == 1 %}First Year{% elif section.year_level == 2 %}Second Year{% elif section.year_level == 3 %}Third Year{% else %}Fourth Year{% endif %}
+                    <div class="card-header-left">
+                        <div class="card-title">{{ section.name }}</div>
+                        <div class="card-subtitle">
+                            {% if section.year_level == 1 %}First Year{% elif section.year_level == 2 %}Second Year{% elif section.year_level == 3 %}Third Year{% else %}Fourth Year{% endif %}
+                        </div>
                     </div>
                 </div>
                 
@@ -99,17 +101,21 @@
                         <div class="info-group">
                             <div class="info-label">YEAR LEVEL</div>
                             <div class="info-value">
-                                {% if section.year_level == 1 %}1st Year{% elif section.year_level == 2 %}2nd Year{% elif section.year_level == 3 %}3rd Year{% else %}4th Year{% endif %}
+                                {% if section.year_level == 1 %}First Year{% elif section.year_level == 2 %}Second Year{% elif section.year_level == 3 %}Third Year{% else %}Fourth Year{% endif %}
                             </div>
                         </div>
                         <div class="info-group">
-                            <div class="info-label">SEMESTER</div>
-                            <div class="info-value">
-                                {% if section.semester == 1 %}1st{% else %}2nd{% endif %} Semester
-                            </div>
+                            <div class="info-label">SECTION</div>
+                            <div class="info-value">{{ section.section|default:section.name }}</div>
                         </div>
                     </div>
-                    <div class="info-row full">
+                    <div class="info-row">
+                        <div class="info-group">
+                            <div class="info-label">SEMESTER</div>
+                            <div class="info-value">
+                                {% if section.semester == 1 %}1st{% else %}2nd{% endif %}
+                            </div>
+                        </div>
                         <div class="info-group">
                             <div class="info-label">CURRICULUM</div>
                             <div class="info-value">{{ section.curriculum.name }} ({{ section.curriculum.year }})</div>
@@ -118,25 +124,7 @@
                 </div>
                 
                 <!-- Card Footer -->
-                <div class="card-footer">
-                    <button class="schedule-btn" onclick="viewSchedule({{ section.id }}); event.stopPropagation();">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                            <path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z"/>
-                        </svg>
-                    </button>
-                    <div class="action-btns">
-                        <button class="edit-icon-btn" onclick="openEditSectionModal({{ section.id }}); event.stopPropagation();">
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                                <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
-                            </svg>
-                        </button>
-                        <button class="delete-icon-btn" onclick="deleteSection({{ section.id }}, '{{ section.name }}'); event.stopPropagation();">
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                                <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
-                            </svg>
-                        </button>
-                    </div>
-                </div>
+                
             </div>
             {% endfor %}
         </div>
@@ -297,7 +285,7 @@
                 const curriculum = card.dataset.curriculum;
                 
                 if (sectionName.includes(searchTerm) || curriculum.includes(searchTerm)) {
-                    card.style.display = 'flex';
+                    card.style.display = 'block';
                 } else {
                     card.style.display = 'none';
                 }
@@ -422,6 +410,14 @@
                 setTimeout(() => notification.remove(), 300);
             }, 3000);
         }
+
+        document.querySelectorAll('.section-card').forEach(card => {
+        card.addEventListener('click', () => {
+            document.querySelectorAll('.section-card').forEach(c => c.classList.remove('selected'));
+            card.classList.add('selected');
+        });
+    });
+
     </script>
 </body>
 </html>
