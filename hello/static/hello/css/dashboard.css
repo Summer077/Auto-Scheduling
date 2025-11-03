@@ -239,6 +239,146 @@ body {
     position: relative;
     overflow: hidden;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.summary-card::before,
+.summary-card::after {
+    position: absolute;
+    content: "";
+    width: 20%;
+    height: 20%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: rgba(173, 181, 189, 0.1);
+    transition: all 0.5s ease;
+    z-index: 1;
+}
+
+.summary-card::before {
+    top: 0;
+    right: 0;
+    border-radius: 0 12px 0 100%;
+}
+
+.summary-card::after {
+    bottom: 0;
+    left: 0;
+    border-radius: 0 100% 0 12px;
+}
+
+.summary-card:hover::before,
+.summary-card:hover::after {
+    width: 100%;
+    height: 100%;
+    border-radius: 12px;
+    transition: all 0.5s ease;
+}
+
+/* Faculty card hover - shows faculty list design */
+.summary-card.faculty-card:hover::before {
+    background-color: #2d3436;
+    background-image: 
+        /* Header */
+        linear-gradient(to right, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0.15) 100%),
+        /* Name column header */
+        linear-gradient(to right, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0.2) 100%),
+        /* Total Units column header */
+        linear-gradient(to right, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0.2) 100%),
+        /* Row 1 */
+        linear-gradient(to right, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.08) 100%),
+        /* Row 2 */
+        linear-gradient(to right, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.08) 100%),
+        /* Row 3 */
+        linear-gradient(to right, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.08) 100%),
+        /* Row 4 */
+        linear-gradient(to right, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.08) 100%);
+    background-size: 
+        100% 40px,
+        65% 30px,
+        30% 30px,
+        100% 35px,
+        100% 35px,
+        100% 35px,
+        100% 35px;
+    background-position: 
+        0 20px,
+        20px 70px,
+        calc(100% - 80px) 70px,
+        0 110px,
+        0 150px,
+        0 190px,
+        0 230px;
+    background-repeat: no-repeat;
+}
+
+.summary-card.faculty-card:hover::after {
+    content: "";
+    background-color: transparent;
+}
+
+/* Section card hover - shows section list design */
+.summary-card.section-card:hover::before {
+    background-color: #2d3436;
+    background-image: 
+        /* Header */
+        linear-gradient(to right, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0.15) 100%),
+        /* Section column header */
+        linear-gradient(to right, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0.2) 100%),
+        /* Status column header */
+        linear-gradient(to right, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0.2) 100%),
+        /* Row 1 */
+        linear-gradient(to right, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.08) 100%),
+        /* Status badge 1 (Complete) */
+        linear-gradient(to right, rgba(100,200,100,0.4) 0%, rgba(100,200,100,0.4) 100%),
+        /* Row 2 */
+        linear-gradient(to right, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.08) 100%),
+        /* Status badge 2 (Complete) */
+        linear-gradient(to right, rgba(100,200,100,0.4) 0%, rgba(100,200,100,0.4) 100%),
+        /* Row 3 */
+        linear-gradient(to right, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.08) 100%),
+        /* Status badge 3 (No Schedule) */
+        linear-gradient(to right, rgba(150,150,150,0.4) 0%, rgba(150,150,150,0.4) 100%),
+        /* Row 4 */
+        linear-gradient(to right, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.08) 100%);
+    background-size: 
+        100% 40px,
+        40% 30px,
+        45% 30px,
+        100% 35px,
+        35% 25px,
+        100% 35px,
+        35% 25px,
+        100% 35px,
+        35% 25px,
+        100% 35px;
+    background-position: 
+        0 20px,
+        20px 70px,
+        calc(100% - 140px) 70px,
+        0 110px,
+        calc(100% - 135px) 117px,
+        0 150px,
+        calc(100% - 135px) 157px,
+        0 190px,
+        calc(100% - 135px) 197px,
+        0 230px;
+    background-repeat: no-repeat;
+}
+
+.summary-card.section-card:hover::after {
+    content: "";
+    background-color: transparent;
+}
+
+.summary-card:hover .summary-number,
+.summary-card:hover .summary-label,
+.summary-card:hover .summary-icon,
+.summary-card:hover .summary-decoration {
+    opacity: 0;
+    transition: opacity 0.3s ease;
 }
 
 .summary-number {
@@ -248,6 +388,9 @@ body {
     color: #212529;
     line-height: 1;
     margin-bottom: 8px;
+    position: relative;
+    z-index: 2;
+    transition: opacity 0.3s ease;
 }
 
 .summary-label {
@@ -256,6 +399,9 @@ body {
     font-weight: 600;
     color: #495057;
     letter-spacing: 0.5px;
+    position: relative;
+    z-index: 2;
+    transition: opacity 0.3s ease;
 }
 
 .summary-icon {
@@ -266,6 +412,8 @@ body {
     height: 60px;
     fill: #212529;
     opacity: 0.1;
+    z-index: 2;
+    transition: opacity 0.3s ease;
 }
 
 .summary-decoration {
@@ -275,6 +423,8 @@ body {
     border-radius: 12px;
     background: #212529;
     opacity: 0.05;
+    z-index: 2;
+    transition: opacity 0.3s ease;
 }
 
 .summary-decoration.top-left {
