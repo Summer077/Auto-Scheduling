@@ -252,7 +252,7 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    background-color: rgba(173, 181, 189, 0.1);
+    background-color: #212529;
     transition: all 0.5s ease;
     z-index: 1;
 }
@@ -538,7 +538,6 @@ body {
     height: 80px;
     border-radius: 12px;
     background: #212529;
-    opacity: 0.05;
     z-index: 2;
     transition: opacity 0.3s ease;
 }
