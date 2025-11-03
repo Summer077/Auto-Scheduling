@@ -89,6 +89,26 @@
                     </svg>
                     <div class="summary-decoration top-left"></div>
                     <div class="summary-decoration bottom-right"></div>
+                    
+                    <div class="card-hover-content">
+                        <div class="card-hover-title">Faculty List</div>
+                        {% if faculty_list %}
+                            <div class="card-data-table">
+                                <div class="card-data-header">
+                                    <span>Name</span>
+                                    <span>Total Units</span>
+                                </div>
+                                {% for faculty in faculty_list %}
+                                <div class="card-data-row">
+                                    <div class="card-data-name">{{ faculty.last_name }}, {{ faculty.first_name }}</div>
+                                    <div class="card-data-value">{{ faculty.total_units|default:"0" }}</div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <div class="card-empty-message">No faculty members added yet</div>
+                        {% endif %}
+                    </div>
                 </div>
 
                 <div class="summary-card section-card">
@@ -99,6 +119,32 @@
                     </svg>
                     <div class="summary-decoration top-left"></div>
                     <div class="summary-decoration bottom-right"></div>
+                    
+                    <div class="card-hover-content">
+                        <div class="card-hover-title">Section List</div>
+                        {% if section_list %}
+                            <div class="card-data-table">
+                                <div class="card-data-header">
+                                    <span>Section</span>
+                                    <span>Status</span>
+                                </div>
+                                {% for section in section_list %}
+                                <div class="card-data-row">
+                                    <div class="card-data-name">{{ section.name }}</div>
+                                    <div class="card-data-value">
+                                        {% if section.has_schedule %}
+                                            <span class="card-status-badge status-complete">Complete Schedule</span>
+                                        {% else %}
+                                            <span class="card-status-badge status-no-schedule">No Schedule Yet</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <div class="card-empty-message">No sections added yet</div>
+                        {% endif %}
+                    </div>
                 </div>
             </div>
 

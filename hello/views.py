@@ -54,6 +54,15 @@ def admin_dashboard(request):
     faculty_count = Faculty.objects.count()
     section_count = Section.objects.count()
     
+    # Get faculty list with their total units
+    faculty_list = Faculty.objects.all().order_by('last_name', 'first_name')
+    
+    # Get section list with schedule status
+    section_list = Section.objects.all().order_by('year_level', 'semester', 'name')
+    # Annotate each section with whether it has schedules
+    for section in section_list:
+        section.has_schedule = section.schedules.exists()
+    
     # Get all activities from last 2 days
     today = timezone.now().date()
     yesterday = today - timedelta(days=1)
@@ -91,12 +100,12 @@ def admin_dashboard(request):
     
     # Days of the week
     days = [
-    (0, 'Monday'),
-    (1, 'Tuesday'),
-    (2, 'Wednesday'),
-    (3, 'Thursday'),
-    (4, 'Friday'),
-    (5, 'Saturday')
+        (0, 'Monday'),
+        (1, 'Tuesday'),
+        (2, 'Wednesday'),
+        (3, 'Thursday'),
+        (4, 'Friday'),
+        (5, 'Saturday')
     ]
     
     # Get all schedules
@@ -108,6 +117,8 @@ def admin_dashboard(request):
         'user': request.user,
         'faculty_count': faculty_count,
         'section_count': section_count,
+        'faculty_list': faculty_list,
+        'section_list': section_list,
         'recent_activities': recent_activities,
         'scheduled_courses': scheduled_courses,
         'time_slots': time_slots,
@@ -354,3 +365,4 @@ def edit_curriculum(request, curriculum_id):
             return JsonResponse({'success': False, 'error': 'Curriculum not found'}, status=404)
         except Exception as e:
             return JsonResponse({'success': False, 'errors': str(e)})
+        
