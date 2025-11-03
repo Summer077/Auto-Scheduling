@@ -1,6 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import User
 import random
+from django.core.exceptions import ValidationError  # <-- added import
 
 class Curriculum(models.Model):
     name = models.CharField(max_length=100)
@@ -108,6 +109,13 @@ class Faculty(models.Model):
     
     def __str__(self):
         return f"{self.last_name}, {self.first_name}"
+    
+    @property
+    def total_units(self):
+        """Automatically calculate total credit units from assigned schedules."""
+        schedules = self.schedules.select_related('course')
+        total = sum(s.course.credit_units for s in schedules)
+        return total
 
 class Section(models.Model):
     """Model for class sections"""
@@ -157,14 +165,14 @@ class Schedule(models.Model):
     day = models.IntegerField(choices=DAY_CHOICES)
     start_time = models.CharField(max_length=5)
     end_time = models.CharField(max_length=5)
-    duration = models.IntegerField(default=0, help_text="Duration in minutes")  # ADD default=0
+    duration = models.IntegerField(default=0, help_text="Duration in minutes")
     created_at = models.DateTimeField(auto_now_add=True)
     
     class Meta:
         ordering = ['day', 'start_time']
     
     def save(self, *args, **kwargs):
-        """Auto-calculate duration from start_time and end_time"""
+        """Auto-calculate duration and enforce faculty 25-unit limit"""
         if self.start_time and self.end_time:
             # Parse start time
             start_hour, start_min = map(int, self.start_time.split(':'))
@@ -176,7 +184,21 @@ class Schedule(models.Model):
             
             # Calculate duration
             self.duration = end_total_mins - start_total_mins
-        
+
+        # ✅ Enforce faculty teaching load limit
+        if self.faculty:
+            # Sum existing units excluding this schedule if it already exists
+            current_units = sum(
+                s.course.credit_units for s in self.faculty.schedules.exclude(pk=self.pk)
+            )
+            new_total = current_units + self.course.credit_units
+
+            if new_total > 25:
+                raise ValidationError(
+                    f"{self.faculty.first_name} {self.faculty.last_name} already has {current_units} units. "
+                    f"Adding {self.course.course_code} would exceed the 25-unit limit."
+                )
+
         super().save(*args, **kwargs)
     
     def __str__(self):

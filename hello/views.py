@@ -59,9 +59,16 @@ def admin_dashboard(request):
     
     # Get section list with schedule status
     section_list = Section.objects.all().order_by('year_level', 'semester', 'name')
-    # Annotate each section with whether it has schedules
+    # Calculate total units for each section and check if schedule is complete (25 units)
     for section in section_list:
-        section.has_schedule = section.schedules.exists()
+        # Get all schedules for this section and sum up the credit units
+        total_units = 0
+        schedules = section.schedules.select_related('course').all()
+        for schedule in schedules:
+            total_units += schedule.course.credit_units
+        
+        section.total_units = total_units
+        section.has_schedule = total_units >= 25  # Complete if 25 or more units
     
     # Get all activities from last 2 days
     today = timezone.now().date()
@@ -365,4 +372,3 @@ def edit_curriculum(request, curriculum_id):
             return JsonResponse({'success': False, 'error': 'Curriculum not found'}, status=404)
         except Exception as e:
             return JsonResponse({'success': False, 'errors': str(e)})
-        
