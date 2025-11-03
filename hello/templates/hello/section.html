@@ -12,6 +12,7 @@
     <nav class="top-nav">
         <div class="page-title">Section</div>
         <div class="admin-section" onclick="toggleDropdown()">
+            <div class="admin-avatar"></div>
             <span class="admin-name">ADMIN</span>
             <svg class="dropdown-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
                 <path d="M7 10l5 5 5-5z"/>
@@ -64,71 +65,76 @@
     <main class="main-content">
         <!-- Top Controls -->
         <div class="top-controls">
-            <div class="left-controls">
-                <div class="search-bar">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                        <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
-                    </svg>
-                    <input type="text" id="searchInput" placeholder="Search" onkeyup="filterSections()">
-                </div>
+            <div class="search-container">
+                <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                    <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
+                </svg>
+                <input type="text" id="searchInput" placeholder="Search" onkeyup="filterSections()">
             </div>
             
-            <div class="right-controls">
-                <button class="btn" onclick="openAddSectionModal()">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                        <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
-                    </svg>
-                    Add Section
-                </button>
-            </div>
+            <button class="add-section-btn" onclick="openAddSectionModal()">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                    <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+                </svg>
+                Add Section
+            </button>
         </div>
 
-        <!-- Section Cards Grid -->
+        <!-- Section Cards -->
         {% if sections %}
-        <div class="section-grid" id="sectionGrid">
+        <div class="sections-container">
             {% for section in sections %}
             <div class="section-card" data-section-name="{{ section.name|lower }}" data-curriculum="{{ section.curriculum.name|lower }}">
-                <div class="section-header">
-                    <div class="section-info">
-                        <h3>{{ section.name }}</h3>
-                        <div class="section-meta">
-                            {% if section.year_level == 1 %}First Year{% elif section.year_level == 2 %}Second Year{% elif section.year_level == 3 %}Third Year{% else %}Fourth Year{% endif %}
+                <!-- Card Header -->
+                <div class="card-header">
+                    <div class="card-title">{{ section.name }}</div>
+                    <div class="card-subtitle">
+                        {% if section.year_level == 1 %}First Year{% elif section.year_level == 2 %}Second Year{% elif section.year_level == 3 %}Third Year{% else %}Fourth Year{% endif %}
+                    </div>
+                </div>
+                
+                <!-- Card Body -->
+                <div class="card-body">
+                    <div class="info-row">
+                        <div class="info-group">
+                            <div class="info-label">YEAR LEVEL</div>
+                            <div class="info-value">
+                                {% if section.year_level == 1 %}1st Year{% elif section.year_level == 2 %}2nd Year{% elif section.year_level == 3 %}3rd Year{% else %}4th Year{% endif %}
+                            </div>
+                        </div>
+                        <div class="info-group">
+                            <div class="info-label">SEMESTER</div>
+                            <div class="info-value">
+                                {% if section.semester == 1 %}1st{% else %}2nd{% endif %} Semester
+                            </div>
                         </div>
                     </div>
-                    <div class="section-actions">
-                        <button class="action-btn view-schedule-btn" onclick="viewSchedule({{ section.id }}); event.stopPropagation();" title="View Schedule">
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                                <path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z"/>
-                            </svg>
-                        </button>
-                        <button class="action-btn edit-btn" onclick="openEditSectionModal({{ section.id }}); event.stopPropagation();" title="Edit">
+                    <div class="info-row full">
+                        <div class="info-group">
+                            <div class="info-label">CURRICULUM</div>
+                            <div class="info-value">{{ section.curriculum.name }} ({{ section.curriculum.year }})</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Card Footer -->
+                <div class="card-footer">
+                    <button class="schedule-btn" onclick="viewSchedule({{ section.id }}); event.stopPropagation();">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                            <path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z"/>
+                        </svg>
+                    </button>
+                    <div class="action-btns">
+                        <button class="edit-icon-btn" onclick="openEditSectionModal({{ section.id }}); event.stopPropagation();">
                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
                                 <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
                             </svg>
                         </button>
-                        <button class="action-btn delete-btn" onclick="deleteSection({{ section.id }}, '{{ section.name }}'); event.stopPropagation();" title="Delete">
+                        <button class="delete-icon-btn" onclick="deleteSection({{ section.id }}, '{{ section.name }}'); event.stopPropagation();">
                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
                                 <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
                             </svg>
                         </button>
-                    </div>
-                </div>
-                <div class="section-details">
-                    <div class="detail-row">
-                        <span class="detail-label">YEAR LEVEL</span>
-                        <span class="detail-value">
-                            {% if section.year_level == 1 %}1st Year{% elif section.year_level == 2 %}2nd Year{% elif section.year_level == 3 %}3rd Year{% else %}4th Year{% endif %}
-                        </span>
-                    </div>
-                    <div class="detail-row">
-                        <span class="detail-label">SEMESTER</span>
-                        <span class="detail-value">
-                            {% if section.semester == 1 %}1st Semester{% else %}2nd Semester{% endif %}
-                        </span>
-                    </div>
-                    <div class="detail-row">
-                        <span class="detail-label">CURRICULUM</span>
-                        <span class="detail-value">{{ section.curriculum.name }} ({{ section.curriculum.year }})</span>
                     </div>
                 </div>
             </div>
@@ -136,11 +142,11 @@
         </div>
         {% else %}
         <div class="empty-state">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" style="width: 80px; height: 80px; fill: #ADB5BD; margin-bottom: 20px;">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
                 <path d="M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z"/>
             </svg>
             <p>No sections available. Add a section to get started.</p>
-            <button class="btn" onclick="openAddSectionModal()" style="margin-top: 20px;">
+            <button class="add-section-btn" onclick="openAddSectionModal()">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
                     <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
                 </svg>
@@ -291,7 +297,7 @@
                 const curriculum = card.dataset.curriculum;
                 
                 if (sectionName.includes(searchTerm) || curriculum.includes(searchTerm)) {
-                    card.style.display = 'block';
+                    card.style.display = 'flex';
                 } else {
                     card.style.display = 'none';
                 }
