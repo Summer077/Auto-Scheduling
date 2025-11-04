@@ -368,14 +368,14 @@ body {
 .schedule-time {
     font-size: 0.7rem;
     font-weight: 500;
-    color: #495057;
+    color: #212529;
 }
 
 .schedule-room,
 .schedule-section {
     font-size: 0.7rem;
     font-weight: 500;
-    color: #6C757D;
+    color: #212529;
 }
 
 /* Courses Sidebar */

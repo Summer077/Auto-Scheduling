@@ -609,7 +609,7 @@
                     
                     if (schedule) {
                         const duration = calculateDuration(schedule.start_time, schedule.end_time);
-                        const rowspan = Math.ceil(duration / 30);
+                        const rowspan = Math.ceil(duration / 22);
                         
                         // Mark future cells as skipped
                         for (let i = 1; i < rowspan; i++) {
