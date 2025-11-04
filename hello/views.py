@@ -480,47 +480,54 @@ def delete_section(request, section_id):
 @login_required(login_url='admin_login')
 def get_section_schedule(request, section_id):
     """Get schedule data for a specific section"""
-    section = get_object_or_404(Section, id=section_id)
-    
-    # Get all schedules for this section
-    schedules = Schedule.objects.filter(section=section).select_related(
-        'course', 'room', 'faculty'
-    )
-    
-    # Get all courses for this section's curriculum, year level, and semester
-    courses = Course.objects.filter(
-        curriculum=section.curriculum,
-        year_level=section.year_level,
-        semester=section.semester
-    )
-    
-    # Format schedule data
-    schedule_data = []
-    for schedule in schedules:
-        schedule_data.append({
-            'day': schedule.day,
-            'start_time': schedule.start_time,
-            'end_time': schedule.end_time,
-            'course_code': schedule.course.course_code,
-            'course_color': schedule.course.color,
-            'room': schedule.room.name if schedule.room else 'TBA',
-            'section_name': section.name,
-            'faculty': f"{schedule.faculty.first_name} {schedule.faculty.last_name}" if schedule.faculty else 'TBA'
+    try:
+        section = get_object_or_404(Section, id=section_id)
+        
+        # Get all schedules for this section
+        schedules = Schedule.objects.filter(section=section).select_related(
+            'course', 'room', 'faculty'
+        )
+        
+        # Get all courses for this section's curriculum, year level, and semester
+        courses = Course.objects.filter(
+            curriculum=section.curriculum,
+            year_level=section.year_level,
+            semester=section.semester
+        )
+        
+        # Format schedule data
+        schedule_data = []
+        for schedule in schedules:
+            schedule_data.append({
+                'day': schedule.day,
+                'start_time': schedule.start_time,
+                'end_time': schedule.end_time,
+                'course_code': schedule.course.course_code,
+                'course_color': schedule.course.color,
+                'room': schedule.room.name if schedule.room else 'TBA',
+                'section_name': section.name,
+                'faculty': f"{schedule.faculty.first_name} {schedule.faculty.last_name}" if schedule.faculty else 'TBA'
+            })
+        
+        # Format course data
+        course_data = []
+        for course in courses:
+            course_data.append({
+                'course_code': course.course_code,
+                'descriptive_title': course.descriptive_title,
+                'lecture_hours': course.lecture_hours,
+                'laboratory_hours': course.laboratory_hours,
+                'credit_units': course.credit_units,
+                'color': course.color
+            })
+        
+        return JsonResponse({
+            'success': True,
+            'schedules': schedule_data,
+            'courses': course_data
         })
-    
-    # Format course data
-    course_data = []
-    for course in courses:
-        course_data.append({
-            'course_code': course.course_code,
-            'descriptive_title': course.descriptive_title,
-            'lecture_hours': course.lecture_hours,
-            'laboratory_hours': course.laboratory_hours,
-            'credit_units': course.credit_units,
-            'color': course.color
-        })
-    
-    return JsonResponse({
-        'schedules': schedule_data,
-        'courses': course_data
-    })
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=500)

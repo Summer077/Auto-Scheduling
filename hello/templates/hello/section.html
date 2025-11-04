@@ -545,37 +545,76 @@
             
             // Fetch schedule data
             fetch(`/admin/section/${sectionId}/schedule-data/`)
-                .then(response => response.json())
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
                 .then(data => {
-                    renderSchedule(data.schedules);
-                    renderCoursesList(data.courses);
+                    console.log('Received data:', data); // Debug log
+                    if (data.success !== false) {
+                        renderSchedule(data.schedules || []);
+                        renderCoursesList(data.courses || []);
+                    } else {
+                        showNotification('Error: ' + (data.error || 'Unknown error'), 'error');
+                    }
                 })
                 .catch(error => {
                     console.error('Error loading schedule:', error);
-                    showNotification('Error loading schedule', 'error');
+                    showNotification('Error loading schedule: ' + error.message, 'error');
                 });
         }
 
         function renderSchedule(schedules) {
+            console.log('Rendering schedules:', schedules); // Debug log
+            
             const timeSlots = generateTimeSlots();
             const tbody = document.getElementById('scheduleTableBody');
             tbody.innerHTML = '';
             
-            timeSlots.forEach(time => {
+            // Create a map to track which time slots have schedules for each day
+            const scheduleMap = {};
+            schedules.forEach(schedule => {
+                const key = `${schedule.day}-${schedule.start_time}`;
+                scheduleMap[key] = schedule;
+            });
+            
+            // Track cells that should be skipped due to rowspan
+            const skipCells = {};
+            
+            timeSlots.forEach((time, timeIndex) => {
                 const row = document.createElement('tr');
-                row.innerHTML = `<td class="time-cell">${time}</td>`;
                 
+                // Add time cell
+                const timeCell = document.createElement('td');
+                timeCell.className = 'time-cell';
+                timeCell.textContent = time;
+                row.appendChild(timeCell);
+                
+                // Add cells for each day
                 for (let day = 0; day < 6; day++) {
+                    const cellKey = `${timeIndex}-${day}`;
+                    
+                    // Skip if this cell is part of a previous rowspan
+                    if (skipCells[cellKey]) {
+                        continue;
+                    }
+                    
+                    const scheduleKey = `${day}-${time}`;
+                    const schedule = scheduleMap[scheduleKey];
+                    
                     const cell = document.createElement('td');
                     cell.className = 'schedule-cell';
-                    
-                    const schedule = schedules.find(s => 
-                        s.day === day && s.start_time === time
-                    );
                     
                     if (schedule) {
                         const duration = calculateDuration(schedule.start_time, schedule.end_time);
                         const rowspan = Math.ceil(duration / 30);
+                        
+                        // Mark future cells as skipped
+                        for (let i = 1; i < rowspan; i++) {
+                            skipCells[`${timeIndex + i}-${day}`] = true;
+                        }
                         
                         cell.rowSpan = rowspan;
                         cell.className = 'schedule-cell occupied';
@@ -584,7 +623,7 @@
                             <div class="schedule-item">
                                 <div class="schedule-course-code">${schedule.course_code}</div>
                                 <div class="schedule-time">${schedule.start_time} - ${schedule.end_time}</div>
-                                <div class="schedule-room">Room: ${schedule.room || 'TBA'}</div>
+                                <div class="schedule-room">Room: ${schedule.room}</div>
                                 <div class="schedule-section">Section: ${schedule.section_name}</div>
                             </div>
                         `;
@@ -622,13 +661,17 @@
 
         function generateTimeSlots() {
             const slots = [];
+            // Start at 7:30 AM
             slots.push('7:30');
+            // 8:00 to 9:00 PM (21:00)
             for (let hour = 8; hour <= 21; hour++) {
                 slots.push(`${hour}:00`);
                 if (hour < 21) {
                     slots.push(`${hour}:30`);
                 }
             }
+            // End at 9:30 PM
+            slots.push('21:30');
             return slots;
         }
 

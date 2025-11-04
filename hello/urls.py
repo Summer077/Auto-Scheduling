@@ -9,12 +9,18 @@ urlpatterns = [
     path('admin/course/add/', views.add_course, name='add_course'),
     path('admin/course/edit/<int:course_id>/', views.edit_course, name='edit_course'),
     path('admin/course/delete/<int:course_id>/', views.delete_course, name='delete_course'),
+    path('admin/section/<int:section_id>/schedule-data/', views.get_section_schedule, name='get_section_schedule'),
     
     # Add section CRUD operations
     path('admin/section/add/', views.add_section, name='add_section'),
     path('admin/section/edit/<int:section_id>/', views.edit_section, name='edit_section'),
     path('admin/section/delete/<int:section_id>/', views.delete_section, name='delete_section'),
     
+    # Add section CRUD operations
+    path('admin/section/add/', views.add_section, name='add_section'),
+    path('admin/section/edit/<int:section_id>/', views.edit_section, name='edit_section'),
+    path('admin/section/delete/<int:section_id>/', views.delete_section, name='delete_section'),
+
     path('admin/curriculum/add/', views.add_curriculum, name='add_curriculum'),
     path('admin/curriculum/delete/<int:curriculum_id>/', views.delete_curriculum, name='delete_curriculum'),
     path('admin/logout/', views.admin_logout, name='admin_logout'),
