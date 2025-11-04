@@ -185,6 +185,18 @@ body {
     min-height: calc(100vh - 70px);
 }
 
+/* Sections Container - White block like in image */
+.sections-container {
+    background: #FFFFFF;
+    border-radius: 12px;
+    padding: 30px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
 /* Top Controls */
 .top-controls {
     display: flex;
@@ -270,19 +282,7 @@ body {
     fill: #212529;
 }
 
-/* Sections Grid - Exactly like the image */
-.sections-container {
-    max-width: 1400px; /* wider overall container */
-    width: 100%;
-    display: flex; /* switch to flex to allow natural width flow */
-    flex-direction: column;
-    gap: 20px;
-    background: #FFFFFF;
-    border-radius: 12px;
-    padding: 30px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
+/* Section Cards */
 .section-card {
     background: #FFFFFF;
     border-radius: 12px;
@@ -292,8 +292,6 @@ body {
     transition: border-color 0.2s ease, transform 0.2s ease;
     cursor: pointer;
     width: 100%;
-    min-width: 1100px; /* 👈 longer width like the image */
-    margin: 0 auto; /* center each card */
 }
 
 .section-card.selected {
@@ -306,85 +304,16 @@ body {
     box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
 }
 
-/* Section Title and Subtitle (formerly in .card-header) */
-.section-title {
-    font-family: 'Lexend', sans-serif;
-    font-size: 1.25rem;
-    font-weight: 700;
-    color: #212529;
-}
-
-.section-subtitle {
-    font-family: 'Lexend', sans-serif;
-    font-size: 0.875rem;
-    font-weight: 500;
-    color: #6C757D;
-}
-
-/* View Schedule Button - aligned to top-right if needed */
-.section-actions {
-    display: flex;
-    justify-content: flex-end;
-}
-
-.view-schedule-btn {
-    background: none;
-    border: none;
-    cursor: pointer;
-    padding: 8px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 6px;
-    transition: all 0.3s;
-}
-
-.view-schedule-btn svg {
-    width: 20px;
-    height: 20px;
-    fill: #495057;
-    transition: fill 0.3s;
-}
-
-.view-schedule-btn:hover {
-    background: #E9ECEF;
-}
-
-.view-schedule-btn:hover svg {
-    fill: #212529;
-}
-
-/* Info Section (merged from .card-body) */
-.info-row {
+/* Card Header */
+.card-header {
     display: flex;
     justify-content: space-between;
-    margin-bottom: 16px;
+    align-items: flex-start;
+    margin-bottom: 20px;
 }
 
-.info-row:last-child {
-    margin-bottom: 0;
-}
-
-.info-group {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-}
-
-.info-label {
-    font-family: 'Lexend', sans-serif;
-    font-size: 0.7rem;
-    font-weight: 600;
-    color: #868E96;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-
-.info-value {
-    font-family: 'Lexend', sans-serif;
-    font-size: 0.9rem;
-    font-weight: 600;
-    color: #212529;
+.card-header-left {
+    flex: 1;
 }
 
 .card-title {
@@ -402,53 +331,58 @@ body {
     color: #6C757D;
 }
 
-/* View Schedule Button in Header */
+/* View Schedule Button */
 .view-schedule-btn {
     background: none;
     border: none;
     cursor: pointer;
-    padding: 8px;
+    padding: 8px 12px;
     display: flex;
     align-items: center;
-    justify-content: center;
+    gap: 6px;
     border-radius: 6px;
     transition: all 0.3s;
-}
-
-.view-schedule-btn svg {
-    width: 20px;
-    height: 20px;
-    fill: #495057;
-    transition: fill 0.3s;
+    color: #495057;
+    font-family: 'Lexend', sans-serif;
+    font-size: 0.875rem;
+    font-weight: 500;
+    text-decoration: none;
 }
 
 .view-schedule-btn:hover {
     background: #E9ECEF;
+    color: #212529;
 }
 
-.view-schedule-btn:hover svg {
-    fill: #212529;
+.view-schedule-btn svg {
+    width: 16px;
+    height: 16px;
+    fill: currentColor;
 }
 
 /* Card Body */
 .card-body {
-    padding: 20px;
+    padding: 20px 0;
 }
 
 .info-row {
     display: flex;
     justify-content: space-between;
-    margin-bottom: 16px;
+    margin-bottom: 0;
 }
 
-.info-row:last-child {
-    margin-bottom: 0;
+.info-row:first-child {
+    padding-bottom: 20px;
+    margin-bottom: 20px;
+    border-bottom: 1px solid #E9ECEF;
 }
 
 .info-group {
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: 8px;
+    flex: 1;
+    text-align: left;
 }
 
 .info-label {
@@ -465,6 +399,61 @@ body {
     font-size: 0.9rem;
     font-weight: 600;
     color: #212529;
+}
+
+/* Card Footer */
+.card-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 16px;
+    border-top: 1px solid #E9ECEF;
+}
+
+.card-footer-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.student-avatar {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: #ADB5BD;
+}
+
+.student-name {
+    font-family: 'Lexend', sans-serif;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #495057;
+}
+
+.delete-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 8px 12px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    border-radius: 6px;
+    transition: all 0.3s;
+    color: #DC3545;
+    font-family: 'Lexend', sans-serif;
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.delete-btn:hover {
+    background: #F8F9FA;
+}
+
+.delete-btn svg {
+    width: 16px;
+    height: 16px;
+    fill: currentColor;
 }
 
 /* Empty State */
@@ -677,13 +666,105 @@ body {
     border-left: 4px solid #dc3545;
 }
 
-/* Responsive Design */
-@media (max-width: 1200px) {
-    .sections-container {
-        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-    }
+/* Card Header Right */
+.card-header-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
 
+/* Triple Dot Button */
+.triple-dot-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 6px;
+    transition: all 0.3s;
+    color: #495057;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.triple-dot-btn:hover {
+    background: #E9ECEF;
+    color: #212529;
+}
+
+.triple-dot-btn svg {
+    width: 20px;
+    height: 20px;
+    fill: currentColor;
+}
+
+/* Dropdown Menu Container */
+.dropdown-menu-container {
+    position: relative;
+}
+
+/* Section Dropdown Menu */
+.section-dropdown-menu {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    background: #FFFFFF;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    min-width: 140px;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-10px);
+    transition: all 0.3s;
+    z-index: 100;
+    border: 1px solid #E9ECEF;
+    display: none;
+}
+
+.section-dropdown-menu.show {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+    display: block;
+}
+
+/* Dropdown Items */
+.dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    padding: 12px 16px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-family: 'Lexend', sans-serif;
+    font-size: 0.875rem;
+    color: #495057;
+    transition: background 0.3s;
+    text-align: left;
+}
+
+.dropdown-item:hover {
+    background: #F8F9FA;
+}
+
+.dropdown-item svg {
+    width: 16px;
+    height: 16px;
+    fill: currentColor;
+}
+
+.dropdown-item.delete-item {
+    color: #DC3545;
+}
+
+.dropdown-item.delete-item:hover {
+    background: #FFF5F5;
+    color: #C82333;
+}
+
+/* Responsive Design */
 @media (max-width: 768px) {
     .sidebar {
         width: 70px;
@@ -716,10 +797,6 @@ body {
         max-width: 100%;
     }
 
-    .sections-container {
-        grid-template-columns: 1fr;
-    }
-
     .modal-content {
         width: 95%;
         margin: 10% auto;
@@ -730,23 +807,15 @@ body {
         left: 20px;
         min-width: auto;
     }
-}
-
-@media (max-width: 1200px) {
-    .section-card {
-        max-width: 95%; /* shrink slightly on medium screens */
-    }
-}
-
-@media (max-width: 768px) {
-    .section-card {
-        max-width: 100%;
-        padding: 16px;
-    }
-
-    .section-info {
+    
+    .card-footer {
         flex-direction: column;
         align-items: flex-start;
-        gap: 10px;
+        gap: 12px;
+    }
+    
+    .card-footer-right {
+        width: 100%;
+        justify-content: flex-end;
     }
 }
