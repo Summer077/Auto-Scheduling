@@ -294,56 +294,126 @@ body {
     gap: 30px;
 }
 
+/* Schedule Table Container - Match Dashboard Style */
 .schedule-grid-wrapper {
     overflow-x: auto;
-    max-height: 600px;
     overflow-y: auto;
+    max-height: 600px;
+    border: 1px solid #CED4DA;
+    border-radius: 12px;
+    background: #FFFFFF;
+}
+
+.schedule-grid-wrapper::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+
+.schedule-grid-wrapper::-webkit-scrollbar-track {
+    background: #F8F9FA;
+}
+
+.schedule-grid-wrapper::-webkit-scrollbar-thumb {
+    background: #ADB5BD;
+    border-radius: 5px;
+}
+
+.schedule-grid-wrapper::-webkit-scrollbar-thumb:hover {
+    background: #6C757D;
 }
 
 .schedule-table {
     width: 100%;
-    border-collapse: collapse;
+    border-collapse: separate;
+    border-spacing: 0;
     font-family: 'Lexend', sans-serif;
-    min-width: 800px;
+    min-width: 900px;
+}
+
+.schedule-table thead {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: #FFFFFF;
 }
 
 .schedule-table thead th {
-    background: #F8F9FA;
-    padding: 12px 8px;
+    background: #FFFFFF;
+    padding: 14px 12px;
     text-align: center;
     font-size: 0.75rem;
     font-weight: 700;
     color: #495057;
-    border: 1px solid #DEE2E6;
-    position: sticky;
-    top: 0;
-    z-index: 10;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    border-bottom: 1px solid #CED4DA;
+    border-right: 1px solid #DEE2E6;
+    min-width: 130px;
 }
 
 .schedule-table thead th.time-column {
     width: 80px;
+    min-width: 80px;
+    max-width: 80px;
+    background: #F8F9FA;
+    position: sticky;
+    left: 0;
+    z-index: 101;
+    border-right: 2px solid #CED4DA;
+}
+
+.schedule-table thead th:last-child {
+    border-right: none;
+}
+
+.schedule-table tbody {
     background: #FFFFFF;
 }
 
+.schedule-table tbody tr {
+    height: 60px;
+}
+
 .schedule-table tbody td {
-    border: 1px solid #DEE2E6;
+    border-bottom: 1px solid #DEE2E6;
+    border-right: 1px solid #DEE2E6;
     padding: 0;
-    height: 40px;
-    text-align: center;
-    vertical-align: middle;
+    position: relative;
+    vertical-align: top;
+    background: #FFFFFF;
+    height: 60px;
+    min-width: 130px;
 }
 
 .schedule-table tbody td.time-cell {
     background: #F8F9FA;
+    text-align: center;
     font-size: 0.75rem;
     font-weight: 600;
     color: #6C757D;
-    padding: 8px;
+    padding: 8px 5px;
+    width: 80px;
+    min-width: 80px;
+    max-width: 80px;
+    border-right: 2px solid #CED4DA;
+    vertical-align: middle;
+    position: sticky;
+    left: 0;
+    z-index: 50;
+}
+
+.schedule-table tbody td:last-child {
+    border-right: none;
+}
+
+.schedule-table tbody tr:last-child td {
+    border-bottom: none;
 }
 
 .schedule-table tbody td.schedule-cell {
     background: #FFFFFF;
     position: relative;
+    padding: 0;
 }
 
 .schedule-table tbody td.schedule-cell.occupied {
@@ -356,34 +426,58 @@ body {
     height: 100%;
     display: flex;
     flex-direction: column;
+    justify-content: flex-start;
     gap: 4px;
+    padding: 4px;
 }
 
 .schedule-course-code {
-    font-size: 0.875rem;
+    font-size: 0.95rem;
     font-weight: 700;
     color: #212529;
+    line-height: 1.2;
 }
 
 .schedule-time {
     font-size: 0.7rem;
     font-weight: 500;
-    color: #212529;
+    color: #2d3436;
+    line-height: 1.4;
 }
 
 .schedule-room,
 .schedule-section {
     font-size: 0.7rem;
     font-weight: 500;
-    color: #212529;
+    color: #2d3436;
+    line-height: 1.4;
 }
 
-/* Courses Sidebar */
+/* Courses Sidebar - Updated */
 .courses-sidebar {
     background: #F8F9FA;
     border-radius: 12px;
     padding: 20px;
     overflow-y: auto;
+    max-height: 600px;
+}
+
+.courses-sidebar::-webkit-scrollbar {
+    width: 8px;
+}
+
+.courses-sidebar::-webkit-scrollbar-track {
+    background: #E9ECEF;
+    border-radius: 4px;
+}
+
+.courses-sidebar::-webkit-scrollbar-thumb {
+    background: #ADB5BD;
+    border-radius: 4px;
+}
+
+.courses-sidebar::-webkit-scrollbar-thumb:hover {
+    background: #6C757D;
 }
 
 .courses-sidebar h3 {
@@ -417,12 +511,6 @@ body {
     padding: 12px;
     border-radius: 8px;
     border-left: 4px solid #ADB5BD;
-}
-
-.course-color-indicator {
-    width: 4px;
-    border-radius: 2px;
-    flex-shrink: 0;
 }
 
 .course-details {

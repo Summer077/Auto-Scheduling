@@ -566,14 +566,15 @@
                 });
         }
 
+        // Fixed renderSchedule function that properly handles schedule blocks
         function renderSchedule(schedules) {
-            console.log('Rendering schedules:', schedules); // Debug log
+            console.log('Rendering schedules:', schedules);
             
             const timeSlots = generateTimeSlots();
             const tbody = document.getElementById('scheduleTableBody');
             tbody.innerHTML = '';
             
-            // Create a map to track which time slots have schedules for each day
+            // Create a map for quick schedule lookup
             const scheduleMap = {};
             schedules.forEach(schedule => {
                 const key = `${schedule.day}-${schedule.start_time}`;
@@ -581,7 +582,7 @@
             });
             
             // Track cells that should be skipped due to rowspan
-            const skipCells = {};
+            const skipCells = new Set();
             
             timeSlots.forEach((time, timeIndex) => {
                 const row = document.createElement('tr');
@@ -592,12 +593,12 @@
                 timeCell.textContent = time;
                 row.appendChild(timeCell);
                 
-                // Add cells for each day
+                // Add cells for each day (Monday to Saturday = 0 to 5)
                 for (let day = 0; day < 6; day++) {
                     const cellKey = `${timeIndex}-${day}`;
                     
                     // Skip if this cell is part of a previous rowspan
-                    if (skipCells[cellKey]) {
+                    if (skipCells.has(cellKey)) {
                         continue;
                     }
                     
@@ -608,17 +609,22 @@
                     cell.className = 'schedule-cell';
                     
                     if (schedule) {
-                        const duration = calculateDuration(schedule.start_time, schedule.end_time);
-                        const rowspan = Math.ceil(duration / 22);
+                        // Calculate rowspan based on duration
+                        // IMPORTANT: Each time slot is 30 minutes, each row represents 30 minutes
+                        const duration = schedule.duration || calculateDuration(schedule.start_time, schedule.end_time);
+                        const slotsNeeded = Math.ceil(duration / 30); // 30 min per slot
+                        
+                        console.log(`Schedule: ${schedule.course_code}, Duration: ${duration} mins, Slots needed: ${slotsNeeded}`);
                         
                         // Mark future cells as skipped
-                        for (let i = 1; i < rowspan; i++) {
-                            skipCells[`${timeIndex + i}-${day}`] = true;
+                        for (let i = 1; i < slotsNeeded; i++) {
+                            skipCells.add(`${timeIndex + i}-${day}`);
                         }
                         
-                        cell.rowSpan = rowspan;
+                        cell.rowSpan = slotsNeeded;
                         cell.className = 'schedule-cell occupied';
                         cell.style.backgroundColor = schedule.course_color;
+                        
                         cell.innerHTML = `
                             <div class="schedule-item">
                                 <div class="schedule-course-code">${schedule.course_code}</div>
@@ -637,14 +643,21 @@
         }
 
         function renderCoursesList(courses) {
+            console.log('Rendering courses:', courses);
+            
             const coursesList = document.getElementById('coursesList');
             coursesList.innerHTML = '';
+            
+            if (!courses || courses.length === 0) {
+                coursesList.innerHTML = '<div class="card-empty-message">No courses available</div>';
+                return;
+            }
             
             courses.forEach(course => {
                 const courseItem = document.createElement('div');
                 courseItem.className = 'course-item';
+                courseItem.style.borderLeftColor = course.color;
                 courseItem.innerHTML = `
-                    <div class="course-color-indicator" style="background-color: ${course.color}"></div>
                     <div class="course-details">
                         <div class="course-code">${course.course_code}</div>
                         <div class="course-title">${course.descriptive_title}</div>
@@ -662,12 +675,12 @@
         function generateTimeSlots() {
             const slots = [];
             // Start at 7:30 AM
-            slots.push('7:30');
+            slots.push('07:30');
             // 8:00 to 9:00 PM (21:00)
             for (let hour = 8; hour <= 21; hour++) {
-                slots.push(`${hour}:00`);
+                slots.push(`${hour.toString().padStart(2, '0')}:00`);
                 if (hour < 21) {
-                    slots.push(`${hour}:30`);
+                    slots.push(`${hour.toString().padStart(2, '0')}:30`);
                 }
             }
             // End at 9:30 PM
@@ -678,7 +691,8 @@
         function calculateDuration(startTime, endTime) {
             const [startHour, startMin] = startTime.split(':').map(Number);
             const [endHour, endMin] = endTime.split(':').map(Number);
-            return (endHour * 60 + endMin) - (startHour * 60 + startMin);
+            const duration = (endHour * 60 + endMin) - (startHour * 60 + startMin);
+            return duration;
         }
 
         function exportSchedule() {

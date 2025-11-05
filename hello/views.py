@@ -483,43 +483,61 @@ def get_section_schedule(request, section_id):
     try:
         section = get_object_or_404(Section, id=section_id)
         
+        print(f"\n=== Getting schedule for section: {section.name} ===")
+        print(f"Curriculum: {section.curriculum.name}")
+        print(f"Year Level: {section.year_level}")
+        print(f"Semester: {section.semester}")
+        
         # Get all schedules for this section
         schedules = Schedule.objects.filter(section=section).select_related(
             'course', 'room', 'faculty'
-        )
+        ).order_by('day', 'start_time')
         
-        # Get all courses for this section's curriculum, year level, and semester
+        print(f"Found {schedules.count()} schedules")
+        
+        # Get ALL courses for this section's curriculum, year level, and semester
+        # This should return ALL courses, regardless of whether they're scheduled
         courses = Course.objects.filter(
             curriculum=section.curriculum,
             year_level=section.year_level,
             semester=section.semester
-        )
+        ).order_by('course_code')
+        
+        print(f"Found {courses.count()} courses for this curriculum/year/semester:")
+        for course in courses:
+            print(f"  - {course.course_code}: {course.descriptive_title}")
         
         # Format schedule data
         schedule_data = []
         for schedule in schedules:
-            schedule_data.append({
+            schedule_item = {
                 'day': schedule.day,
                 'start_time': schedule.start_time,
                 'end_time': schedule.end_time,
+                'duration': schedule.duration,
                 'course_code': schedule.course.course_code,
                 'course_color': schedule.course.color,
                 'room': schedule.room.name if schedule.room else 'TBA',
                 'section_name': section.name,
                 'faculty': f"{schedule.faculty.first_name} {schedule.faculty.last_name}" if schedule.faculty else 'TBA'
-            })
+            }
+            schedule_data.append(schedule_item)
+            print(f"Schedule: {schedule_item['course_code']} - {schedule_item['start_time']} to {schedule_item['end_time']} ({schedule_item['duration']} mins)")
         
-        # Format course data
+        # Format course data - RETURN ALL COURSES
         course_data = []
         for course in courses:
-            course_data.append({
+            course_item = {
                 'course_code': course.course_code,
                 'descriptive_title': course.descriptive_title,
                 'lecture_hours': course.lecture_hours,
                 'laboratory_hours': course.laboratory_hours,
                 'credit_units': course.credit_units,
                 'color': course.color
-            })
+            }
+            course_data.append(course_item)
+        
+        print(f"\nReturning {len(course_data)} courses and {len(schedule_data)} schedules\n")
         
         return JsonResponse({
             'success': True,
@@ -527,6 +545,9 @@ def get_section_schedule(request, section_id):
             'courses': course_data
         })
     except Exception as e:
+        import traceback
+        print(f"Error in get_section_schedule: {str(e)}")
+        print(traceback.format_exc())
         return JsonResponse({
             'success': False,
             'error': str(e)
