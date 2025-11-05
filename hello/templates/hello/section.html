@@ -230,108 +230,125 @@
         </div>
     </main>
 
-    <!-- Add Section Modal -->
-    <div id="addSectionModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2>Add New Section</h2>
-                <span class="close" onclick="closeModal('addSectionModal')">&times;</span>
-            </div>
-            <form id="addSectionForm" onsubmit="submitAddSection(event)">
-                {% csrf_token %}
-                <div class="form-group">
-                    <label>Section Name</label>
-                    <input type="text" name="name" placeholder="e.g., CPE21S2" required>
-                </div>
-                <div class="form-group">
-                    <label>Curriculum</label>
-                    <select name="curriculum" required>
-                        {% for curriculum in curricula %}
-                        <option value="{{ curriculum.id }}">{{ curriculum.name }} ({{ curriculum.year }})</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>Year Level</label>
-                        <select name="year_level" required>
-                            <option value="1">1st Year</option>
-                            <option value="2">2nd Year</option>
-                            <option value="3">3rd Year</option>
-                            <option value="4">4th Year</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label>Semester</label>
-                        <select name="semester" required>
-                            <option value="1">1st Semester</option>
-                            <option value="2">2nd Semester</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label>Max Students</label>
-                    <input type="number" name="max_students" min="1" value="40" required>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn-secondary" onclick="closeModal('addSectionModal')">Cancel</button>
-                    <button type="submit" class="btn-primary">Add Section</button>
-                </div>
-            </form>
-        </div>
-    </div>
+    <!-- REPLACE the Add Section Modal and Edit Section Modal in your section.html -->
 
-    <!-- Edit Section Modal -->
-    <div id="editSectionModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2>Edit Section</h2>
-                <span class="close" onclick="closeModal('editSectionModal')">&times;</span>
+<!-- Add Section Modal -->
+<div id="addSectionModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Add New Section</h2>
+            <span class="close" onclick="closeModal('addSectionModal')">&times;</span>
+        </div>
+        <form id="addSectionForm" onsubmit="submitAddSection(event)">
+            {% csrf_token %}
+            <div class="form-group">
+                <label>Section Name</label>
+                <input type="text" 
+                       name="name" 
+                       id="add_section_name"
+                       placeholder="e.g., CPE11S1" 
+                       required>
+                <small style="color: #6C757D; font-size: 0.8rem; margin-top: 4px; display: block;">
+                    <strong>Format:</strong> CPE[year][semester]S[number]<br>
+                    <strong>Examples:</strong> CPE11S1 (1st year, 1st sem, Section 1), CPE21S2 (2nd year, 1st sem, Section 2)
+                </small>
             </div>
-            <form id="editSectionForm" onsubmit="submitEditSection(event)">
-                {% csrf_token %}
-                <input type="hidden" id="edit_section_id" name="section_id">
+            <div class="form-group">
+                <label>Curriculum</label>
+                <select name="curriculum" required>
+                    {% for curriculum in curricula %}
+                    <option value="{{ curriculum.id }}">{{ curriculum.name }} ({{ curriculum.year }})</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-row">
                 <div class="form-group">
-                    <label>Section Name</label>
-                    <input type="text" name="name" id="edit_name" required>
-                </div>
-                <div class="form-group">
-                    <label>Curriculum</label>
-                    <select name="curriculum" id="edit_curriculum" required>
-                        {% for curriculum in curricula %}
-                        <option value="{{ curriculum.id }}">{{ curriculum.name }} ({{ curriculum.year }})</option>
-                        {% endfor %}
+                    <label>Year Level</label>
+                    <select name="year_level" id="add_year_level" required onchange="updateSectionNameHint('add')">
+                        <option value="1">1st Year</option>
+                        <option value="2">2nd Year</option>
+                        <option value="3">3rd Year</option>
+                        <option value="4">4th Year</option>
                     </select>
                 </div>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>Year Level</label>
-                        <select name="year_level" id="edit_year_level" required>
-                            <option value="1">1st Year</option>
-                            <option value="2">2nd Year</option>
-                            <option value="3">3rd Year</option>
-                            <option value="4">4th Year</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label>Semester</label>
-                        <select name="semester" id="edit_semester" required>
-                            <option value="1">1st Semester</option>
-                            <option value="2">2nd Semester</option>
-                        </select>
-                    </div>
+                <div class="form-group">
+                    <label>Semester</label>
+                    <select name="semester" id="add_semester" required onchange="updateSectionNameHint('add')">
+                        <option value="1">1st Semester</option>
+                        <option value="2">2nd Semester</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Max Students</label>
+                <input type="number" name="max_students" min="1" value="40" required>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-secondary" onclick="closeModal('addSectionModal')">Cancel</button>
+                <button type="submit" class="btn-primary">Add Section</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Edit Section Modal -->
+<div id="editSectionModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Edit Section</h2>
+            <span class="close" onclick="closeModal('editSectionModal')">&times;</span>
+        </div>
+        <form id="editSectionForm" onsubmit="submitEditSection(event)">
+            {% csrf_token %}
+            <input type="hidden" id="edit_section_id" name="section_id">
+            <div class="form-group">
+                <label>Section Name</label>
+                <input type="text" 
+                       name="name" 
+                       id="edit_name" 
+                       required>
+                <small style="color: #6C757D; font-size: 0.8rem; margin-top: 4px; display: block;">
+                    <strong>Format:</strong> CPE[year][semester]S[number]<br>
+                    Name must match year level and semester below
+                </small>
+            </div>
+            <div class="form-group">
+                <label>Curriculum</label>
+                <select name="curriculum" id="edit_curriculum" required>
+                    {% for curriculum in curricula %}
+                    <option value="{{ curriculum.id }}">{{ curriculum.name }} ({{ curriculum.year }})</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Year Level</label>
+                    <select name="year_level" id="edit_year_level" required onchange="updateSectionNameHint('edit')">
+                        <option value="1">1st Year</option>
+                        <option value="2">2nd Year</option>
+                        <option value="3">3rd Year</option>
+                        <option value="4">4th Year</option>
+                    </select>
                 </div>
                 <div class="form-group">
-                    <label>Max Students</label>
-                    <input type="number" name="max_students" id="edit_max_students" min="1" required>
+                    <label>Semester</label>
+                    <select name="semester" id="edit_semester" required onchange="updateSectionNameHint('edit')">
+                        <option value="1">1st Semester</option>
+                        <option value="2">2nd Semester</option>
+                    </select>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn-secondary" onclick="closeModal('editSectionModal')">Cancel</button>
-                    <button type="submit" class="btn-primary">Save Changes</button>
-                </div>
-            </form>
-        </div>
+            </div>
+            <div class="form-group">
+                <label>Max Students</label>
+                <input type="number" name="max_students" id="edit_max_students" min="1" required>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-secondary" onclick="closeModal('editSectionModal')">Cancel</button>
+                <button type="submit" class="btn-primary">Save Changes</button>
+            </div>
+        </form>
     </div>
+</div>
 
     <script>
         let currentSectionId = null;
@@ -434,9 +451,35 @@
                 });
         }
 
+        // REPLACE the submitAddSection and submitEditSection functions in your section.html <script> tag
         function submitAddSection(event) {
             event.preventDefault();
             const formData = new FormData(event.target);
+            
+            const sectionName = formData.get('name');
+            const yearLevel = formData.get('year_level');
+            const semester = formData.get('semester');
+            
+            // Validate format: CPE[year][semester]S[number]
+            const pattern = /^([A-Z]+)(\d)(\d)S(\d+)$/;
+            const match = sectionName.match(pattern);
+            
+            if (!match) {
+                showNotification('Section name must follow format: CPE[year][semester]S[number]\nExample: CPE11S1', 'error');
+                return;
+            }
+            
+            const [, program, nameYear, nameSem, sectionNum] = match;
+            
+            if (nameYear !== yearLevel) {
+                showNotification(`Section name year (${nameYear}) must match selected year (${yearLevel})\nExpected: ${program}${yearLevel}${semester}S${sectionNum}`, 'error');
+                return;
+            }
+            
+            if (nameSem !== semester) {
+                showNotification(`Section name semester (${nameSem}) must match selected semester (${semester})\nExpected: ${program}${yearLevel}${semester}S${sectionNum}`, 'error');
+                return;
+            }
             
             fetch('/admin/section/add/', {
                 method: 'POST',
@@ -451,11 +494,12 @@
                     showNotification('Section added successfully!', 'success');
                     setTimeout(() => window.location.reload(), 1000);
                 } else {
-                    showNotification('Error adding section: ' + JSON.stringify(data.errors), 'error');
+                    const errorMsg = data.errors ? data.errors.join('\n') : 'Error adding section';
+                    showNotification(errorMsg, 'error');
                 }
             })
             .catch(error => {
-                showNotification('Error adding section', 'error');
+                showNotification('Error: ' + error.message, 'error');
             });
         }
 
@@ -463,6 +507,31 @@
             event.preventDefault();
             const formData = new FormData(event.target);
             const sectionId = document.getElementById('edit_section_id').value;
+            
+            const sectionName = formData.get('name');
+            const yearLevel = formData.get('year_level');
+            const semester = formData.get('semester');
+            
+            // Validate format
+            const pattern = /^([A-Z]+)(\d)(\d)S(\d+)$/;
+            const match = sectionName.match(pattern);
+            
+            if (!match) {
+                showNotification('Section name must follow format: CPE[year][semester]S[number]\nExample: CPE21S2', 'error');
+                return;
+            }
+            
+            const [, program, nameYear, nameSem, sectionNum] = match;
+            
+            if (nameYear !== yearLevel) {
+                showNotification(`Section name year (${nameYear}) must match selected year (${yearLevel})\nExpected: ${program}${yearLevel}${semester}S${sectionNum}`, 'error');
+                return;
+            }
+            
+            if (nameSem !== semester) {
+                showNotification(`Section name semester (${nameSem}) must match selected semester (${semester})\nExpected: ${program}${yearLevel}${semester}S${sectionNum}`, 'error');
+                return;
+            }
             
             fetch(`/admin/section/edit/${sectionId}/`, {
                 method: 'POST',
@@ -477,12 +546,51 @@
                     showNotification('Section updated successfully!', 'success');
                     setTimeout(() => window.location.reload(), 1000);
                 } else {
-                    showNotification('Error updating section: ' + JSON.stringify(data.errors), 'error');
+                    const errorMsg = data.errors ? data.errors.join('\n') : 'Error updating section';
+                    showNotification(errorMsg, 'error');
                 }
             })
             .catch(error => {
-                showNotification('Error updating section', 'error');
+                showNotification('Error: ' + error.message, 'error');
             });
+        }
+
+        // ADD this new function for better notifications
+        function showNotification(message, type) {
+            const notification = document.createElement('div');
+            notification.className = `notification ${type} show`;
+            
+            // Handle multi-line messages
+            if (message.includes('\n')) {
+                notification.style.whiteSpace = 'pre-line';
+                notification.style.textAlign = 'left';
+                notification.style.maxWidth = '500px';
+            }
+            
+            notification.textContent = message;
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+                setTimeout(() => notification.remove(), 300);
+            }, 5000);
+        }
+
+        // ADD this helper function to show format hints
+        function updateSectionNameHint(mode) {
+            const yearSelect = document.getElementById(`${mode}_year_level`);
+            const semesterSelect = document.getElementById(`${mode}_semester`);
+            const nameInput = document.getElementById(`${mode === 'add' ? 'add_section_name' : 'edit_name'}`);
+            
+            if (yearSelect && semesterSelect && nameInput) {
+                const year = yearSelect.value;
+                const semester = semesterSelect.value;
+                
+                if (year && semester) {
+                    const suggested = `CPE${year}${semester}S1`;
+                    nameInput.placeholder = `e.g., ${suggested}`;
+                }
+            }
         }
 
         function deleteSection(sectionId, sectionName) {

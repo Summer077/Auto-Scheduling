@@ -4,6 +4,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from django.utils import timezone
+from django.core.exceptions import ValidationError
 from datetime import datetime, timedelta
 from .models import Course, Curriculum, Activity, Faculty, Section, Schedule
 from .forms import CourseForm, CurriculumForm
@@ -394,18 +395,29 @@ def section_view(request):
     
     return render(request, 'hello/section.html', context)
 
+# REPLACE these functions in your hello/views.py file
+
 @login_required(login_url='admin_login')
 def add_section(request):
-    """Add new section"""
+    """Add new section with validation"""
     if request.method == 'POST':
         try:
-            section = Section.objects.create(
-                name=request.POST.get('name'),
-                curriculum_id=request.POST.get('curriculum'),
-                year_level=request.POST.get('year_level'),
-                semester=request.POST.get('semester'),
-                max_students=request.POST.get('max_students', 40)
+            name = request.POST.get('name')
+            curriculum_id = request.POST.get('curriculum')
+            year_level = int(request.POST.get('year_level'))
+            semester = int(request.POST.get('semester'))
+            max_students = int(request.POST.get('max_students', 40))
+            
+            section = Section(
+                name=name,
+                curriculum_id=curriculum_id,
+                year_level=year_level,
+                semester=semester,
+                max_students=max_students
             )
+            
+            section.full_clean()
+            section.save()
             
             log_activity(
                 user=request.user,
@@ -416,23 +428,44 @@ def add_section(request):
             )
             
             return JsonResponse({'success': True})
+            
+        except ValidationError as e:
+            error_messages = []
+            if hasattr(e, 'error_dict'):
+                for field, errors in e.error_dict.items():
+                    for error in errors:
+                        error_messages.append(error.message)
+            else:
+                error_messages = [str(e)]
+            
+            return JsonResponse({
+                'success': False, 
+                'errors': error_messages
+            })
+            
         except Exception as e:
-            return JsonResponse({'success': False, 'errors': str(e)})
+            return JsonResponse({
+                'success': False, 
+                'errors': [str(e)]
+            })
     
     return JsonResponse({'success': False})
 
+
 @login_required(login_url='admin_login')
 def edit_section(request, section_id):
-    """Edit existing section"""
+    """Edit existing section with validation"""
     section = get_object_or_404(Section, id=section_id)
     
     if request.method == 'POST':
         try:
             section.name = request.POST.get('name')
             section.curriculum_id = request.POST.get('curriculum')
-            section.year_level = request.POST.get('year_level')
-            section.semester = request.POST.get('semester')
-            section.max_students = request.POST.get('max_students')
+            section.year_level = int(request.POST.get('year_level'))
+            section.semester = int(request.POST.get('semester'))
+            section.max_students = int(request.POST.get('max_students'))
+            
+            section.full_clean()
             section.save()
             
             log_activity(
@@ -444,10 +477,27 @@ def edit_section(request, section_id):
             )
             
             return JsonResponse({'success': True})
+            
+        except ValidationError as e:
+            error_messages = []
+            if hasattr(e, 'error_dict'):
+                for field, errors in e.error_dict.items():
+                    for error in errors:
+                        error_messages.append(error.message)
+            else:
+                error_messages = [str(e)]
+            
+            return JsonResponse({
+                'success': False, 
+                'errors': error_messages
+            })
+            
         except Exception as e:
-            return JsonResponse({'success': False, 'errors': str(e)})
+            return JsonResponse({
+                'success': False, 
+                'errors': [str(e)]
+            })
     
-    # Return section data for editing
     return JsonResponse({
         'id': section.id,
         'name': section.name,
