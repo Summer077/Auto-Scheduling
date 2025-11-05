@@ -543,7 +543,7 @@ body {
     font-weight: 500;
 }
 
-/* Sections Container - White block like in image */
+/* Sections Container - Scrollable with proper structure */
 .sections-container {
     background: #FFFFFF;
     border-radius: 12px;
@@ -553,6 +553,27 @@ body {
     display: flex;
     flex-direction: column;
     gap: 20px;
+    max-height: 600px; /* Set maximum height */
+    overflow-y: auto; /* Enable vertical scrolling */
+}
+
+/* Scrollbar Styling for Sections Container */
+.sections-container::-webkit-scrollbar {
+    width: 10px;
+}
+
+.sections-container::-webkit-scrollbar-track {
+    background: #F8F9FA;
+    border-radius: 5px;
+}
+
+.sections-container::-webkit-scrollbar-thumb {
+    background: #ADB5BD;
+    border-radius: 5px;
+}
+
+.sections-container::-webkit-scrollbar-thumb:hover {
+    background: #6C757D;
 }
 
 /* Top Controls */
@@ -640,7 +661,7 @@ body {
     fill: #212529;
 }
 
-/* Section Cards */
+/* Section Cards - Fixed to prevent nesting */
 .section-card {
     background: #FFFFFF;
     border-radius: 12px;
@@ -650,6 +671,7 @@ body {
     transition: border-color 0.2s ease, transform 0.2s ease;
     cursor: pointer;
     width: 100%;
+    flex-shrink: 0; /* Prevent cards from shrinking */
 }
 
 .section-card.selected {
@@ -661,6 +683,7 @@ body {
     transform: translateY(-4px);
     box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
 }
+
 
 /* Card Header */
 .card-header {
@@ -718,28 +741,29 @@ body {
     fill: currentColor;
 }
 
-/* Card Body */
+/* Update Card Body to display horizontally */
 .card-body {
     padding: 20px 0;
 }
 
 .info-row {
-    display: flex;
-    justify-content: space-between;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr); /* 4 equal columns */
+    gap: 20px; /* Space between columns */
     margin-bottom: 0;
+    width: 100%;
 }
 
 .info-row:first-child {
-    padding-bottom: 20px;
-    margin-bottom: 20px;
-    border-bottom: 1px solid #E9ECEF;
+    padding-bottom: 0;
+    margin-bottom: 0;
+    border-bottom: none;
 }
 
 .info-group {
     display: flex;
     flex-direction: column;
     gap: 8px;
-    flex: 1;
     text-align: left;
 }
 
@@ -757,6 +781,7 @@ body {
     font-size: 0.9rem;
     font-weight: 600;
     color: #212529;
+    word-wrap: break-word;
 }
 
 /* Card Footer */
@@ -1189,5 +1214,28 @@ body {
     
     .courses-sidebar {
         display: none;
+    }
+}
+
+@media (max-width: 1024px) {
+    .info-row {
+        grid-template-columns: repeat(2, 1fr); /* 2 columns on tablets */
+        gap: 16px 20px;
+    }
+}
+
+@media (max-width: 768px) {
+    .sections-container {
+        max-height: 500px;
+        padding: 20px;
+    }
+    
+    .section-card {
+        padding: 20px;
+    }
+    
+    .info-row {
+        grid-template-columns: 1fr; /* 1 column on mobile */
+        gap: 12px;
     }
 }

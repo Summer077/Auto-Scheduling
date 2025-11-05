@@ -133,8 +133,6 @@
                                     <div class="info-label">SECTION</div>
                                     <div class="info-value">{{ section.section|default:section.name }}</div>
                                 </div>
-                            </div>
-                            <div class="info-row">
                                 <div class="info-group">
                                     <div class="info-label">SEMESTER</div>
                                     <div class="info-value">
@@ -230,125 +228,123 @@
         </div>
     </main>
 
-    <!-- REPLACE the Add Section Modal and Edit Section Modal in your section.html -->
-
-<!-- Add Section Modal -->
-<div id="addSectionModal" class="modal">
-    <div class="modal-content">
-        <div class="modal-header">
-            <h2>Add New Section</h2>
-            <span class="close" onclick="closeModal('addSectionModal')">&times;</span>
+    <!-- Add Section Modal -->
+    <div id="addSectionModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Add New Section</h2>
+                <span class="close" onclick="closeModal('addSectionModal')">&times;</span>
+            </div>
+            <form id="addSectionForm" onsubmit="submitAddSection(event)">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label>Section Name</label>
+                    <input type="text" 
+                        name="name" 
+                        id="add_section_name"
+                        placeholder="e.g., CPE11S1" 
+                        required>
+                    <small style="color: #6C757D; font-size: 0.8rem; margin-top: 4px; display: block;">
+                        <strong>Format:</strong> CPE[year][semester]S[number]<br>
+                        <strong>Examples:</strong> CPE11S1 (1st year, 1st sem, Section 1), CPE21S2 (2nd year, 1st sem, Section 2)
+                    </small>
+                </div>
+                <div class="form-group">
+                    <label>Curriculum</label>
+                    <select name="curriculum" required>
+                        {% for curriculum in curricula %}
+                        <option value="{{ curriculum.id }}">{{ curriculum.name }} ({{ curriculum.year }})</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Year Level</label>
+                        <select name="year_level" id="add_year_level" required onchange="updateSectionNameHint('add')">
+                            <option value="1">1st Year</option>
+                            <option value="2">2nd Year</option>
+                            <option value="3">3rd Year</option>
+                            <option value="4">4th Year</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Semester</label>
+                        <select name="semester" id="add_semester" required onchange="updateSectionNameHint('add')">
+                            <option value="1">1st Semester</option>
+                            <option value="2">2nd Semester</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Max Students</label>
+                    <input type="number" name="max_students" min="1" value="40" required>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-secondary" onclick="closeModal('addSectionModal')">Cancel</button>
+                    <button type="submit" class="btn-primary">Add Section</button>
+                </div>
+            </form>
         </div>
-        <form id="addSectionForm" onsubmit="submitAddSection(event)">
-            {% csrf_token %}
-            <div class="form-group">
-                <label>Section Name</label>
-                <input type="text" 
-                       name="name" 
-                       id="add_section_name"
-                       placeholder="e.g., CPE11S1" 
-                       required>
-                <small style="color: #6C757D; font-size: 0.8rem; margin-top: 4px; display: block;">
-                    <strong>Format:</strong> CPE[year][semester]S[number]<br>
-                    <strong>Examples:</strong> CPE11S1 (1st year, 1st sem, Section 1), CPE21S2 (2nd year, 1st sem, Section 2)
-                </small>
-            </div>
-            <div class="form-group">
-                <label>Curriculum</label>
-                <select name="curriculum" required>
-                    {% for curriculum in curricula %}
-                    <option value="{{ curriculum.id }}">{{ curriculum.name }} ({{ curriculum.year }})</option>
-                    {% endfor %}
-                </select>
-            </div>
-            <div class="form-row">
-                <div class="form-group">
-                    <label>Year Level</label>
-                    <select name="year_level" id="add_year_level" required onchange="updateSectionNameHint('add')">
-                        <option value="1">1st Year</option>
-                        <option value="2">2nd Year</option>
-                        <option value="3">3rd Year</option>
-                        <option value="4">4th Year</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>Semester</label>
-                    <select name="semester" id="add_semester" required onchange="updateSectionNameHint('add')">
-                        <option value="1">1st Semester</option>
-                        <option value="2">2nd Semester</option>
-                    </select>
-                </div>
-            </div>
-            <div class="form-group">
-                <label>Max Students</label>
-                <input type="number" name="max_students" min="1" value="40" required>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn-secondary" onclick="closeModal('addSectionModal')">Cancel</button>
-                <button type="submit" class="btn-primary">Add Section</button>
-            </div>
-        </form>
     </div>
-</div>
 
-<!-- Edit Section Modal -->
-<div id="editSectionModal" class="modal">
-    <div class="modal-content">
-        <div class="modal-header">
-            <h2>Edit Section</h2>
-            <span class="close" onclick="closeModal('editSectionModal')">&times;</span>
+    <!-- Edit Section Modal -->
+    <div id="editSectionModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Edit Section</h2>
+                <span class="close" onclick="closeModal('editSectionModal')">&times;</span>
+            </div>
+            <form id="editSectionForm" onsubmit="submitEditSection(event)">
+                {% csrf_token %}
+                <input type="hidden" id="edit_section_id" name="section_id">
+                <div class="form-group">
+                    <label>Section Name</label>
+                    <input type="text" 
+                        name="name" 
+                        id="edit_name" 
+                        required>
+                    <small style="color: #6C757D; font-size: 0.8rem; margin-top: 4px; display: block;">
+                        <strong>Format:</strong> CPE[year][semester]S[number]<br>
+                        Name must match year level and semester below
+                    </small>
+                </div>
+                <div class="form-group">
+                    <label>Curriculum</label>
+                    <select name="curriculum" id="edit_curriculum" required>
+                        {% for curriculum in curricula %}
+                        <option value="{{ curriculum.id }}">{{ curriculum.name }} ({{ curriculum.year }})</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Year Level</label>
+                        <select name="year_level" id="edit_year_level" required onchange="updateSectionNameHint('edit')">
+                            <option value="1">1st Year</option>
+                            <option value="2">2nd Year</option>
+                            <option value="3">3rd Year</option>
+                            <option value="4">4th Year</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Semester</label>
+                        <select name="semester" id="edit_semester" required onchange="updateSectionNameHint('edit')">
+                            <option value="1">1st Semester</option>
+                            <option value="2">2nd Semester</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Max Students</label>
+                    <input type="number" name="max_students" id="edit_max_students" min="1" required>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-secondary" onclick="closeModal('editSectionModal')">Cancel</button>
+                    <button type="submit" class="btn-primary">Save Changes</button>
+                </div>
+            </form>
         </div>
-        <form id="editSectionForm" onsubmit="submitEditSection(event)">
-            {% csrf_token %}
-            <input type="hidden" id="edit_section_id" name="section_id">
-            <div class="form-group">
-                <label>Section Name</label>
-                <input type="text" 
-                       name="name" 
-                       id="edit_name" 
-                       required>
-                <small style="color: #6C757D; font-size: 0.8rem; margin-top: 4px; display: block;">
-                    <strong>Format:</strong> CPE[year][semester]S[number]<br>
-                    Name must match year level and semester below
-                </small>
-            </div>
-            <div class="form-group">
-                <label>Curriculum</label>
-                <select name="curriculum" id="edit_curriculum" required>
-                    {% for curriculum in curricula %}
-                    <option value="{{ curriculum.id }}">{{ curriculum.name }} ({{ curriculum.year }})</option>
-                    {% endfor %}
-                </select>
-            </div>
-            <div class="form-row">
-                <div class="form-group">
-                    <label>Year Level</label>
-                    <select name="year_level" id="edit_year_level" required onchange="updateSectionNameHint('edit')">
-                        <option value="1">1st Year</option>
-                        <option value="2">2nd Year</option>
-                        <option value="3">3rd Year</option>
-                        <option value="4">4th Year</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>Semester</label>
-                    <select name="semester" id="edit_semester" required onchange="updateSectionNameHint('edit')">
-                        <option value="1">1st Semester</option>
-                        <option value="2">2nd Semester</option>
-                    </select>
-                </div>
-            </div>
-            <div class="form-group">
-                <label>Max Students</label>
-                <input type="number" name="max_students" id="edit_max_students" min="1" required>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn-secondary" onclick="closeModal('editSectionModal')">Cancel</button>
-                <button type="submit" class="btn-primary">Save Changes</button>
-            </div>
-        </form>
     </div>
-</div>
 
     <script>
         let currentSectionId = null;
