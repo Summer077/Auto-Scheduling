@@ -865,6 +865,7 @@ body {
     border-bottom: none;
 }
 
+
 .schedule-block {
     position: absolute;
     top: 2px;
@@ -876,8 +877,12 @@ body {
     flex-direction: column;
     justify-content: flex-start;
     gap: 4px;
-    border-left: 3px solid rgba(0, 0, 0, 0.15);
+    border-left: 5px solid;
+    border-top: 1px solid #DEE2E6;
+    border-right: 1px solid #DEE2E6;
+    border-bottom: 1px solid #DEE2E6;
     z-index: 10;
+    box-sizing: border-box;
 }
 
 .course-code {

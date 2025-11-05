@@ -419,6 +419,8 @@ body {
 .schedule-table tbody td.schedule-cell.occupied {
     padding: 8px;
     vertical-align: top;
+    box-sizing: border-box;
+    position: relative;
 }
 
 .schedule-item {

@@ -86,3 +86,39 @@ def auto_color(value):
         return color_palette[hash_int % len(color_palette)]
     
     return '#FFA726'
+
+
+@register.filter
+def rgba_25(hex_color):
+    """
+    Convert a hex color (#RRGGBB or RRGGBB) into an rgba string with 0.25 alpha.
+    If input is invalid, return a sensible fallback rgba(255,167,38,0.25) (matches #FFA726 with 25% opacity).
+    """
+    if not hex_color:
+        return 'rgba(255,167,38,0.25)'
+
+    # Normalize the string
+    c = str(hex_color).strip()
+    if c.startswith('#'):
+        c = c[1:]
+
+    # Support short form like 'FAB' -> 'FFAABB'
+    if len(c) == 3:
+        try:
+            r = int(c[0]*2, 16)
+            g = int(c[1]*2, 16)
+            b = int(c[2]*2, 16)
+            return f'rgba({r},{g},{b},0.25)'
+        except Exception:
+            return 'rgba(255,167,38,0.25)'
+
+    if len(c) != 6:
+        return 'rgba(255,167,38,0.25)'
+
+    try:
+        r = int(c[0:2], 16)
+        g = int(c[2:4], 16)
+        b = int(c[4:6], 16)
+        return f'rgba({r},{g},{b},0.25)'
+    except Exception:
+        return 'rgba(255,167,38,0.25)'

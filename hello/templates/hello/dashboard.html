@@ -215,7 +215,7 @@
                                 <td data-day="{{ day_num }}">
                                     {% for schedule in schedules %}
                                         {% if schedule.day == day_num and schedule.start_time == time %}
-                                        <div class="schedule-block" style="background: {{ schedule.course.color }}; height: {{ schedule.duration|schedule_height }}px; border-left-color: {{ schedule.course.color }};">
+                                        <div class="schedule-block" style="background: {{ schedule.course.color|rgba_25 }}; height: {{ schedule.duration|schedule_height }}px; border-left-color: {{ schedule.course.color }};">
                                             <div class="course-code">{{ schedule.course.course_code }}</div>
                                             <div class="course-details">{{ schedule.start_time }} - {{ schedule.end_time }}</div>
                                             <div class="course-details">Room: {{ schedule.room.name|default:'TBA' }}</div>
