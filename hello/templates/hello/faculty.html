@@ -443,6 +443,412 @@
         </div>
     </div>
 
-    <script src="{% static 'hello/js/faculty.js' %}"></script>
+    <script>
+        let currentFacultyId = null;
+
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+
+        function toggleDropdown() {
+            document.getElementById('dropdownMenu').classList.toggle('show');
+        }
+
+        function toggleFacultyMenu(event, facultyId) {
+            event.stopPropagation();
+            
+            document.querySelectorAll('.faculty-dropdown-menu').forEach(menu => {
+                if (menu.id !== `facultyMenu${facultyId}`) {
+                    menu.classList.remove('show');
+                }
+            });
+            
+            const menu = document.getElementById(`facultyMenu${facultyId}`);
+            menu.classList.toggle('show');
+        }
+
+        window.onclick = function(event) {
+            if (!event.target.matches('.admin-section') && !event.target.closest('.admin-section')) {
+                document.getElementById('dropdownMenu').classList.remove('show');
+            }
+            
+            if (!event.target.closest('.triple-dot-btn') && !event.target.closest('.faculty-dropdown-menu')) {
+                document.querySelectorAll('.faculty-dropdown-menu').forEach(menu => {
+                    menu.classList.remove('show');
+                });
+            }
+            
+            if (event.target.classList.contains('modal')) {
+                event.target.style.display = 'none';
+            }
+        }
+
+        function filterFaculty() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const cards = document.querySelectorAll('.faculty-card');
+            
+            cards.forEach(card => {
+                const facultyName = card.dataset.facultyName;
+                const email = card.dataset.email;
+                
+                if (facultyName.includes(searchTerm) || email.includes(searchTerm)) {
+                    card.style.display = 'block';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        }
+
+        function openModal(modalId) {
+            document.getElementById(modalId).style.display = 'block';
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+        }
+
+        function openAddFacultyModal() {
+            document.getElementById('addFacultyForm').reset();
+            openModal('addFacultyModal');
+        }
+
+        function openEditFacultyModal(facultyId) {
+            event.stopPropagation();
+            document.querySelectorAll('.faculty-dropdown-menu').forEach(menu => {
+                menu.classList.remove('show');
+            });
+            
+            fetch(`/admin/faculty/edit/${facultyId}/`)
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('edit_faculty_id').value = data.id;
+                    document.getElementById('edit_first_name').value = data.first_name;
+                    document.getElementById('edit_last_name').value = data.last_name;
+                    document.getElementById('edit_email').value = data.email;
+                    document.getElementById('edit_gender').value = data.gender;
+                    document.getElementById('edit_employment_status').value = data.employment_status;
+                    document.getElementById('edit_highest_degree').value = data.highest_degree;
+                    document.getElementById('edit_prc_qualified').checked = data.prc_licensed;
+                    document.getElementById('edit_prc_not_applicable').checked = !data.prc_licensed;
+                    
+                    // Set role
+                    if (data.role === 'admin') {
+                        document.getElementById('edit_role_admin').checked = true;
+                    } else {
+                        document.getElementById('edit_role_staff').checked = true;
+                    }
+                    
+                    // Set specializations
+                    const specializationSelect = document.getElementById('edit_specialization');
+                    Array.from(specializationSelect.options).forEach(option => {
+                        option.selected = data.specialization.includes(parseInt(option.value));
+                    });
+                    
+                    openModal('editFacultyModal');
+                })
+                .catch(error => {
+                    showNotification('Error loading faculty data', 'error');
+                });
+        }
+
+        function submitAddFaculty(event) {
+            event.preventDefault();
+            const formData = new FormData(event.target);
+            
+            // Get selected specializations
+            const specializationSelect = document.getElementById('add_specialization');
+            const selectedOptions = Array.from(specializationSelect.selectedOptions);
+            formData.delete('specialization');
+            selectedOptions.forEach(option => {
+                formData.append('specialization', option.value);
+            });
+            
+            fetch('/admin/faculty/add/', {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: formData,
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showNotification(data.message || 'Faculty added successfully!', 'success');
+                    setTimeout(() => window.location.reload(), 1000);
+                } else {
+                    const errorMsg = data.errors ? data.errors.join('\n') : 'Error adding faculty';
+                    showNotification(errorMsg, 'error');
+                }
+            })
+            .catch(error => {
+                showNotification('Error: ' + error.message, 'error');
+            });
+        }
+
+        function submitEditFaculty(event) {
+            event.preventDefault();
+            const formData = new FormData(event.target);
+            const facultyId = document.getElementById('edit_faculty_id').value;
+            
+            // Get selected specializations
+            const specializationSelect = document.getElementById('edit_specialization');
+            const selectedOptions = Array.from(specializationSelect.selectedOptions);
+            formData.delete('specialization');
+            selectedOptions.forEach(option => {
+                formData.append('specialization', option.value);
+            });
+            
+            fetch(`/admin/faculty/edit/${facultyId}/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: formData,
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showNotification('Faculty updated successfully!', 'success');
+                    setTimeout(() => window.location.reload(), 1000);
+                } else {
+                    const errorMsg = data.errors ? data.errors.join('\n') : 'Error updating faculty';
+                    showNotification(errorMsg, 'error');
+                }
+            })
+            .catch(error => {
+                showNotification('Error: ' + error.message, 'error');
+            });
+        }
+
+        function deleteFaculty(facultyId, facultyName) {
+            event.stopPropagation();
+            document.querySelectorAll('.faculty-dropdown-menu').forEach(menu => {
+                menu.classList.remove('show');
+            });
+            
+            if (confirm(`Are you sure you want to delete ${facultyName}?`)) {
+                fetch(`/admin/faculty/delete/${facultyId}/`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': getCookie('csrftoken')
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        showNotification('Faculty deleted successfully!', 'success');
+                        setTimeout(() => window.location.reload(), 1000);
+                    } else {
+                        showNotification('Error deleting faculty', 'error');
+                    }
+                })
+                .catch(error => {
+                    showNotification('Error deleting faculty', 'error');
+                });
+            }
+        }
+
+        function showNotification(message, type) {
+            const notification = document.createElement('div');
+            notification.className = `notification ${type} show`;
+            
+            if (message.includes('\n')) {
+                notification.style.whiteSpace = 'pre-line';
+                notification.style.textAlign = 'left';
+                notification.style.maxWidth = '500px';
+            }
+            
+            notification.textContent = message;
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+                setTimeout(() => notification.remove(), 300);
+            }, 5000);
+        }
+
+        function togglePRCQualified(mode) {
+            const qualifiedCheckbox = document.getElementById(`${mode}_prc_qualified`);
+            const naCheckbox = document.getElementById(`${mode}_prc_not_applicable`);
+            
+            if (naCheckbox.checked) {
+                qualifiedCheckbox.checked = false;
+                qualifiedCheckbox.disabled = true;
+            } else {
+                qualifiedCheckbox.disabled = false;
+            }
+        }
+
+        function loadFacultySchedule(facultyId, facultyName, email, totalUnits) {
+            currentFacultyId = facultyId;
+            
+            // Update selected state
+            document.querySelectorAll('.faculty-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+            event.currentTarget.classList.add('selected');
+            
+            // Show schedule view
+            document.getElementById('scheduleEmptyState').style.display = 'none';
+            document.getElementById('scheduleView').style.display = 'block';
+            
+            // Update header
+            document.getElementById('scheduleFacultyName').textContent = facultyName;
+            document.getElementById('scheduleFacultyEmail').textContent = email;
+            document.getElementById('sidebarTotalUnits').textContent = `${totalUnits} units`;
+            
+            // Fetch schedule data
+            fetch(`/admin/faculty/${facultyId}/schedule-data/`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.success !== false) {
+                        renderSchedule(data.schedules || []);
+                        renderSpecializations(data.specializations || []);
+                    } else {
+                        showNotification('Error: ' + (data.error || 'Unknown error'), 'error');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading schedule:', error);
+                    showNotification('Error loading schedule: ' + error.message, 'error');
+                });
+        }
+
+        function renderSchedule(schedules) {
+            console.log('Rendering schedules:', schedules);
+            
+            // Generate time slots and labels
+            const timeSlots = generateTimeSlots();
+            const timeColumn = document.getElementById('timeColumn');
+            timeColumn.innerHTML = '';
+            
+            timeSlots.forEach(time => {
+                const label = document.createElement('div');
+                label.className = 'time-label';
+                label.textContent = time;
+                label.style.top = `${calculateTopPosition(time)}px`;
+                timeColumn.appendChild(label);
+            });
+            
+            // Clear all day columns
+            document.querySelectorAll('.schedule-day-column').forEach(col => {
+                col.innerHTML = '';
+            });
+            
+            // Render schedule blocks
+            schedules.forEach(schedule => {
+                const dayColumn = document.querySelector(`.schedule-day-column[data-day="${schedule.day}"]`);
+                if (!dayColumn) return;
+                
+                const block = document.createElement('div');
+                block.className = 'schedule-block';
+                
+                const topPos = calculateTopPosition(schedule.start_time);
+                const duration = schedule.duration || calculateDuration(schedule.start_time, schedule.end_time);
+                const height = (duration / 30) * 60;
+                
+                const hexColor = schedule.course_color;
+                block.style.backgroundColor = hexToRGBA(hexColor, 0.25);
+                block.style.borderLeftColor = hexColor;
+                block.style.top = `${topPos}px`;
+                block.style.height = `${height}px`;
+                
+                block.innerHTML = `
+                    <div class="schedule-course-code">${schedule.course_code}</div>
+                    <div class="schedule-details">${schedule.start_time} - ${schedule.end_time}</div>
+                    <div class="schedule-details">Room: ${schedule.room}</div>
+                    <div class="schedule-details">Section: ${schedule.section_name}</div>
+                `;
+                
+                dayColumn.appendChild(block);
+            });
+        }
+
+        function calculateTopPosition(timeStr) {
+            const [hours, minutes] = timeStr.split(':').map(Number);
+            const totalMinutes = (hours * 60 + minutes) - (7 * 60);
+            return (totalMinutes / 30) * 60;
+        }
+
+        function hexToRGBA(hex, alpha) {
+            const r = parseInt(hex.slice(1, 3), 16);
+            const g = parseInt(hex.slice(3, 5), 16);
+            const b = parseInt(hex.slice(5, 7), 16);
+            return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+        }
+
+        function renderSpecializations(specializations) {
+            console.log('Rendering specializations:', specializations);
+            
+            const specializationsList = document.getElementById('specializationsList');
+            specializationsList.innerHTML = '';
+            
+            if (!specializations || specializations.length === 0) {
+                specializationsList.innerHTML = '<div class="card-empty-message">No specializations</div>';
+                return;
+            }
+            
+            specializations.forEach(spec => {
+                const specItem = document.createElement('div');
+                specItem.className = 'specialization-item';
+                specItem.style.borderLeftColor = spec.color;
+                specItem.innerHTML = `
+                    <div class="specialization-details">
+                        <div class="specialization-code">${spec.course_code}</div>
+                        <div class="specialization-title">${spec.descriptive_title}</div>
+                    </div>
+                `;
+                specializationsList.appendChild(specItem);
+            });
+        }
+
+        function generateTimeSlots() {
+            const slots = [];
+            slots.push('07:30');
+            for (let hour = 8; hour <= 21; hour++) {
+                slots.push(`${hour.toString().padStart(2, '0')}:00`);
+                if (hour < 21) {
+                    slots.push(`${hour.toString().padStart(2, '0')}:30`);
+                }
+            }
+            slots.push('21:30');
+            return slots;
+        }
+
+        function calculateDuration(startTime, endTime) {
+            const [startHour, startMin] = startTime.split(':').map(Number);
+            const [endHour, endMin] = endTime.split(':').map(Number);
+            const duration = (endHour * 60 + endMin) - (startHour * 60 + startMin);
+            return duration;
+        }
+
+        function exportSchedule() {
+            if (currentFacultyId) {
+                window.location.href = `/admin/faculty/${currentFacultyId}/export-pdf/`;
+            }
+        }
+
+        function printSchedule() {
+            if (currentFacultyId) {
+                window.print();
+            }
+        }
+    </script>
 </body>
 </html>
