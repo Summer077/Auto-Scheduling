@@ -197,22 +197,31 @@
 
                     <div class="schedule-content">
                         <div class="schedule-grid-wrapper">
-                            <table class="schedule-table">
-                                <thead>
-                                    <tr>
-                                        <th class="time-column"></th>
-                                        <th>MONDAY</th>
-                                        <th>TUESDAY</th>
-                                        <th>WEDNESDAY</th>
-                                        <th>THURSDAY</th>
-                                        <th>FRIDAY</th>
-                                        <th>SATURDAY</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="scheduleTableBody">
-                                    <!-- Schedule will be populated by JavaScript -->
-                                </tbody>
-                            </table>
+                            <div class="schedule-grid">
+                                <!-- Header Row -->
+                                <div class="schedule-header-row">
+                                    <div class="schedule-header-cell"></div>
+                                    <div class="schedule-header-cell">MONDAY</div>
+                                    <div class="schedule-header-cell">TUESDAY</div>
+                                    <div class="schedule-header-cell">WEDNESDAY</div>
+                                    <div class="schedule-header-cell">THURSDAY</div>
+                                    <div class="schedule-header-cell">FRIDAY</div>
+                                    <div class="schedule-header-cell">SATURDAY</div>
+                                </div>
+
+                                <!-- Time Column -->
+                                <div class="schedule-time-column" id="timeColumn">
+                                    <!-- Time labels will be added by JavaScript -->
+                                </div>
+
+                                <!-- Day Columns -->
+                                <div class="schedule-day-column" data-day="0"></div>
+                                <div class="schedule-day-column" data-day="1"></div>
+                                <div class="schedule-day-column" data-day="2"></div>
+                                <div class="schedule-day-column" data-day="3"></div>
+                                <div class="schedule-day-column" data-day="4"></div>
+                                <div class="schedule-day-column" data-day="5"></div>
+                            </div>
                         </div>
 
                         <div class="courses-sidebar">
@@ -670,85 +679,66 @@
                 });
         }
 
-        // Fixed renderSchedule function that properly handles schedule blocks
+        // Fixed renderSchedule function using grid layout like dashboard
         function renderSchedule(schedules) {
             console.log('Rendering schedules:', schedules);
             
+            // Generate time slots and labels
             const timeSlots = generateTimeSlots();
-            const tbody = document.getElementById('scheduleTableBody');
-            tbody.innerHTML = '';
+            const timeColumn = document.getElementById('timeColumn');
+            timeColumn.innerHTML = '';
             
-            // Create a map for quick schedule lookup
-            const scheduleMap = {};
+            // Add time labels at proper positions
+            timeSlots.forEach(time => {
+                const label = document.createElement('div');
+                label.className = 'time-label';
+                label.textContent = time;
+                label.style.top = `${calculateTopPosition(time)}px`;
+                timeColumn.appendChild(label);
+            });
+            
+            // Clear all day columns
+            document.querySelectorAll('.schedule-day-column').forEach(col => {
+                col.innerHTML = '';
+            });
+            
+            // Render schedule blocks
             schedules.forEach(schedule => {
-                const key = `${schedule.day}-${schedule.start_time}`;
-                scheduleMap[key] = schedule;
+                const dayColumn = document.querySelector(`.schedule-day-column[data-day="${schedule.day}"]`);
+                if (!dayColumn) return;
+                
+                const block = document.createElement('div');
+                block.className = 'schedule-block';
+                
+                // Calculate position and height
+                const topPos = calculateTopPosition(schedule.start_time);
+                const duration = schedule.duration || calculateDuration(schedule.start_time, schedule.end_time);
+                const height = (duration / 30) * 60; // 60px per 30 minutes
+                
+                // Apply styles
+                const hexColor = schedule.course_color;
+                block.style.backgroundColor = hexToRGBA(hexColor, 0.25);
+                block.style.borderLeftColor = hexColor;
+                block.style.top = `${topPos}px`;
+                block.style.height = `${height}px`;
+                
+                // Add content
+                block.innerHTML = `
+                    <div class="schedule-course-code">${schedule.course_code}</div>
+                    <div class="schedule-details">${schedule.start_time} - ${schedule.end_time}</div>
+                    <div class="schedule-details">Room: ${schedule.room}</div>
+                    <div class="schedule-details">Section: ${schedule.section_name}</div>
+                `;
+                
+                dayColumn.appendChild(block);
             });
-            
-            // Track cells that should be skipped due to rowspan
-            const skipCells = {};
-            
-            timeSlots.forEach((time, timeIndex) => {
-                const row = document.createElement('tr');
-                
-                // Add time cell
-                const timeCell = document.createElement('td');
-                timeCell.className = 'time-cell';
-                timeCell.textContent = time;
-                row.appendChild(timeCell);
-                
-                // Add cells for each day (Monday to Saturday = 0 to 5)
-                for (let day = 0; day < 6; day++) {
-                    // Check if this cell should be skipped
-                    if (skipCells[`${day}-${timeIndex}`]) {
-                        continue;
-                    }
-                    
-                    const scheduleKey = `${day}-${time}`;
-                    const schedule = scheduleMap[scheduleKey];
-                    
-                    const cell = document.createElement('td');
-                    cell.className = 'schedule-cell';
-                    
-                    if (schedule) {
-                        // Calculate rowspan based on duration
-                        // Each row is 60px tall and represents 30 minutes
-                        const duration = schedule.duration || calculateDuration(schedule.start_time, schedule.end_time);
-                        const slotsNeeded = Math.round(duration / 30); // 30 min per slot
-                        
-                        console.log(`Schedule: ${schedule.course_code}, Duration: ${duration} mins, Slots needed: ${slotsNeeded}`);
-                        
-                        // Mark future cells in this day column as skipped
-                        for (let i = 1; i < slotsNeeded; i++) {
-                            skipCells[`${day}-${timeIndex + i}`] = true;
-                        }
-                        
-                        cell.rowSpan = slotsNeeded;
-                        cell.className = 'schedule-cell occupied';
-                        
-                        // Apply color with 25% opacity for fill
-                        const hexColor = schedule.course_color;
-                        cell.style.backgroundColor = hexToRGBA(hexColor, 0.25);
-                        cell.style.borderLeft = `5px solid ${hexColor}`;
-                        cell.style.borderTop = '1px solid #DEE2E6';
-                        cell.style.borderRight = '1px solid #DEE2E6';
-                        cell.style.borderBottom = '1px solid #DEE2E6';
-                        
-                        cell.innerHTML = `
-                            <div class="schedule-item">
-                                <div class="schedule-course-code">${schedule.course_code}</div>
-                                <div class="schedule-time">${schedule.start_time} - ${schedule.end_time}</div>
-                                <div class="schedule-room">Room: ${schedule.room}</div>
-                                <div class="schedule-section">Section: ${schedule.section_name}</div>
-                            </div>
-                        `;
-                    }
-                    
-                    row.appendChild(cell);
-                }
-                
-                tbody.appendChild(row);
-            });
+        }
+        
+        // Calculate top position based on time (7:00 AM = 0px)
+        function calculateTopPosition(timeStr) {
+            const [hours, minutes] = timeStr.split(':').map(Number);
+            const totalMinutes = (hours * 60 + minutes) - (7 * 60); // Offset from 7:00 AM
+            return (totalMinutes / 30) * 60; // 60px per 30 minutes
         }
         
         // Helper function to convert hex to rgba
