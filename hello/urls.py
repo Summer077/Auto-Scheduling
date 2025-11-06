@@ -11,21 +11,25 @@ urlpatterns = [
     path('admin/course/delete/<int:course_id>/', views.delete_course, name='delete_course'),
     path('admin/section/<int:section_id>/schedule-data/', views.get_section_schedule, name='get_section_schedule'),
     
-    # Add section CRUD operations
-    path('admin/section/add/', views.add_section, name='add_section'),
-    path('admin/section/edit/<int:section_id>/', views.edit_section, name='edit_section'),
-    path('admin/section/delete/<int:section_id>/', views.delete_section, name='delete_section'),
-    
-    # Add section CRUD operations
+    # Section CRUD operations
     path('admin/section/add/', views.add_section, name='add_section'),
     path('admin/section/edit/<int:section_id>/', views.edit_section, name='edit_section'),
     path('admin/section/delete/<int:section_id>/', views.delete_section, name='delete_section'),
 
+    # Curriculum operations
     path('admin/curriculum/add/', views.add_curriculum, name='add_curriculum'),
     path('admin/curriculum/delete/<int:curriculum_id>/', views.delete_curriculum, name='delete_curriculum'),
-    path('admin/logout/', views.admin_logout, name='admin_logout'),
     path('curriculum/edit/<int:curriculum_id>/', views.edit_curriculum, name='edit_curriculum'),
     
+    # Faculty CRUD operations (NEW!)
+    path('admin/faculty/', views.faculty_view, name='faculty_view'),
+    path('admin/faculty/add/', views.add_faculty, name='add_faculty'),
+    path('admin/faculty/edit/<int:faculty_id>/', views.edit_faculty, name='edit_faculty'),
+    path('admin/faculty/delete/<int:faculty_id>/', views.delete_faculty, name='delete_faculty'),
+    path('admin/faculty/<int:faculty_id>/schedule-data/', views.get_faculty_schedule, name='get_faculty_schedule'),
+    
+    # Auth
+    path('admin/logout/', views.admin_logout, name='admin_logout'),
     path('admin/password-reset/', 
          auth_views.PasswordResetView.as_view(
              template_name='hello/password_reset.html'

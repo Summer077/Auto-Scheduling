@@ -318,18 +318,29 @@
                     </div>
                 </div>
 
-                <!-- Specialization -->
+                <!-- Specialization with Custom Multiselect -->
                 <div class="form-group">
                     <label>Specialization</label>
-                    <div class="specialization-select">
-                        <select id="add_specialization" multiple size="8">
-                            {% for course in courses %}
-                            <option value="{{ course.id }}">{{ course.course_code }} - {{ course.descriptive_title }}</option>
-                            {% endfor %}
-                        </select>
-                        <small style="color: #6C757D; font-size: 0.8rem; margin-top: 4px; display: block;">
-                            Hold Ctrl (Windows) or Cmd (Mac) to select multiple courses
-                        </small>
+                    <div class="custom-multiselect" id="add_multiselect">
+                        <div class="multiselect-header" onclick="toggleMultiselect('add')">
+                            <div class="multiselect-selected">
+                                <span class="multiselect-placeholder">Select specializations...</span>
+                            </div>
+                            <div class="multiselect-arrow"></div>
+                        </div>
+                        <div class="multiselect-dropdown" id="add_dropdown">
+                            <div class="multiselect-search">
+                                <input type="text" placeholder="Search courses (e.g., CHEM, CPE)..." oninput="filterMultiselectOptions('add', this.value)">
+                            </div>
+                            <div class="multiselect-options" id="add_options">
+                                {% for course in courses %}
+                                <div class="multiselect-option" data-value="{{ course.id }}" data-text="{{ course.course_code }} - {{ course.descriptive_title }}" onclick="toggleOption('add', this)">
+                                    <input type="checkbox">
+                                    <span>{{ course.course_code }} - {{ course.descriptive_title }}</span>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -420,18 +431,29 @@
                     </div>
                 </div>
 
-                <!-- Specialization -->
+                <!-- Multiselect Design -->
                 <div class="form-group">
                     <label>Specialization</label>
-                    <div class="specialization-select">
-                        <select id="edit_specialization" multiple size="8">
-                            {% for course in courses %}
-                            <option value="{{ course.id }}">{{ course.course_code }} - {{ course.descriptive_title }}</option>
-                            {% endfor %}
-                        </select>
-                        <small style="color: #6C757D; font-size: 0.8rem; margin-top: 4px; display: block;">
-                            Hold Ctrl (Windows) or Cmd (Mac) to select multiple courses
-                        </small>
+                    <div class="custom-multiselect" id="edit_multiselect">
+                        <div class="multiselect-header" onclick="toggleMultiselect('edit')">
+                            <div class="multiselect-selected">
+                                <span class="multiselect-placeholder">Select specializations...</span>
+                            </div>
+                            <div class="multiselect-arrow">▼</div>
+                        </div>
+                        <div class="multiselect-dropdown" id="edit_dropdown">
+                            <div class="multiselect-search">
+                                <input type="text" placeholder="Search courses..." oninput="filterMultiselectOptions('edit', this.value)">
+                            </div>
+                            <div class="multiselect-options" id="edit_options">
+                                {% for course in courses %}
+                                <div class="multiselect-option" data-value="{{ course.id }}" data-text="{{ course.course_code }} - {{ course.descriptive_title }}" onclick="toggleOption('edit', this)">
+                                    <input type="checkbox">
+                                    <span>{{ course.course_code }} - {{ course.descriptive_title }}</span>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -445,6 +467,10 @@
 
     <script>
         let currentFacultyId = null;
+        const multiselectStates = {
+            add: { selected: [] },
+            edit: { selected: [] }
+        };
 
         function getCookie(name) {
             let cookieValue = null;
@@ -460,6 +486,113 @@
             }
             return cookieValue;
         }
+
+        // Multiselect functions
+        function toggleMultiselect(mode) {
+            const dropdown = document.getElementById(`${mode}_dropdown`);
+            const header = document.querySelector(`#${mode}_multiselect .multiselect-header`);
+            
+            dropdown.classList.toggle('show');
+            header.classList.toggle('active');
+            
+            // Close other multiselect
+            const otherMode = mode === 'add' ? 'edit' : 'add';
+            document.getElementById(`${otherMode}_dropdown`).classList.remove('show');
+            document.querySelector(`#${otherMode}_multiselect .multiselect-header`).classList.remove('active');
+        }
+
+        function toggleOption(mode, element) {
+            event.stopPropagation();
+            const value = element.dataset.value;
+            const text = element.dataset.text;
+            const checkbox = element.querySelector('input[type="checkbox"]');
+            
+            checkbox.checked = !checkbox.checked;
+            element.classList.toggle('selected');
+            
+            if (checkbox.checked) {
+                if (!multiselectStates[mode].selected.includes(value)) {
+                    multiselectStates[mode].selected.push(value);
+                }
+            } else {
+                multiselectStates[mode].selected = multiselectStates[mode].selected.filter(v => v !== value);
+            }
+            
+            updateMultiselectDisplay(mode);
+        }
+
+        function updateMultiselectDisplay(mode) {
+            const selectedContainer = document.querySelector(`#${mode}_multiselect .multiselect-selected`);
+            const selected = multiselectStates[mode].selected;
+            
+            if (selected.length === 0) {
+                selectedContainer.innerHTML = '<span class="multiselect-placeholder">Select specializations...</span>';
+            } else {
+                let html = '';
+                selected.forEach(value => {
+                    const option = document.querySelector(`#${mode}_options .multiselect-option[data-value="${value}"]`);
+                    if (option) {
+                        const text = option.dataset.text.split(' - ')[0]; // Show only course code
+                        html += `<span class="selected-tag">${text}<span class="remove-tag" onclick="removeTag('${mode}', '${value}')">&times;</span></span>`;
+                    }
+                });
+                selectedContainer.innerHTML = html;
+            }
+        }
+
+        function removeTag(mode, value) {
+            event.stopPropagation();
+            multiselectStates[mode].selected = multiselectStates[mode].selected.filter(v => v !== value);
+            
+            const option = document.querySelector(`#${mode}_options .multiselect-option[data-value="${value}"]`);
+            if (option) {
+                option.classList.remove('selected');
+                option.querySelector('input[type="checkbox"]').checked = false;
+            }
+            
+            updateMultiselectDisplay(mode);
+        }
+
+        function filterMultiselectOptions(mode, searchTerm) {
+            const options = document.querySelectorAll(`#${mode}_options .multiselect-option`);
+            const lowerSearch = searchTerm.toLowerCase();
+            let hasResults = false;
+            
+            options.forEach(option => {
+                const text = option.dataset.text.toLowerCase();
+                if (text.includes(lowerSearch)) {
+                    option.style.display = 'flex';
+                    hasResults = true;
+                } else {
+                    option.style.display = 'none';
+                }
+            });
+            
+            // Show "no results" message
+            let noResults = document.querySelector(`#${mode}_options .no-results`);
+            if (!hasResults && searchTerm) {
+                if (!noResults) {
+                    noResults = document.createElement('div');
+                    noResults.className = 'no-results';
+                    noResults.textContent = 'No courses found';
+                    document.getElementById(`${mode}_options`).appendChild(noResults);
+                }
+            } else if (noResults) {
+                noResults.remove();
+            }
+        }
+
+        // Close multiselect when clicking outside
+        document.addEventListener('click', function(event) {
+            if (!event.target.closest('.custom-multiselect')) {
+                document.querySelectorAll('.multiselect-dropdown').forEach(dropdown => {
+                    dropdown.classList.remove('show');
+                });
+                document.querySelectorAll('.multiselect-header').forEach(header => {
+                    header.classList.remove('active');
+                });
+            }
+        });
 
         function toggleDropdown() {
             document.getElementById('dropdownMenu').classList.toggle('show');
@@ -516,10 +649,20 @@
 
         function closeModal(modalId) {
             document.getElementById(modalId).style.display = 'none';
+            // Reset multiselect
+            const mode = modalId.includes('add') ? 'add' : 'edit';
+            multiselectStates[mode].selected = [];
+            document.querySelectorAll(`#${mode}_options .multiselect-option`).forEach(opt => {
+                opt.classList.remove('selected');
+                opt.querySelector('input[type="checkbox"]').checked = false;
+            });
+            updateMultiselectDisplay(mode);
         }
 
         function openAddFacultyModal() {
             document.getElementById('addFacultyForm').reset();
+            multiselectStates.add.selected = [];
+            updateMultiselectDisplay('add');
             openModal('addFacultyModal');
         }
 
@@ -549,11 +692,14 @@
                         document.getElementById('edit_role_staff').checked = true;
                     }
                     
-                    // Set specializations
-                    const specializationSelect = document.getElementById('edit_specialization');
-                    Array.from(specializationSelect.options).forEach(option => {
-                        option.selected = data.specialization.includes(parseInt(option.value));
+                    // Set specializations in multiselect
+                    multiselectStates.edit.selected = data.specialization.map(String);
+                    document.querySelectorAll('#edit_options .multiselect-option').forEach(option => {
+                        const isSelected = data.specialization.includes(parseInt(option.dataset.value));
+                        option.classList.toggle('selected', isSelected);
+                        option.querySelector('input[type="checkbox"]').checked = isSelected;
                     });
+                    updateMultiselectDisplay('edit');
                     
                     openModal('editFacultyModal');
                 })
@@ -566,12 +712,9 @@
             event.preventDefault();
             const formData = new FormData(event.target);
             
-            // Get selected specializations
-            const specializationSelect = document.getElementById('add_specialization');
-            const selectedOptions = Array.from(specializationSelect.selectedOptions);
-            formData.delete('specialization');
-            selectedOptions.forEach(option => {
-                formData.append('specialization', option.value);
+            // Add selected specializations from multiselect
+            multiselectStates.add.selected.forEach(value => {
+                formData.append('specialization', value);
             });
             
             fetch('/admin/faculty/add/', {
@@ -601,12 +744,9 @@
             const formData = new FormData(event.target);
             const facultyId = document.getElementById('edit_faculty_id').value;
             
-            // Get selected specializations
-            const specializationSelect = document.getElementById('edit_specialization');
-            const selectedOptions = Array.from(specializationSelect.selectedOptions);
-            formData.delete('specialization');
-            selectedOptions.forEach(option => {
-                formData.append('specialization', option.value);
+            // Add selected specializations from multiselect
+            multiselectStates.edit.selected.forEach(value => {
+                formData.append('specialization', value);
             });
             
             fetch(`/admin/faculty/edit/${facultyId}/`, {
@@ -731,8 +871,6 @@
         }
 
         function renderSchedule(schedules) {
-            console.log('Rendering schedules:', schedules);
-            
             // Generate time slots and labels
             const timeSlots = generateTimeSlots();
             const timeColumn = document.getElementById('timeColumn');
@@ -794,8 +932,6 @@
         }
 
         function renderSpecializations(specializations) {
-            console.log('Rendering specializations:', specializations);
-            
             const specializationsList = document.getElementById('specializationsList');
             specializationsList.innerHTML = '';
             
