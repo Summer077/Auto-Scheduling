@@ -21,32 +21,48 @@ def ordinal(value):
 
 @register.filter
 def schedule_height(duration_minutes):
-    """Calculate height in pixels for a schedule block (30 min = 60px), always add +30 min."""
+    """
+    Calculate height in pixels for a schedule block.
+    60px = 30 minutes, so 2px per minute.
+    Exact duration - no padding.
+    """
     try:
         duration_minutes = int(duration_minutes)
     except (ValueError, TypeError):
         duration_minutes = 0
 
-    duration_minutes += 30  # always add one 30-min slot
-    px_per_minute = 60 / 30  # 2 px per minute
-    total_height = (duration_minutes * px_per_minute) - 2  # offset for borders
+    # 2 pixels per minute (60px per 30 min slot)
+    total_height = duration_minutes * 2
     return int(total_height)
 
 
 @register.filter
 def schedule_top(start_time):
     """
-    Convert start time (e.g., '07:30') into vertical position in pixels.
-    Each 30-minute slot = 60px height.
-    The base time is 7:00 AM.
+    Calculate the exact top position in pixels from 7:00 AM baseline.
+    Each minute = 2px (30 minutes = 60px)
+    
+    Grid lines are at:
+    - 7:00 -> 0px
+    - 7:30 -> 60px
+    - 8:00 -> 120px
+    - 8:30 -> 180px
+    etc.
+    
+    Examples:
+    - 7:00 -> 0px (on the 7:00 line)
+    - 7:30 -> 60px (on the 7:30 line)
+    - 7:35 -> 70px (5 min = 10px below 7:30 line)
+    - 10:00 -> 360px (on the 10:00 line)
     """
     try:
         hours, minutes = map(int, str(start_time).split(':'))
         total_minutes = (hours * 60) + minutes
-        base_minutes = 7 * 60  # starting point = 7:00 AM
+        base_minutes = 7 * 60  # 7:00 AM baseline
         minutes_from_start = total_minutes - base_minutes
-        px_per_minute = 60 / 30  # 2 px per minute
-        return int(minutes_from_start * px_per_minute)
+        
+        # 2 pixels per minute
+        return int(minutes_from_start * 2)
     except Exception:
         return 0
 
@@ -92,17 +108,15 @@ def auto_color(value):
 def rgba_25(hex_color):
     """
     Convert a hex color (#RRGGBB or RRGGBB) into an rgba string with 0.25 alpha.
-    If input is invalid, return a sensible fallback rgba(255,167,38,0.25) (matches #FFA726 with 25% opacity).
+    If input is invalid, return a sensible fallback rgba(255,167,38,0.25).
     """
     if not hex_color:
         return 'rgba(255,167,38,0.25)'
 
-    # Normalize the string
     c = str(hex_color).strip()
     if c.startswith('#'):
         c = c[1:]
 
-    # Support short form like 'FAB' -> 'FFAABB'
     if len(c) == 3:
         try:
             r = int(c[0]*2, 16)

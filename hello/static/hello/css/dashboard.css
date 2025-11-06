@@ -748,7 +748,8 @@ body {
     flex-shrink: 0;
 }
 
-.schedule-table-container {
+/* GRID-BASED SCHEDULE CONTAINER */
+.schedule-grid-container {
     flex: 1;
     overflow-x: auto;
     overflow-y: auto;
@@ -757,39 +758,38 @@ body {
     position: relative;
 }
 
-.schedule-table-container::-webkit-scrollbar {
+.schedule-grid-container::-webkit-scrollbar {
     width: 10px;
     height: 10px;
 }
 
-.schedule-table-container::-webkit-scrollbar-track {
+.schedule-grid-container::-webkit-scrollbar-track {
     background: #F8F9FA;
 }
 
-.schedule-table-container::-webkit-scrollbar-thumb {
+.schedule-grid-container::-webkit-scrollbar-thumb {
     background: #ADB5BD;
     border-radius: 5px;
 }
 
-.schedule-table-container::-webkit-scrollbar-thumb:hover {
+.schedule-grid-container::-webkit-scrollbar-thumb:hover {
     background: #6C757D;
 }
 
-.schedule-table {
-    width: 100%;
-    border-collapse: separate;
-    border-spacing: 0;
+/* GRID LAYOUT */
+.schedule-grid {
+    display: grid;
+    grid-template-columns: 80px repeat(6, 1fr);
     min-width: 900px;
+    position: relative;
 }
 
-.schedule-table thead {
-    position: sticky;
-    top: 0;
-    z-index: 100;
-    background: #FFFFFF;
+/* HEADER ROW */
+.schedule-header {
+    display: contents;
 }
 
-.schedule-table thead th {
+.schedule-header-cell {
     background: #FFFFFF;
     padding: 14px 12px;
     text-align: center;
@@ -799,76 +799,85 @@ body {
     color: #495057;
     letter-spacing: 0.5px;
     text-transform: uppercase;
-    border-bottom: 1px solid #CED4DA;
-    border-right: 1px solid #DEE2E6;
+    border-bottom: 2px solid #CED4DA;
+    position: sticky;
+    top: 0;
+    z-index: 100;
     min-width: 130px;
 }
 
-.schedule-table thead th:first-child {
+.schedule-header-cell:first-child {
     width: 80px;
     min-width: 80px;
-    max-width: 80px;
-    height: 47px;
     background: #F8F9FA;
-    position: sticky;
-    left: 0;
-    z-index: 101;
     border-right: 2px solid #CED4DA;
+    z-index: 101;
 }
 
-.schedule-table thead th:last-child {
-    border-right: none;
-}
-
-.schedule-table tbody {
-    background: #FFFFFF;
-}
-
-.schedule-table tbody tr {
-    height: 60px;
-}
-
-.schedule-table tbody td {
-    border-bottom: 1px solid #DEE2E6;
-    border-right: 1px solid #DEE2E6;
-    padding: 0;
-    position: relative;
-    vertical-align: top;
-    background: #FFFFFF;
-    height: 60px;
-    min-width: 130px;
-}
-
-.schedule-table tbody td:first-child {
+/* TIME COLUMN (labels on grid lines) */
+.schedule-time-column {
+    grid-column: 1;
+    grid-row: 2;
     background: #F8F9FA;
+    border-right: 2px solid #CED4DA;
+    position: relative;
+    /* Height = (number of 30-min slots) * 60px */
+    /* 7:00 AM to 9:30 PM = 14.5 hours = 29 slots = 1740px */
+    height: 1740px;
+}
+
+.time-label {
+    position: absolute;
+    left: 0;
+    right: 0;
     text-align: center;
     font-family: 'Lexend', sans-serif;
     font-size: 0.75rem;
     font-weight: 600;
     color: #6C757D;
-    padding: 8px 5px;
-    width: 80px;
-    min-width: 80px;
-    max-width: 80px;
-    border-right: 2px solid #CED4DA;
-    vertical-align: middle;
-    position: sticky;
-    left: 0;
-    z-index: 50;
+    /* Center the label on the grid line */
+    transform: translateY(-50%);
+    background: #F8F9FA;
+    padding: 4px 0;
+    z-index: 10;
 }
 
-.schedule-table tbody td:last-child {
+/* DAY COLUMNS (with horizontal grid lines) */
+.schedule-day-column {
+    position: relative;
+    border-right: 1px solid #DEE2E6;
+    /* Same height as time column */
+    height: 1740px;
+    background: #FFFFFF;
+}
+
+.schedule-day-column:last-child {
     border-right: none;
 }
 
-.schedule-table tbody tr:last-child td {
-    border-bottom: none;
+/* HORIZONTAL GRID LINES (only in day columns) */
+.schedule-day-column::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    /* Create horizontal lines every 60px (30 minutes) */
+    background-image: repeating-linear-gradient(
+        to bottom,
+        #DEE2E6 0px,
+        #DEE2E6 1px,
+        transparent 1px,
+        transparent 60px
+    );
+    pointer-events: none;
+    z-index: 1;
 }
 
-
+/* SCHEDULE BLOCKS (absolutely positioned) */
 .schedule-block {
     position: absolute;
-    top: 2px;
     left: 6px;
     right: 6px;
     border-radius: 6px;
@@ -883,6 +892,15 @@ body {
     border-bottom: 1px solid #DEE2E6;
     z-index: 10;
     box-sizing: border-box;
+    overflow: hidden;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.schedule-block:hover {
+    z-index: 100;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    transform: scale(1.02);
 }
 
 .course-code {
@@ -891,6 +909,9 @@ body {
     font-weight: 700;
     color: #212529;
     line-height: 1.2;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .course-details {
@@ -899,46 +920,13 @@ body {
     font-weight: 500;
     color: #2d3436;
     line-height: 1.4;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 /* Responsive Design */
-@media (max-width: 1200px) {
-    .content-grid {
-        grid-template-columns: 1fr;
-    }
-}
-
 @media (max-width: 768px) {
-    .sidebar {
-        width: 70px;
-    }
-
-    .nav-item span {
-        display: none;
-    }
-
-    .nav-item {
-        justify-content: center;
-        padding: 14px;
-    }
-
-    .nav-item.active {
-        padding-left: 14px;
-    }
-
-    .main-content {
-        margin-left: 70px;
-        padding: 20px;
-    }
-
-    .top-nav {
-        padding: 0 20px;
-    }
-
-    .page-title {
-        font-size: 1.25rem;
-    }
-
     .schedule-wrapper {
         flex-direction: column;
     }
@@ -948,15 +936,16 @@ body {
         flex-wrap: wrap;
     }
 
-    .schedule-table-container {
+    .schedule-grid-container {
         max-height: 400px;
     }
 
-    .welcome-card h1 {
-        font-size: 1.5rem;
+    .schedule-grid {
+        min-width: 700px;
     }
 
-    .summary-number {
-        font-size: 3rem;
+    .schedule-header-cell {
+        min-width: 100px;
     }
 }
+

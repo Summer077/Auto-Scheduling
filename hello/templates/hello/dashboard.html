@@ -178,6 +178,7 @@
             <h2>Schedule</h2>
             
             <div class="schedule-wrapper">
+                <!-- Left sidebar with course list -->
                 <div class="schedule-left">
                     <div class="courses-label">Courses</div>
                     <div class="courses-list">
@@ -194,41 +195,52 @@
                     </div>
                 </div>
 
-                <div class="schedule-table-container">
-                    <table class="schedule-table">
-                        <thead>
-                            <tr>
-                                <th></th>
-                                <th>MONDAY</th>
-                                <th>TUESDAY</th>
-                                <th>WEDNESDAY</th>
-                                <th>THURSDAY</th>
-                                <th>FRIDAY</th>
-                                <th>SATURDAY</th>
-                            </tr>
-                        </thead>
-                        <tbody>
+                <!-- Grid-based schedule -->
+                <div class="schedule-grid-container">
+                    <div class="schedule-grid">
+                        <!-- Header Row -->
+                        <div class="schedule-header">
+                            <div class="schedule-header-cell"></div>
+                            <div class="schedule-header-cell">MONDAY</div>
+                            <div class="schedule-header-cell">TUESDAY</div>
+                            <div class="schedule-header-cell">WEDNESDAY</div>
+                            <div class="schedule-header-cell">THURSDAY</div>
+                            <div class="schedule-header-cell">FRIDAY</div>
+                            <div class="schedule-header-cell">SATURDAY</div>
+                        </div>
+
+                        <!-- Time Column (labels on grid lines) -->
+                        <div class="schedule-time-column">
                             {% for time in time_slots %}
-                            <tr class="time-row">
-                                <td>{{ time }}</td>
-                                {% for day_num, day_name in days %}
-                                <td data-day="{{ day_num }}">
-                                    {% for schedule in schedules %}
-                                        {% if schedule.day == day_num and schedule.start_time == time %}
-                                        <div class="schedule-block" style="background: {{ schedule.course.color|rgba_25 }}; height: {{ schedule.duration|schedule_height }}px; border-left-color: {{ schedule.course.color }};">
-                                            <div class="course-code">{{ schedule.course.course_code }}</div>
-                                            <div class="course-details">{{ schedule.start_time }} - {{ schedule.end_time }}</div>
-                                            <div class="course-details">Room: {{ schedule.room.name|default:'TBA' }}</div>
-                                            <div class="course-details">Section: {{ schedule.section.name|default:'No Section' }}</div>
-                                        </div>
-                                        {% endif %}
-                                    {% endfor %}
-                                </td>
-                                {% endfor %}
-                            </tr>
+                            <div class="time-label" style="top: {{ time|schedule_top }}px;">
+                                {{ time }}
+                            </div>
                             {% endfor %}
-                        </tbody>
-                    </table>
+                        </div>
+
+                        <!-- Day Columns (Monday to Saturday) -->
+                        {% for day_num, day_name in days %}
+                        <div class="schedule-day-column" data-day="{{ day_num }}">
+                            <!-- Render all schedules for this day -->
+                            {% for schedule in schedules %}
+                                {% if schedule.day == day_num %}
+                                <div class="schedule-block" 
+                                    style="
+                                        background: {{ schedule.course.color|rgba_25 }}; 
+                                        height: {{ schedule.duration|schedule_height }}px; 
+                                        top: {{ schedule.start_time|schedule_top }}px;
+                                        border-left-color: {{ schedule.course.color }};
+                                    ">
+                                    <div class="course-code">{{ schedule.course.course_code }}</div>
+                                    <div class="course-details">{{ schedule.start_time }} - {{ schedule.end_time }}</div>
+                                    <div class="course-details">Room: {{ schedule.room.name|default:'TBA' }}</div>
+                                    <div class="course-details">Section: {{ schedule.section.name|default:'No Section' }}</div>
+                                </div>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                        {% endfor %}
+                    </div>
                 </div>
             </div>
         </div>
