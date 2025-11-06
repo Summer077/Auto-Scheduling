@@ -5,7 +5,12 @@ from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from django.utils import timezone
 from django.core.exceptions import ValidationError
+from django.contrib.auth.models import User
+from django.core.mail import send_mail
+from django.conf import settings
 from datetime import datetime, timedelta
+import random
+import string
 from .models import Course, Curriculum, Activity, Faculty, Section, Schedule
 from .forms import CourseForm, CurriculumForm
 
@@ -145,6 +150,12 @@ def log_activity(user, action, entity_type, entity_name, message):
         entity_name=entity_name,
         message=message
     )
+
+def generate_password(length=12):
+    """Generate a random password"""
+    characters = string.ascii_letters + string.digits + "!@#$%^&*"
+    password = ''.join(random.choice(characters) for i in range(length))
+    return password
 
 @login_required(login_url='admin_login')
 def course_view(request):
@@ -395,8 +406,6 @@ def section_view(request):
     
     return render(request, 'hello/section.html', context)
 
-# REPLACE these functions in your hello/views.py file
-
 @login_required(login_url='admin_login')
 def add_section(request):
     """Add new section with validation"""
@@ -546,7 +555,6 @@ def get_section_schedule(request, section_id):
         print(f"Found {schedules.count()} schedules")
         
         # Get ALL courses for this section's curriculum, year level, and semester
-        # This should return ALL courses, regardless of whether they're scheduled
         courses = Course.objects.filter(
             curriculum=section.curriculum,
             year_level=section.year_level,
@@ -572,9 +580,8 @@ def get_section_schedule(request, section_id):
                 'faculty': f"{schedule.faculty.first_name} {schedule.faculty.last_name}" if schedule.faculty else 'TBA'
             }
             schedule_data.append(schedule_item)
-            print(f"Schedule: {schedule_item['course_code']} - {schedule_item['start_time']} to {schedule_item['end_time']} ({schedule_item['duration']} mins)")
         
-        # Format course data - RETURN ALL COURSES
+        # Format course data
         course_data = []
         for course in courses:
             course_item = {
@@ -587,8 +594,6 @@ def get_section_schedule(request, section_id):
             }
             course_data.append(course_item)
         
-        print(f"\nReturning {len(course_data)} courses and {len(schedule_data)} schedules\n")
-        
         return JsonResponse({
             'success': True,
             'schedules': schedule_data,
@@ -597,6 +602,284 @@ def get_section_schedule(request, section_id):
     except Exception as e:
         import traceback
         print(f"Error in get_section_schedule: {str(e)}")
+        print(traceback.format_exc())
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=500)
+
+# ===== FACULTY VIEWS =====
+
+@login_required(login_url='admin_login')
+def faculty_view(request):
+    """Faculty management page"""
+    if not (request.user.is_staff or request.user.is_superuser):
+        messages.error(request, 'You do not have permission to access this page.')
+        return redirect('admin_login')
+    
+    # Get all faculty members
+    faculties = Faculty.objects.all().order_by('last_name', 'first_name')
+    
+    # Get all courses for specialization selection
+    courses = Course.objects.all().order_by('course_code')
+    
+    context = {
+        'user': request.user,
+        'faculties': faculties,
+        'courses': courses,
+    }
+    
+    return render(request, 'hello/faculty.html', context)
+
+@login_required(login_url='admin_login')
+def add_faculty(request):
+    """Add new faculty member"""
+    if request.method == 'POST':
+        try:
+            # Get form data
+            first_name = request.POST.get('first_name')
+            last_name = request.POST.get('last_name')
+            email = request.POST.get('email')
+            gender = request.POST.get('gender')
+            role = request.POST.get('role')  # 'admin' or 'staff'
+            employment_status = request.POST.get('employment_status')
+            highest_degree = request.POST.get('highest_degree')
+            prc_licensed = request.POST.get('prc_licensed') == 'on'
+            specialization_ids = request.POST.getlist('specialization')
+            
+            # Generate random password
+            password = generate_password()
+            
+            # Create User account
+            username = f"{first_name.lower()}.{last_name.lower()}"
+            base_username = username
+            counter = 1
+            
+            # Ensure unique username
+            while User.objects.filter(username=username).exists():
+                username = f"{base_username}{counter}"
+                counter += 1
+            
+            user = User.objects.create_user(
+                username=username,
+                email=email,
+                password=password,
+                first_name=first_name,
+                last_name=last_name
+            )
+            
+            # Set user permissions based on role
+            if role == 'admin':
+                user.is_staff = True
+                user.is_superuser = True
+            else:
+                user.is_staff = True
+                user.is_superuser = False
+            
+            user.save()
+            
+            # Create Faculty record
+            faculty = Faculty.objects.create(
+                user=user,
+                first_name=first_name,
+                last_name=last_name,
+                email=email,
+                gender=gender,
+                employment_status=employment_status,
+                highest_degree=highest_degree,
+                prc_licensed=prc_licensed
+            )
+            
+            # Add specializations
+            if specialization_ids:
+                courses = Course.objects.filter(id__in=specialization_ids)
+                faculty.specialization.set(courses)
+            
+            # Send email with credentials
+            try:
+                send_mail(
+                    'Your ASSIST Account Credentials',
+                    f'Hello {first_name},\n\n'
+                    f'Your account has been created:\n\n'
+                    f'Username: {username}\n'
+                    f'Password: {password}\n'
+                    f'Role: {role.capitalize()}\n\n'
+                    f'Please login and change your password.\n\n'
+                    f'Best regards,\n'
+                    f'ASSIST Team',
+                    settings.DEFAULT_FROM_EMAIL,
+                    [email],
+                    fail_silently=False,
+                )
+            except Exception as e:
+                print(f"Error sending email: {e}")
+            
+            # Log activity
+            log_activity(
+                user=request.user,
+                action='add',
+                entity_type='faculty',
+                entity_name=f"{first_name} {last_name}",
+                message=f'Added faculty: {first_name} {last_name} ({role})'
+            )
+            
+            return JsonResponse({
+                'success': True,
+                'message': f'Faculty added successfully. Credentials sent to {email}'
+            })
+            
+        except Exception as e:
+            return JsonResponse({
+                'success': False,
+                'errors': [str(e)]
+            })
+    
+    return JsonResponse({'success': False})
+
+@login_required(login_url='admin_login')
+def edit_faculty(request, faculty_id):
+    """Edit existing faculty member"""
+    faculty = get_object_or_404(Faculty, id=faculty_id)
+    
+    if request.method == 'POST':
+        try:
+            faculty.first_name = request.POST.get('first_name')
+            faculty.last_name = request.POST.get('last_name')
+            faculty.email = request.POST.get('email')
+            faculty.gender = request.POST.get('gender')
+            faculty.employment_status = request.POST.get('employment_status')
+            faculty.highest_degree = request.POST.get('highest_degree')
+            faculty.prc_licensed = request.POST.get('prc_licensed') == 'on'
+            
+            # Update specializations
+            specialization_ids = request.POST.getlist('specialization')
+            if specialization_ids:
+                courses = Course.objects.filter(id__in=specialization_ids)
+                faculty.specialization.set(courses)
+            else:
+                faculty.specialization.clear()
+            
+            # Update User account
+            if faculty.user:
+                role = request.POST.get('role')
+                faculty.user.email = faculty.email
+                faculty.user.first_name = faculty.first_name
+                faculty.user.last_name = faculty.last_name
+                
+                if role == 'admin':
+                    faculty.user.is_staff = True
+                    faculty.user.is_superuser = True
+                else:
+                    faculty.user.is_staff = True
+                    faculty.user.is_superuser = False
+                
+                faculty.user.save()
+            
+            faculty.save()
+            
+            # Log activity
+            log_activity(
+                user=request.user,
+                action='edit',
+                entity_type='faculty',
+                entity_name=f"{faculty.first_name} {faculty.last_name}",
+                message=f'Edited faculty: {faculty.first_name} {faculty.last_name}'
+            )
+            
+            return JsonResponse({'success': True})
+            
+        except Exception as e:
+            return JsonResponse({
+                'success': False,
+                'errors': [str(e)]
+            })
+    
+    # Return faculty data for editing
+    specialization_ids = list(faculty.specialization.values_list('id', flat=True))
+    role = 'admin' if faculty.user and faculty.user.is_superuser else 'staff'
+    
+    return JsonResponse({
+        'id': faculty.id,
+        'first_name': faculty.first_name,
+        'last_name': faculty.last_name,
+        'email': faculty.email,
+        'gender': faculty.gender,
+        'role': role,
+        'employment_status': faculty.employment_status,
+        'highest_degree': faculty.highest_degree,
+        'prc_licensed': faculty.prc_licensed,
+        'specialization': specialization_ids
+    })
+
+@login_required(login_url='admin_login')
+def delete_faculty(request, faculty_id):
+    """Delete faculty member"""
+    if request.method == 'POST':
+        faculty = get_object_or_404(Faculty, id=faculty_id)
+        faculty_name = f"{faculty.first_name} {faculty.last_name}"
+        
+        # Delete associated user account
+        if faculty.user:
+            faculty.user.delete()
+        
+        faculty.delete()
+        
+        log_activity(
+            user=request.user,
+            action='delete',
+            entity_type='faculty',
+            entity_name=faculty_name,
+            message=f'Deleted faculty: {faculty_name}'
+        )
+        
+        return JsonResponse({'success': True})
+    return JsonResponse({'success': False})
+
+@login_required(login_url='admin_login')
+def get_faculty_schedule(request, faculty_id):
+    """Get schedule data for a specific faculty member"""
+    try:
+        faculty = get_object_or_404(Faculty, id=faculty_id)
+        
+        # Get all schedules for this faculty
+        schedules = Schedule.objects.filter(faculty=faculty).select_related(
+            'course', 'section', 'room'
+        ).order_by('day', 'start_time')
+        
+        # Format schedule data
+        schedule_data = []
+        for schedule in schedules:
+            schedule_item = {
+                'day': schedule.day,
+                'start_time': schedule.start_time,
+                'end_time': schedule.end_time,
+                'duration': schedule.duration,
+                'course_code': schedule.course.course_code,
+                'course_title': schedule.course.descriptive_title,
+                'course_color': schedule.course.color,
+                'room': schedule.room.name if schedule.room else 'TBA',
+                'section_name': schedule.section.name,
+            }
+            schedule_data.append(schedule_item)
+        
+        # Get faculty specializations
+        specializations = []
+        for course in faculty.specialization.all():
+            specializations.append({
+                'course_code': course.course_code,
+                'descriptive_title': course.descriptive_title,
+                'color': course.color
+            })
+        
+        return JsonResponse({
+            'success': True,
+            'schedules': schedule_data,
+            'specializations': specializations,
+            'total_units': faculty.total_units
+        })
+    except Exception as e:
+        import traceback
+        print(f"Error in get_faculty_schedule: {str(e)}")
         print(traceback.format_exc())
         return JsonResponse({
             'success': False,

@@ -79,9 +79,26 @@ class Course(models.Model):
 
 class Faculty(models.Model):
     """Model for faculty members"""
+    GENDER_CHOICES = [
+        ('M', 'Male'),
+        ('F', 'Female'),
+    ]
+    
+    EMPLOYMENT_STATUS_CHOICES = [
+        ('full_time', 'Full-Time'),
+        ('part_time', 'Part-Time'),
+        ('contractual', 'Contractual'),
+    ]
+    
+    user = models.OneToOneField(User, on_delete=models.CASCADE, null=True, blank=True, related_name='faculty_profile')
     first_name = models.CharField(max_length=100)
     last_name = models.CharField(max_length=100)
     email = models.EmailField(unique=True)
+    gender = models.CharField(max_length=1, choices=GENDER_CHOICES, default='M')
+    employment_status = models.CharField(max_length=20, choices=EMPLOYMENT_STATUS_CHOICES, default='full_time')
+    highest_degree = models.CharField(max_length=100, blank=True)
+    prc_licensed = models.BooleanField(default=False, verbose_name='PRC Licensed (Qualified)')
+    specialization = models.ManyToManyField(Course, blank=True, related_name='specialized_faculty')
     department = models.CharField(max_length=100, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     
@@ -98,6 +115,10 @@ class Faculty(models.Model):
         schedules = self.schedules.select_related('course')
         total = sum(s.course.credit_units for s in schedules)
         return total
+    
+    @property
+    def full_name(self):
+        return f"{self.first_name} {self.last_name}"
 
 class Section(models.Model):
     """Model for class sections with naming convention CPE[year][semester]S[number]"""
