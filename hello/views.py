@@ -11,7 +11,7 @@ from django.conf import settings
 from datetime import datetime, timedelta
 import random
 import string
-from .models import Course, Curriculum, Activity, Faculty, Section, Schedule
+from .models import Course, Curriculum, Activity, Faculty, Section, Schedule, Room
 from .forms import CourseForm, CurriculumForm
 
 def admin_login(request):
@@ -885,3 +885,119 @@ def get_faculty_schedule(request, faculty_id):
             'success': False,
             'error': str(e)
         }, status=500)
+    
+    # ===== ROOM VIEWS =====
+
+@login_required(login_url='admin_login')
+def room_view(request):
+    """Room management page"""
+    if not (request.user.is_staff or request.user.is_superuser):
+        messages.error(request, 'You do not have permission to access this page.')
+        return redirect('admin_login')
+    
+    # Get all rooms
+    rooms = Room.objects.all().order_by('campus', 'room_number')
+    
+    context = {
+        'user': request.user,
+        'rooms': rooms,
+    }
+    
+    return render(request, 'hello/room.html', context)
+
+@login_required(login_url='admin_login')
+def add_room(request):
+    """Add new room"""
+    if request.method == 'POST':
+        try:
+            name = request.POST.get('name')
+            room_number = request.POST.get('room_number')
+            capacity = int(request.POST.get('capacity', 40))
+            campus = request.POST.get('campus')
+            room_type = request.POST.get('room_type')
+            
+            room = Room.objects.create(
+                name=name,
+                room_number=room_number,
+                capacity=capacity,
+                campus=campus,
+                room_type=room_type
+            )
+            
+            log_activity(
+                user=request.user,
+                action='add',
+                entity_type='room',
+                entity_name=room.name,
+                message=f'Added room: {room.name} - {room.get_campus_display()} Campus'
+            )
+            
+            return JsonResponse({'success': True})
+            
+        except Exception as e:
+            return JsonResponse({
+                'success': False,
+                'errors': [str(e)]
+            })
+    
+    return JsonResponse({'success': False})
+
+@login_required(login_url='admin_login')
+def edit_room(request, room_id):
+    """Edit existing room"""
+    room = get_object_or_404(Room, id=room_id)
+    
+    if request.method == 'POST':
+        try:
+            room.name = request.POST.get('name')
+            room.room_number = request.POST.get('room_number')
+            room.capacity = int(request.POST.get('capacity'))
+            room.campus = request.POST.get('campus')
+            room.room_type = request.POST.get('room_type')
+            
+            room.save()
+            
+            log_activity(
+                user=request.user,
+                action='edit',
+                entity_type='room',
+                entity_name=room.name,
+                message=f'Edited room: {room.name} - {room.get_campus_display()} Campus'
+            )
+            
+            return JsonResponse({'success': True})
+            
+        except Exception as e:
+            return JsonResponse({
+                'success': False,
+                'errors': [str(e)]
+            })
+    
+    return JsonResponse({
+        'id': room.id,
+        'name': room.name,
+        'room_number': room.room_number,
+        'capacity': room.capacity,
+        'campus': room.campus,
+        'room_type': room.room_type,
+    })
+
+@login_required(login_url='admin_login')
+def delete_room(request, room_id):
+    """Delete room"""
+    if request.method == 'POST':
+        room = get_object_or_404(Room, id=room_id)
+        room_name = room.name
+        
+        room.delete()
+        
+        log_activity(
+            user=request.user,
+            action='delete',
+            entity_type='room',
+            entity_name=room_name,
+            message=f'Deleted room: {room_name}'
+        )
+        
+        return JsonResponse({'success': True})
+    return JsonResponse({'success': False})

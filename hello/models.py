@@ -168,17 +168,29 @@ class Section(models.Model):
 
 class Room(models.Model):
     """Model for classrooms"""
-    name = models.CharField(max_length=50, unique=True)
-    building = models.CharField(max_length=50, blank=True)
+    CAMPUS_CHOICES = [
+        ('casal', 'Casal'),
+        ('arlegui', 'Arlegui'),
+    ]
+    
+    ROOM_TYPE_CHOICES = [
+        ('lecture', 'Lecture'),
+        ('laboratory', 'Laboratory'),
+    ]
+    
+    name = models.CharField(max_length=100)
+    room_number = models.CharField(max_length=20, default='000', blank=True)
     capacity = models.IntegerField(default=40)
-    room_type = models.CharField(max_length=50, blank=True)
+    campus = models.CharField(max_length=20, choices=CAMPUS_CHOICES, default='casal')
+    room_type = models.CharField(max_length=20, choices=ROOM_TYPE_CHOICES, default='lecture')
     created_at = models.DateTimeField(auto_now_add=True)
     
     class Meta:
-        ordering = ['name']
+        ordering = ['campus', 'room_number']
+        # unique_together = ['campus', 'room_number']  # Comment this out temporarily
     
     def __str__(self):
-        return self.name
+        return f"{self.name} ({self.get_campus_display()})"
 
 class Schedule(models.Model):
     """Model for course schedules with validation"""
@@ -261,6 +273,7 @@ class Activity(models.Model):
         ('curriculum', 'Curriculum'),
         ('faculty', 'Faculty'),
         ('section', 'Section'),
+        ('room', 'Room'),
         ('schedule', 'Schedule'),
     ]
     

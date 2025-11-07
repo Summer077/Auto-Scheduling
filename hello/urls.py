@@ -27,6 +27,12 @@ urlpatterns = [
     path('admin/faculty/edit/<int:faculty_id>/', views.edit_faculty, name='edit_faculty'),
     path('admin/faculty/delete/<int:faculty_id>/', views.delete_faculty, name='delete_faculty'),
     path('admin/faculty/<int:faculty_id>/schedule-data/', views.get_faculty_schedule, name='get_faculty_schedule'),
+
+    # Room CRUD operations (add these to urlpatterns in hello/urls.py)
+    path('admin/room/', views.room_view, name='room_view'),
+    path('admin/room/add/', views.add_room, name='add_room'),
+    path('admin/room/edit/<int:room_id>/', views.edit_room, name='edit_room'),
+    path('admin/room/delete/<int:room_id>/', views.delete_room, name='delete_room'),
     
     # Auth
     path('admin/logout/', views.admin_logout, name='admin_logout'),

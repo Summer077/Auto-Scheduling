@@ -1,0 +1,461 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Room Management - ASSIST</title>
+    <link rel="stylesheet" href="{% static 'hello/css/room.css' %}">
+</head>
+<body>
+    <!-- Top Navigation Bar -->
+    <nav class="top-nav">
+        <div class="page-title">Room</div>
+        <div class="admin-section" onclick="toggleDropdown()">
+            <div class="admin-avatar"></div>
+            <span class="admin-name">ADMIN</span>
+            <svg class="dropdown-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                <path d="M7 10l5 5 5-5z"/>
+            </svg>
+            <div class="dropdown-menu" id="dropdownMenu">
+                <a href="{% url 'admin_logout' %}">Logout</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar">
+        <a href="{% url 'admin_dashboard' %}" class="nav-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                <path d="M4 13h6c.55 0 1-.45 1-1V4c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v8c0 .55.45 1 1 1zm0 8h6c.55 0 1-.45 1-1v-4c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v4c0 .55.45 1 1 1zm10 0h6c.55 0 1-.45 1-1v-8c0-.55-.45-1-1-1h-6c-.55 0-1 .45-1 1v8c0 .55.45 1 1 1zM13 4v4c0 .55.45 1 1 1h6c.55 0 1-.45 1-1V4c0-.55-.45-1-1-1h-6c-.55 0-1 .45-1 1z"/>
+            </svg>
+            <span>Dashboard</span>
+        </a>
+        
+        <a href="{% url 'course_view' %}" class="nav-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                <path d="M18 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM6 4h5v8l-2.5-1.5L6 12V4z"/>
+            </svg>
+            <span>Course</span>
+        </a>
+        
+        <a href="{% url 'faculty_view' %}" class="nav-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                <path d="M16.5 12c1.38 0 2.49-1.12 2.49-2.5S17.88 7 16.5 7C15.12 7 14 8.12 14 9.5s1.12 2.5 2.5 2.5zM9 11c1.66 0 2.99-1.34 2.99-3S10.66 5 9 5C7.34 5 6 6.34 6 8s1.34 3 3 3zm7.5 3c-1.83 0-5.5.92-5.5 2.75V19h11v-2.25c0-1.83-3.67-2.75-5.5-2.75zM9 13c-2.33 0-7 1.17-7 3.5V19h7v-2.25c0-.85.33-2.34 2.37-3.47C10.5 13.1 9.66 13 9 13z"/>
+            </svg>
+            <span>Faculty</span>
+        </a>
+        
+        <a href="{% url 'section_view' %}" class="nav-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                <path d="M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z"/>
+            </svg>
+            <span>Section</span>
+        </a>
+        
+        <a href="{% url 'room_view' %}" class="nav-item active">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                <path d="M12 7V3H2v18h20V7H12zM6 19H4v-2h2v2zm0-4H4v-2h2v2zm0-4H4V9h2v2zm0-4H4V5h2v2zm4 12H8v-2h2v2zm0-4H8v-2h2v2zm0-4H8V9h2v2zm0-4H8V5h2v2zm10 12h-8v-2h2v-2h-2v-2h2v-2h-2V9h8v10zm-2-8h-2v2h2v-2zm0 4h-2v2h2v-2z"/>
+            </svg>
+            <span>Room</span>
+        </a>
+        
+        <a href="#" class="nav-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                <path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z"/>
+            </svg>
+            <span>Schedule</span>
+        </a>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="main-content">
+        <!-- Top Controls -->
+        <div class="top-controls">
+            <div class="search-container">
+                <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                    <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
+                </svg>
+                <input type="text" id="searchInput" placeholder="Search" onkeyup="filterRooms()">
+            </div>    
+            <button class="add-room-btn" onclick="openAddRoomModal()">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                    <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+                </svg>
+                Add Room
+            </button>
+        </div>
+
+        <!-- Room Cards -->
+        {% if rooms %}
+        <div class="rooms-container">
+            {% for room in rooms %}
+            <div class="room-card" data-room-name="{{ room.name|lower }}" data-room-number="{{ room.room_number|lower }}" data-campus="{{ room.campus|lower }}">
+                <div class="card-header">
+                    <div class="card-header-left">
+                        <div class="card-title">{{ room.name }}</div>
+                        <div class="card-subtitle">{{ room.get_campus_display }} Campus</div>
+                    </div>
+                    <div class="card-header-right">
+                        <div class="dropdown-menu-container">
+                            <button class="triple-dot-btn" onclick="toggleRoomMenu(event, {{ room.id }})">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                                    <circle cx="12" cy="6" r="2"/>
+                                    <circle cx="12" cy="12" r="2"/>
+                                    <circle cx="12" cy="18" r="2"/>
+                                </svg>
+                            </button>
+                            <div class="room-dropdown-menu" id="roomMenu{{ room.id }}">
+                                <button class="dropdown-item" onclick="openEditRoomModal({{ room.id }})">
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                                        <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
+                                    </svg>
+                                    Edit
+                                </button>
+                                <button class="dropdown-item delete-item" onclick="deleteRoom({{ room.id }}, '{{ room.name }}')">
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                                        <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
+                                    </svg>
+                                    Delete
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card-body">
+                    <div class="info-row">
+                        <div class="info-group">
+                            <div class="info-label">ROOM NUMBER</div>
+                            <div class="info-value">{{ room.room_number }}</div>
+                        </div>
+                        <div class="info-group">
+                            <div class="info-label">CAPACITY</div>
+                            <div class="info-value">{{ room.capacity }} Students</div>
+                        </div>
+                        <div class="info-group">
+                            <div class="info-label">CAMPUS</div>
+                            <div class="info-value">{{ room.get_campus_display }}</div>
+                        </div>
+                        <div class="info-group">
+                            <div class="info-label">ROOM TYPE</div>
+                            <div class="info-value">{{ room.get_room_type_display }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                <path d="M12 7V3H2v18h20V7H12zM6 19H4v-2h2v2zm0-4H4v-2h2v2zm0-4H4V9h2v2zm0-4H4V5h2v2zm4 12H8v-2h2v2zm0-4H8v-2h2v2zm0-4H8V9h2v2zm0-4H8V5h2v2zm10 12h-8v-2h2v-2h-2v-2h2v-2h-2V9h8v10zm-2-8h-2v2h2v-2zm0 4h-2v2h2v-2z"/>
+            </svg>
+            <p>No rooms available. Add a room to get started.</p>
+            <button class="add-room-btn" onclick="openAddRoomModal()">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                    <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+                </svg>
+                Add Room
+            </button>
+        </div>
+        {% endif %}
+    </main>
+
+    <!-- Add Room Modal -->
+    <div id="addRoomModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Add New Room</h2>
+                <span class="close" onclick="closeModal('addRoomModal')">&times;</span>
+            </div>
+            <form id="addRoomForm" onsubmit="submitAddRoom(event)">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label>Room Name</label>
+                    <input type="text" name="name" placeholder="e.g., Computer Laboratory 1" required>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Room Number</label>
+                        <input type="text" name="room_number" placeholder="e.g., 201" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Capacity</label>
+                        <input type="number" name="capacity" min="1" value="40" required>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Campus</label>
+                        <select name="campus" required>
+                            <option value="casal">Casal</option>
+                            <option value="arlegui">Arlegui</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Room Type</label>
+                        <select name="room_type" required>
+                            <option value="lecture">Lecture</option>
+                            <option value="laboratory">Laboratory</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-secondary" onclick="closeModal('addRoomModal')">Cancel</button>
+                    <button type="submit" class="btn-primary">Add Room</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Edit Room Modal -->
+    <div id="editRoomModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Edit Room</h2>
+                <span class="close" onclick="closeModal('editRoomModal')">&times;</span>
+            </div>
+            <form id="editRoomForm" onsubmit="submitEditRoom(event)">
+                {% csrf_token %}
+                <input type="hidden" id="edit_room_id" name="room_id">
+                <div class="form-group">
+                    <label>Room Name</label>
+                    <input type="text" name="name" id="edit_name" required>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Room Number</label>
+                        <input type="text" name="room_number" id="edit_room_number" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Capacity</label>
+                        <input type="number" name="capacity" id="edit_capacity" min="1" required>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Campus</label>
+                        <select name="campus" id="edit_campus" required>
+                            <option value="casal">Casal</option>
+                            <option value="arlegui">Arlegui</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Room Type</label>
+                        <select name="room_type" id="edit_room_type" required>
+                            <option value="lecture">Lecture</option>
+                            <option value="laboratory">Laboratory</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-secondary" onclick="closeModal('editRoomModal')">Cancel</button>
+                    <button type="submit" class="btn-primary">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+
+        function toggleDropdown() {
+            document.getElementById('dropdownMenu').classList.toggle('show');
+        }
+
+        function toggleRoomMenu(event, roomId) {
+            event.stopPropagation();
+            
+            document.querySelectorAll('.room-dropdown-menu').forEach(menu => {
+                if (menu.id !== `roomMenu${roomId}`) {
+                    menu.classList.remove('show');
+                }
+            });
+            
+            const menu = document.getElementById(`roomMenu${roomId}`);
+            menu.classList.toggle('show');
+        }
+
+        window.onclick = function(event) {
+            if (!event.target.matches('.admin-section') && !event.target.closest('.admin-section')) {
+                document.getElementById('dropdownMenu').classList.remove('show');
+            }
+            
+            if (!event.target.closest('.triple-dot-btn') && !event.target.closest('.room-dropdown-menu')) {
+                document.querySelectorAll('.room-dropdown-menu').forEach(menu => {
+                    menu.classList.remove('show');
+                });
+            }
+            
+            if (event.target.classList.contains('modal')) {
+                event.target.style.display = 'none';
+            }
+        }
+
+        function filterRooms() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const cards = document.querySelectorAll('.room-card');
+            
+            cards.forEach(card => {
+                const roomName = card.dataset.roomName;
+                const roomNumber = card.dataset.roomNumber;
+                const campus = card.dataset.campus;
+                
+                if (roomName.includes(searchTerm) || roomNumber.includes(searchTerm) || campus.includes(searchTerm)) {
+                    card.style.display = 'block';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        }
+
+        function openModal(modalId) {
+            document.getElementById(modalId).style.display = 'block';
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+        }
+
+        function openAddRoomModal() {
+            openModal('addRoomModal');
+        }
+
+        function openEditRoomModal(roomId) {
+            event.stopPropagation();
+            document.querySelectorAll('.room-dropdown-menu').forEach(menu => {
+                menu.classList.remove('show');
+            });
+            
+            fetch(`/admin/room/edit/${roomId}/`)
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('edit_room_id').value = data.id;
+                    document.getElementById('edit_name').value = data.name;
+                    document.getElementById('edit_room_number').value = data.room_number;
+                    document.getElementById('edit_capacity').value = data.capacity;
+                    document.getElementById('edit_campus').value = data.campus;
+                    document.getElementById('edit_room_type').value = data.room_type;
+                    openModal('editRoomModal');
+                })
+                .catch(error => {
+                    showNotification('Error loading room data', 'error');
+                });
+        }
+
+        function submitAddRoom(event) {
+            event.preventDefault();
+            const formData = new FormData(event.target);
+            
+            fetch('/admin/room/add/', {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: formData,
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showNotification('Room added successfully!', 'success');
+                    setTimeout(() => window.location.reload(), 1000);
+                } else {
+                    const errorMsg = data.errors ? data.errors.join('\n') : 'Error adding room';
+                    showNotification(errorMsg, 'error');
+                }
+            })
+            .catch(error => {
+                showNotification('Error: ' + error.message, 'error');
+            });
+        }
+
+        function submitEditRoom(event) {
+            event.preventDefault();
+            const formData = new FormData(event.target);
+            const roomId = document.getElementById('edit_room_id').value;
+            
+            fetch(`/admin/room/edit/${roomId}/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: formData,
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showNotification('Room updated successfully!', 'success');
+                    setTimeout(() => window.location.reload(), 1000);
+                } else {
+                    const errorMsg = data.errors ? data.errors.join('\n') : 'Error updating room';
+                    showNotification(errorMsg, 'error');
+                }
+            })
+            .catch(error => {
+                showNotification('Error: ' + error.message, 'error');
+            });
+        }
+
+        function deleteRoom(roomId, roomName) {
+            event.stopPropagation();
+            document.querySelectorAll('.room-dropdown-menu').forEach(menu => {
+                menu.classList.remove('show');
+            });
+            
+            if (confirm(`Are you sure you want to delete ${roomName}?`)) {
+                fetch(`/admin/room/delete/${roomId}/`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': getCookie('csrftoken')
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        showNotification('Room deleted successfully!', 'success');
+                        setTimeout(() => window.location.reload(), 1000);
+                    } else {
+                        showNotification('Error deleting room', 'error');
+                    }
+                })
+                .catch(error => {
+                    showNotification('Error deleting room', 'error');
+                });
+            }
+        }
+
+        function showNotification(message, type) {
+            const notification = document.createElement('div');
+            notification.className = `notification ${type} show`;
+            
+            if (message.includes('\n')) {
+                notification.style.whiteSpace = 'pre-line';
+                notification.style.textAlign = 'left';
+                notification.style.maxWidth = '500px';
+            }
+            
+            notification.textContent = message;
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+                setTimeout(() => notification.remove(), 300);
+            }, 3000);
+        }
+    </script>
+</body>
+</html>
