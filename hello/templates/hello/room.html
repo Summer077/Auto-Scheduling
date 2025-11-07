@@ -563,116 +563,126 @@
         }
 
         function renderSchedule(schedules) {
-            console.log('Rendering schedules:', schedules);
-            
-            // Generate time slots and labels
-            const timeSlots = generateTimeSlots();
-            const timeColumn = document.getElementById('timeColumn');
-            timeColumn.innerHTML = '';
-            
-            // Add time labels at proper positions
-            timeSlots.forEach(time => {
-                const label = document.createElement('div');
-                label.className = 'time-label';
-                label.textContent = time;
-                label.style.top = `${calculateTopPosition(time)}px`;
-                timeColumn.appendChild(label);
-            });
-            
-            // Clear all day columns
-            document.querySelectorAll('.schedule-day-column').forEach(col => {
-                col.innerHTML = '';
-            });
-            
-            // Render schedule blocks
-            schedules.forEach(schedule => {
-                const dayColumn = document.querySelector(`.schedule-day-column[data-day="${schedule.day}"]`);
-                if (!dayColumn) return;
-                
-                const block = document.createElement('div');
-                block.className = 'schedule-block';
-                
-                // Calculate position and height
-                const topPos = calculateTopPosition(schedule.start_time);
-                const duration = schedule.duration || calculateDuration(schedule.start_time, schedule.end_time);
-                const height = (duration / 30) * 60; // 60px per 30 minutes
-                
-                // Apply styles
-                const hexColor = schedule.course_color;
-                block.style.backgroundColor = hexToRGBA(hexColor, 0.25);
-                block.style.borderLeftColor = hexColor;
-                block.style.top = `${topPos}px`;
-                block.style.height = `${height}px`;
-                
-                // Add content
-                block.innerHTML = `
-                    <div class="schedule-course-code">${schedule.course_code}</div>
-                    <div class="schedule-details">${schedule.start_time} - ${schedule.end_time}</div>
-                    <div class="schedule-details">Section: ${schedule.section_name}</div>
-                `;
-                
-                dayColumn.appendChild(block);
-            });
+    console.log('Rendering schedules:', schedules);
+    
+    // Generate time slots and labels
+    const timeSlots = generateTimeSlots();
+    const timeColumn = document.getElementById('timeColumn');
+    timeColumn.innerHTML = '';
+    
+    // Add time labels at proper positions
+    timeSlots.forEach(time => {
+        const label = document.createElement('div');
+        label.className = 'time-label';
+        label.textContent = time;
+        label.style.top = `${calculateTopPosition(time)}px`;
+        timeColumn.appendChild(label);
+    });
+    
+    // Clear all day columns
+    document.querySelectorAll('.schedule-day-column').forEach(col => {
+        col.innerHTML = '';
+    });
+    
+    // Render schedule blocks
+    schedules.forEach(schedule => {
+        const dayColumn = document.querySelector(`.schedule-day-column[data-day="${schedule.day}"]`);
+        if (!dayColumn) return;
+        
+        const block = document.createElement('div');
+        block.className = 'schedule-block';
+        
+        // Calculate position and height
+        const topPos = calculateTopPosition(schedule.start_time);
+        const duration = schedule.duration || calculateDuration(schedule.start_time, schedule.end_time);
+        const height = (duration / 30) * 60; // 60px per 30 minutes
+        
+        // Apply styles
+        const hexColor = schedule.course_color;
+        block.style.backgroundColor = hexToRGBA(hexColor, 0.25);
+        block.style.borderLeftColor = hexColor;
+        block.style.top = `${topPos}px`;
+        block.style.height = `${height}px`;
+        
+        // Format room display based on campus
+        let roomDisplay = '';
+        if (schedule.room_name && schedule.room_number && schedule.campus) {
+            const campusPrefix = schedule.campus.toLowerCase() === 'arlegui' ? 'A' : 'C';
+            roomDisplay = `<div class="schedule-details">Room: ${campusPrefix} - ${schedule.room_number}</div>`;
         }
+        
+        // Add content
+        block.innerHTML = `
+            <div class="schedule-course-code">${schedule.course_code}</div>
+            <div class="schedule-details">${schedule.start_time} - ${schedule.end_time}</div>
+            ${roomDisplay}
+            <div class="schedule-details">Section: ${schedule.section_name}</div>
+        `;
+        
+        dayColumn.appendChild(block);
+    });
+}
 
-        function renderCoursesList(schedules, roomInfo) {
-            console.log('Rendering courses list:', schedules);
-            
-            // Update sidebar room info
-            const sidebarInfo = `${roomInfo.name || 'N/A'} - ${roomInfo.room_type || 'N/A'} (Capacity: ${roomInfo.capacity || 'N/A'})`;
-            document.getElementById('sidebarRoomInfo').textContent = sidebarInfo;
-            
-            const coursesList = document.getElementById('coursesList');
-            coursesList.innerHTML = '';
-            
-            if (!schedules || schedules.length === 0) {
-                coursesList.innerHTML = '<div style="text-align: center; color: #6C757D; padding: 20px;">No courses scheduled</div>';
-                return;
-            }
-            
-            // Group schedules by course to avoid duplicates
-            const courseMap = new Map();
-            schedules.forEach(schedule => {
-                if (!courseMap.has(schedule.course_code)) {
-                    courseMap.set(schedule.course_code, {
-                        course_code: schedule.course_code,
-                        course_title: schedule.course_title,
-                        course_color: schedule.course_color,
-                        sections: []
-                    });
-                }
-                courseMap.get(schedule.course_code).sections.push({
-                    section: schedule.section_name,
-                    faculty: schedule.faculty,
-                    day: schedule.day,
-                    time: `${schedule.start_time}-${schedule.end_time}`
-                });
-            });
-            
-            // Render unique courses
-            courseMap.forEach(course => {
-                const courseItem = document.createElement('div');
-                courseItem.className = 'course-item';
-                courseItem.style.borderLeftColor = course.course_color;
-                
-                let sectionsHTML = '';
-                course.sections.forEach(section => {
-                    const dayName = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][section.day];
-                    sectionsHTML += `<span>${section.section} - ${dayName} ${section.time}</span>`;
-                });
-                
-                courseItem.innerHTML = `
-                    <div class="course-details">
-                        <div class="course-code">${course.course_code}</div>
-                        <div class="course-title">${course.course_title}</div>
-                        <div class="course-info">
-                            ${sectionsHTML}
-                        </div>
-                    </div>
-                `;
-                coursesList.appendChild(courseItem);
+function renderCoursesList(schedules, roomInfo) {
+    console.log('Rendering courses list:', schedules);
+    
+    // Update sidebar room info
+    if (roomInfo && roomInfo.name) {
+        const sidebarInfo = `${roomInfo.name} - ${roomInfo.room_type} (Capacity: ${roomInfo.capacity})`;
+        document.getElementById('sidebarRoomInfo').textContent = sidebarInfo;
+    }
+    
+    const coursesList = document.getElementById('coursesList');
+    coursesList.innerHTML = '';
+    
+    if (!schedules || schedules.length === 0) {
+        coursesList.innerHTML = '<div style="text-align: center; color: #6C757D; padding: 20px;">No courses scheduled</div>';
+        return;
+    }
+    
+    // Group schedules by course to avoid duplicates
+    const courseMap = new Map();
+    schedules.forEach(schedule => {
+        if (!courseMap.has(schedule.course_code)) {
+            courseMap.set(schedule.course_code, {
+                course_code: schedule.course_code,
+                course_title: schedule.course_title,
+                course_color: schedule.course_color,
+                sections: []
             });
         }
+        courseMap.get(schedule.course_code).sections.push({
+            section: schedule.section_name,
+            faculty: schedule.faculty || 'TBA',
+            day: schedule.day,
+            time: `${schedule.start_time}-${schedule.end_time}`
+        });
+    });
+    
+    // Render unique courses
+    courseMap.forEach(course => {
+        const courseItem = document.createElement('div');
+        courseItem.className = 'course-item';
+        // Set border color using the course color
+        courseItem.style.borderLeftColor = course.course_color || '#ADB5BD';
+        
+        // Build sections info (no span, just text)
+        let sectionsInfo = '';
+        course.sections.forEach((section, index) => {
+            const dayName = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][section.day];
+            if (index > 0) sectionsInfo += '<br>';
+            sectionsInfo += `${section.section} - ${dayName} ${section.time}`;
+        });
+        
+        courseItem.innerHTML = `
+            <div class="course-details">
+                <div class="course-code">${course.course_code || ''}</div>
+                <div class="course-title">${course.course_title || ''}</div>
+            </div>
+        `;
+        coursesList.appendChild(courseItem);
+    });
+}
 
         function calculateTopPosition(timeStr) {
             const [hours, minutes] = timeStr.split(':').map(Number);

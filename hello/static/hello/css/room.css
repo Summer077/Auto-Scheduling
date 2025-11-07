@@ -185,6 +185,26 @@ body {
     min-height: calc(100vh - 70px);
 }
 
+/* Content Wrapper - Vertical Layout */
+.content-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+}
+
+.left-panel {
+    display: flex;
+    flex-direction: column;
+}
+
+.right-panel {
+    background: #FFFFFF;
+    border-radius: 12px;
+    padding: 30px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    min-height: 600px;
+}
+
 /* Top Controls */
 .top-controls {
     display: flex;
@@ -300,28 +320,6 @@ body {
 
 .rooms-container::-webkit-scrollbar-thumb:hover {
     background: #6C757D;
-}
-
-/* Add these styles to the existing room.css after the .rooms-container styles */
-
-/* Content Wrapper - Vertical Layout */
-.content-wrapper {
-    display: flex;
-    flex-direction: column;
-    gap: 30px;
-}
-
-.left-panel {
-    display: flex;
-    flex-direction: column;
-}
-
-.right-panel {
-    background: #FFFFFF;
-    border-radius: 12px;
-    padding: 30px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    min-height: 600px;
 }
 
 /* Schedule Empty State */
@@ -580,56 +578,92 @@ body {
     text-overflow: ellipsis;
 }
 
-/* Room Info Panel */
-.room-info-panel {
+/* Courses Sidebar - Match Section Design */
+.courses-sidebar {
     background: #F8F9FA;
     border-radius: 12px;
     padding: 20px;
-    margin-top: 20px;
+    overflow-y: auto;
+    max-height: 600px;
 }
 
-.room-info-panel h3 {
+.courses-sidebar::-webkit-scrollbar {
+    width: 8px;
+}
+
+.courses-sidebar::-webkit-scrollbar-track {
+    background: #E9ECEF;
+    border-radius: 4px;
+}
+
+.courses-sidebar::-webkit-scrollbar-thumb {
+    background: #ADB5BD;
+    border-radius: 4px;
+}
+
+.courses-sidebar::-webkit-scrollbar-thumb:hover {
+    background: #6C757D;
+}
+
+.courses-sidebar h3 {
     font-family: 'Lexend', sans-serif;
     font-size: 0.875rem;
     font-weight: 700;
     color: #212529;
-    margin-bottom: 16px;
+    margin-bottom: 8px;
     text-transform: uppercase;
     letter-spacing: 0.5px;
 }
 
-.room-info-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 16px;
+.sidebar-room-info {
+    font-family: 'Lexend', sans-serif;
+    font-size: 0.75rem;
+    color: #6C757D;
+    margin-bottom: 20px;
+    font-weight: 500;
 }
 
-.room-info-item {
+.courses-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.course-item {
+    display: flex;
+    gap: 12px;
+    background: #FFFFFF;
+    padding: 12px;
+    border-radius: 8px;
+    border-left: 4px solid;
+}
+
+.course-details {
+    flex: 1;
+}
+
+.course-code {
+    font-size: 0.875rem;
+    font-weight: 700;
+    color: #212529;
+    margin-bottom: 4px;
+}
+
+.course-title {
+    font-size: 0.75rem;
+    color: #495057;
+    margin-bottom: 8px;
+    font-weight: 500;
+}
+
+.course-info {
     display: flex;
     flex-direction: column;
     gap: 4px;
-}
-
-.room-info-label {
-    font-family: 'Lexend', sans-serif;
     font-size: 0.7rem;
-    font-weight: 600;
-    color: #868E96;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-
-.room-info-value {
-    font-family: 'Lexend', sans-serif;
-    font-size: 0.9rem;
-    font-weight: 600;
-    color: #212529;
-}
-
-/* Selected Room Card */
-.room-card.selected {
-    border-color: #343A40;
-    transform: scale(0.99);
+    color: #6C757D;
+    font-weight: 500;
+    line-height: 1.4;
 }
 
 /* Room Cards */
@@ -643,6 +677,11 @@ body {
     cursor: pointer;
     width: 100%;
     flex-shrink: 0;
+}
+
+.room-card.selected {
+    border-color: #343A40;
+    transform: scale(0.99);
 }
 
 .room-card:hover {
@@ -1023,6 +1062,12 @@ body {
 }
 
 /* Responsive Design */
+@media (max-width: 1200px) {
+    .schedule-content {
+        grid-template-columns: 1fr 280px;
+    }
+}
+
 @media (max-width: 1024px) {
     .info-row {
         grid-template-columns: repeat(2, 1fr);
@@ -1086,14 +1131,12 @@ body {
         grid-template-columns: 1fr;
         gap: 12px;
     }
-}
 
-@media (max-width: 768px) {
     .schedule-content {
-        margin-top: 20px;
+        grid-template-columns: 1fr;
     }
     
-    .room-info-grid {
-        grid-template-columns: 1fr;
+    .courses-sidebar {
+        display: none;
     }
 }

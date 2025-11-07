@@ -1027,7 +1027,11 @@ def get_room_schedule(request, room_id):
                 'course_title': schedule.course.descriptive_title,
                 'course_color': schedule.course.color,
                 'section_name': schedule.section.name,
-                'faculty': f"{schedule.faculty.first_name} {schedule.faculty.last_name}" if schedule.faculty else 'TBA'
+                'faculty': f"{schedule.faculty.first_name} {schedule.faculty.last_name}" if schedule.faculty else 'TBA',
+                # Add room information for display
+                'room_name': room.name,
+                'room_number': room.room_number,
+                'campus': room.campus
             }
             schedule_data.append(schedule_item)
             
