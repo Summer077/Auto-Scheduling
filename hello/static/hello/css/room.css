@@ -302,6 +302,336 @@ body {
     background: #6C757D;
 }
 
+/* Add these styles to the existing room.css after the .rooms-container styles */
+
+/* Content Wrapper - Vertical Layout */
+.content-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+}
+
+.left-panel {
+    display: flex;
+    flex-direction: column;
+}
+
+.right-panel {
+    background: #FFFFFF;
+    border-radius: 12px;
+    padding: 30px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    min-height: 600px;
+}
+
+/* Schedule Empty State */
+.schedule-empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    color: #6C757D;
+}
+
+.schedule-empty-state svg {
+    width: 80px;
+    height: 80px;
+    fill: #CED4DA;
+    margin-bottom: 20px;
+}
+
+.schedule-empty-state p {
+    font-size: 1.125rem;
+    font-weight: 500;
+}
+
+/* Schedule View */
+.schedule-view {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.schedule-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 30px;
+    padding-bottom: 20px;
+    border-bottom: 2px solid #E9ECEF;
+}
+
+.schedule-title-section h2 {
+    font-family: 'Lexend', sans-serif;
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: #212529;
+    margin-bottom: 8px;
+}
+
+.schedule-title-section p {
+    font-family: 'Lexend', sans-serif;
+    font-size: 0.95rem;
+    color: #6C757D;
+    font-weight: 500;
+}
+
+.schedule-actions {
+    display: flex;
+    gap: 12px;
+}
+
+.btn-export,
+.btn-print {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 18px;
+    background: #F8F9FA;
+    border: 1px solid #DEE2E6;
+    border-radius: 8px;
+    color: #495057;
+    font-family: 'Lexend', sans-serif;
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.btn-export:hover,
+.btn-print:hover {
+    background: #E9ECEF;
+    border-color: #ADB5BD;
+    transform: translateY(-1px);
+}
+
+/* Schedule Content */
+.schedule-content {
+    display: grid;
+    grid-template-columns: 1fr 320px;
+    gap: 30px;
+}
+
+/* GRID-BASED SCHEDULE CONTAINER */
+.schedule-grid-wrapper {
+    flex: 1;
+    overflow-x: auto;
+    overflow-y: auto;
+    max-height: 600px;
+    background: #FFFFFF;
+    position: relative;
+    border: 1px solid #CED4DA;
+    border-radius: 12px;
+}
+
+.schedule-grid-wrapper::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+
+.schedule-grid-wrapper::-webkit-scrollbar-track {
+    background: #F8F9FA;
+}
+
+.schedule-grid-wrapper::-webkit-scrollbar-thumb {
+    background: #ADB5BD;
+    border-radius: 5px;
+}
+
+.schedule-grid-wrapper::-webkit-scrollbar-thumb:hover {
+    background: #6C757D;
+}
+
+/* GRID LAYOUT */
+.schedule-grid {
+    display: grid;
+    grid-template-columns: 80px repeat(6, 1fr);
+    min-width: 900px;
+    position: relative;
+}
+
+/* HEADER ROW */
+.schedule-header-row {
+    display: contents;
+}
+
+.schedule-header-cell {
+    background: #FFFFFF;
+    padding: 14px 12px;
+    text-align: center;
+    font-family: 'Lexend', sans-serif;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #495057;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    border-bottom: 2px solid #CED4DA;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    min-width: 130px;
+}
+
+.schedule-header-cell:first-child {
+    width: 80px;
+    min-width: 80px;
+    background: #F8F9FA;
+    border-right: 2px solid #CED4DA;
+    z-index: 101;
+}
+
+/* TIME COLUMN */
+.schedule-time-column {
+    grid-column: 1;
+    grid-row: 2;
+    background: #F8F9FA;
+    border-right: 2px solid #CED4DA;
+    position: relative;
+    height: 1740px;
+}
+
+.time-label {
+    position: absolute;
+    left: 0;
+    right: 0;
+    text-align: center;
+    font-family: 'Lexend', sans-serif;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #6C757D;
+    transform: translateY(-50%);
+    background: #F8F9FA;
+    padding: 4px 0;
+    z-index: 10;
+}
+
+/* DAY COLUMNS */
+.schedule-day-column {
+    position: relative;
+    border-right: 1px solid #DEE2E6;
+    height: 1740px;
+    background: #FFFFFF;
+}
+
+.schedule-day-column:last-child {
+    border-right: none;
+}
+
+/* HORIZONTAL GRID LINES */
+.schedule-day-column::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    background-image: repeating-linear-gradient(
+        to bottom,
+        #DEE2E6 0px,
+        #DEE2E6 1px,
+        transparent 1px,
+        transparent 60px
+    );
+    pointer-events: none;
+    z-index: 1;
+}
+
+/* SCHEDULE BLOCKS */
+.schedule-block {
+    position: absolute;
+    left: 6px;
+    right: 6px;
+    border-radius: 6px;
+    padding: 12px 10px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    gap: 4px;
+    border-left: 5px solid;
+    border-top: 1px solid #DEE2E6;
+    border-right: 1px solid #DEE2E6;
+    border-bottom: 1px solid #DEE2E6;
+    z-index: 10;
+    box-sizing: border-box;
+    overflow: hidden;
+    transition: all 0.2s ease;
+}
+
+.schedule-course-code {
+    font-family: 'Lexend', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #212529;
+    line-height: 1.2;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.schedule-details {
+    font-family: 'Lexend', sans-serif;
+    font-size: 0.7rem;
+    font-weight: 500;
+    color: #2d3436;
+    line-height: 1.4;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Room Info Panel */
+.room-info-panel {
+    background: #F8F9FA;
+    border-radius: 12px;
+    padding: 20px;
+    margin-top: 20px;
+}
+
+.room-info-panel h3 {
+    font-family: 'Lexend', sans-serif;
+    font-size: 0.875rem;
+    font-weight: 700;
+    color: #212529;
+    margin-bottom: 16px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.room-info-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+}
+
+.room-info-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.room-info-label {
+    font-family: 'Lexend', sans-serif;
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: #868E96;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.room-info-value {
+    font-family: 'Lexend', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #212529;
+}
+
+/* Selected Room Card */
+.room-card.selected {
+    border-color: #343A40;
+    transform: scale(0.99);
+}
+
 /* Room Cards */
 .room-card {
     background: #FFFFFF;
@@ -755,5 +1085,15 @@ body {
     .info-row {
         grid-template-columns: 1fr;
         gap: 12px;
+    }
+}
+
+@media (max-width: 768px) {
+    .schedule-content {
+        margin-top: 20px;
+    }
+    
+    .room-info-grid {
+        grid-template-columns: 1fr;
     }
 }

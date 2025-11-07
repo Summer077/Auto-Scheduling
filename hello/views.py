@@ -1001,3 +1001,67 @@ def delete_room(request, room_id):
         
         return JsonResponse({'success': True})
     return JsonResponse({'success': False})
+
+@login_required(login_url='admin_login')
+def get_room_schedule(request, room_id):
+    """Get schedule data for a specific room"""
+    try:
+        room = get_object_or_404(Room, id=room_id)
+        
+        # Get all schedules for this room
+        schedules = Schedule.objects.filter(room=room).select_related(
+            'course', 'section', 'faculty'
+        ).order_by('day', 'start_time')
+        
+        # Format schedule data
+        schedule_data = []
+        courses_map = {}
+        
+        for schedule in schedules:
+            schedule_item = {
+                'day': schedule.day,
+                'start_time': schedule.start_time,
+                'end_time': schedule.end_time,
+                'duration': schedule.duration,
+                'course_code': schedule.course.course_code,
+                'course_title': schedule.course.descriptive_title,
+                'course_color': schedule.course.color,
+                'section_name': schedule.section.name,
+                'faculty': f"{schedule.faculty.first_name} {schedule.faculty.last_name}" if schedule.faculty else 'TBA'
+            }
+            schedule_data.append(schedule_item)
+            
+            # Track unique courses for sidebar
+            if schedule.course.course_code not in courses_map:
+                courses_map[schedule.course.course_code] = {
+                    'course_code': schedule.course.course_code,
+                    'descriptive_title': schedule.course.descriptive_title,
+                    'color': schedule.course.color,
+                    'lecture_hours': schedule.course.lecture_hours,
+                    'laboratory_hours': schedule.course.laboratory_hours,
+                    'credit_units': schedule.course.credit_units
+                }
+        
+        # Convert courses_map to list
+        courses_list = list(courses_map.values())
+        
+        return JsonResponse({
+            'success': True,
+            'schedules': schedule_data,
+            'courses': courses_list,
+            'room_info': {
+                'name': room.name,
+                'room_number': room.room_number,
+                'campus': room.get_campus_display(),
+                'room_type': room.get_room_type_display(),
+                'capacity': room.capacity
+            }
+        })
+    except Exception as e:
+        import traceback
+        print(f"Error in get_room_schedule: {str(e)}")
+        print(traceback.format_exc())
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=500)

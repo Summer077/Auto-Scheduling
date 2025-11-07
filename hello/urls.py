@@ -10,6 +10,7 @@ urlpatterns = [
     path('admin/course/edit/<int:course_id>/', views.edit_course, name='edit_course'),
     path('admin/course/delete/<int:course_id>/', views.delete_course, name='delete_course'),
     path('admin/section/<int:section_id>/schedule-data/', views.get_section_schedule, name='get_section_schedule'),
+    path('admin/room/<int:room_id>/schedule-data/', views.get_room_schedule, name='get_room_schedule'),
     
     # Section CRUD operations
     path('admin/section/add/', views.add_section, name='add_section'),
@@ -28,7 +29,7 @@ urlpatterns = [
     path('admin/faculty/delete/<int:faculty_id>/', views.delete_faculty, name='delete_faculty'),
     path('admin/faculty/<int:faculty_id>/schedule-data/', views.get_faculty_schedule, name='get_faculty_schedule'),
 
-    # Room CRUD operations (add these to urlpatterns in hello/urls.py)
+    # Room CRUD operations 
     path('admin/room/', views.room_view, name='room_view'),
     path('admin/room/add/', views.add_room, name='add_room'),
     path('admin/room/edit/<int:room_id>/', views.edit_room, name='edit_room'),
