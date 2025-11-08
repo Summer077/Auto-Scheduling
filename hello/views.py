@@ -48,6 +48,67 @@ def admin_logout(request):
     messages.success(request, 'You have been logged out successfully.')
     return redirect('admin_login')
 
+@login_required
+def add_schedule(request):
+    """Add a new schedule entry"""
+    if request.method == 'POST' and request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        try:
+            # Extract schedule data from POST
+            section_id = request.POST.get('section')
+            faculty_id = request.POST.get('faculty')
+            room_id = request.POST.get('room')
+            activity_id = request.POST.get('activity')
+            day = request.POST.get('day')
+            start_time = request.POST.get('start_time')
+            duration = request.POST.get('duration')
+
+            # Get related objects
+            section = Section.objects.get(id=section_id)
+            faculty = Faculty.objects.get(id=faculty_id)
+            room = Room.objects.get(id=room_id)
+            activity = Activity.objects.get(id=activity_id)
+
+            # Create new schedule
+            schedule = Schedule(
+                section=section,
+                faculty=faculty,
+                room=room,
+                activity=activity,
+                day=day,
+                start_time=start_time,
+                duration=duration
+            )
+            
+            # Validate and save
+            schedule.full_clean()
+            schedule.save()
+
+            return JsonResponse({
+                'success': True,
+                'message': 'Schedule added successfully'
+            })
+            
+        except (Section.DoesNotExist, Faculty.DoesNotExist, Room.DoesNotExist, Activity.DoesNotExist) as e:
+            return JsonResponse({
+                'success': False,
+                'message': f'Required object not found: {str(e)}'
+            })
+        except ValidationError as e:
+            return JsonResponse({
+                'success': False,
+                'message': str(e)
+            })
+        except Exception as e:
+            return JsonResponse({
+                'success': False,
+                'message': f'Error adding schedule: {str(e)}'
+            })
+            
+    return JsonResponse({
+        'success': False,
+        'message': 'Invalid request method'
+    })
+
 @login_required(login_url='admin_login')
 def admin_dashboard(request):
     """
@@ -140,11 +201,14 @@ def admin_dashboard(request):
         'section_count': section_count,
         'faculty_list': faculty_list,
         'section_list': section_list,
+        'room_list': room_list,
         'recent_activities': recent_activities,
         'scheduled_courses': scheduled_courses,
         'time_slots': time_slots,
         'days': days,
         'schedules': schedules,
+        'curricula': curricula,
+        'all_courses': Course.objects.all().order_by('course_code'),
     }
     
     return render(request, 'hello/dashboard.html', context)
@@ -229,11 +293,6 @@ def course_view(request):
         'selected_year': int(selected_year) if selected_year else None,
         'selected_semester': int(selected_semester) if selected_semester else None,
     }
-    
-    # Check if we should open a modal (from quick actions)
-    if request.GET.get('openModal') == 'addCourse':
-        context['open_add_modal'] = True
-    
     return render(request, 'hello/course.html', context)
 
 @login_required(login_url='admin_login')
@@ -416,10 +475,6 @@ def section_view(request):
         'sections': sections,
         'curricula': curricula,
     }
-    
-    # Check if we should open a modal (from quick actions)
-    if request.GET.get('openModal') == 'addSection':
-        context['open_add_modal'] = True
     
     return render(request, 'hello/section.html', context)
 
@@ -645,10 +700,6 @@ def faculty_view(request):
         'faculties': faculties,
         'courses': courses,
     }
-    
-    # Check if we should open a modal (from quick actions)
-    if request.GET.get('openModal') == 'addFaculty':
-        context['open_add_modal'] = True
     
     return render(request, 'hello/faculty.html', context)
 
@@ -923,10 +974,6 @@ def room_view(request):
         'user': request.user,
         'rooms': rooms,
     }
-    
-    # Check if we should open a modal (from quick actions)
-    if request.GET.get('openModal') == 'addRoom':
-        context['open_add_modal'] = True
     
     return render(request, 'hello/room.html', context)
 

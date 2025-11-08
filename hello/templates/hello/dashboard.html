@@ -181,41 +181,359 @@
         </div>
 
         <!-- Quick Actions -->
-        <div class="quick-actions">
-            <h2>Quick Actions</h2>
-            <div class="quick-actions-grid">
-                <button class="quick-action-btn" onclick="openAddCourseModal()">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                        <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
-                    </svg>
-                    <span>Add Course</span>
-                </button>
-                <button class="quick-action-btn" onclick="openAddFacultyModal()">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                        <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
-                    </svg>
-                    <span>Add Faculty</span>
-                </button>
-                <button class="quick-action-btn" onclick="openAddSectionModal()">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                        <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
-                    </svg>
-                    <span>Add Section</span>
-                </button>
-                <button class="quick-action-btn" onclick="openAddRoomModal()">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                        <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
-                    </svg>
-                    <span>Add Room</span>
-                </button>
-                <button class="quick-action-btn create-schedule-btn" onclick="openCreateScheduleModal()">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                        <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
-                    </svg>
-                    <span>Create Schedule</span>
-                </button>
+<div class="quick-actions">
+    <h2>Quick Actions</h2>
+    <div class="quick-actions-grid">
+        <button class="quick-action-btn create-schedule-btn" onclick="openCreateScheduleModal()">
+            <div class="quick-action-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                    <path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z"/>
+                </svg>
             </div>
+            <span>Create Schedule</span>
+        </button>
+        <button class="quick-action-btn" onclick="openAddCourseModal()">
+            <div class="quick-action-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                    <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+                </svg>
+            </div>
+            <span>Add Course</span>
+        </button>
+        <button class="quick-action-btn" onclick="openAddFacultyModal()">
+            <div class="quick-action-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                    <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+                </svg>
+            </div>
+            <span>Add Faculty</span>
+        </button>
+        <button class="quick-action-btn" onclick="openAddSectionModal()">
+            <div class="quick-action-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                    <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+                </svg>
+            </div>
+            <span>Add Section</span>
+        </button>
+        <button class="quick-action-btn" onclick="openAddRoomModal()">
+            <div class="quick-action-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                    <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+                </svg>
+            </div>
+            <span>Add Room</span>
+        </button>
+    </div>
+</div>
+
+        <!-- Add Course Modal -->
+    <div id="addCourseModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Add New Course</h2>
+                <span class="close" onclick="closeModal('addCourseModal')">&times;</span>
+            </div>
+            <form id="addCourseForm" onsubmit="submitQuickAddCourse(event)">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label>Curriculum</label>
+                    <select name="curriculum" required>
+                        {% for curriculum in curricula %}
+                        <option value="{{ curriculum.id }}">{{ curriculum.name }} ({{ curriculum.year }})</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Course Code</label>
+                    <input type="text" name="course_code" placeholder="e.g., CPE 001" required>
+                </div>
+                <div class="form-group">
+                    <label>Descriptive Title</label>
+                    <input type="text" name="descriptive_title" placeholder="e.g., Software Design" required>
+                </div>
+                <div class="form-row" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px;">
+                    <div class="form-group">
+                        <label>Lab Hours</label>
+                        <input type="number" name="laboratory_hours" min="0" value="0" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Lec Hours</label>
+                        <input type="number" name="lecture_hours" min="0" value="0" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Credit Units</label>
+                        <input type="number" name="credit_units" min="0" value="0" required>
+                    </div>
+                </div>
+                <div class="form-row" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px;">
+                    <div class="form-group">
+                        <label>Year Level</label>
+                        <select name="year_level" required>
+                            <option value="1">1st Year</option>
+                            <option value="2">2nd Year</option>
+                            <option value="3">3rd Year</option>
+                            <option value="4">4th Year</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Semester</label>
+                        <select name="semester" required>
+                            <option value="1">1st Semester</option>
+                            <option value="2">2nd Semester</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer" style="display: flex; justify-content: flex-end; gap: 12px; padding-top: 20px; border-top: 1px solid #E0E0E0; margin-top: 10px;">
+                    <button type="button" class="btn-secondary" onclick="closeModal('addCourseModal')" style="padding: 12px 24px; background: #FFFFFF; border: 1px solid #DEE2E6; border-radius: 10px; color: #495057; font-family: 'Lexend', sans-serif; font-size: 0.95rem; font-weight: 600; cursor: pointer;">Cancel</button>
+                    <button type="submit" class="btn-primary" style="padding: 12px 24px; background: #F8F9FA; border: 1px solid rgba(255, 255, 255, 0.6); border-radius: 10px; color: #212529; font-family: 'Lexend', sans-serif; font-size: 0.95rem; font-weight: 600; cursor: pointer; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);">Add Course</button>
+                </div>
+            </form>
         </div>
+    </div>
+
+    <!-- Add Faculty Modal -->
+    <div id="addFacultyModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Add New Faculty</h2>
+                <span class="close" onclick="closeModal('addFacultyModal')">&times;</span>
+            </div>
+            <form id="addFacultyForm" onsubmit="submitQuickAddFaculty(event)">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label class="checkbox-group-label" style="display: block; margin-bottom: 12px; font-family: 'Lexend', sans-serif; font-size: 0.9rem; font-weight: 600; color: #212529;">Account Type</label>
+                    <div class="checkbox-group" style="display: flex; gap: 20px; align-items: center;">
+                        <label class="checkbox-label" style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-family: 'Lexend', sans-serif; font-size: 0.95rem; color: #495057; font-weight: 500;">
+                            <input type="radio" name="role" value="admin" required style="width: 18px; height: 18px; cursor: pointer; accent-color: #212529;">
+                            <span>Admin</span>
+                        </label>
+                        <label class="checkbox-label" style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-family: 'Lexend', sans-serif; font-size: 0.95rem; color: #495057; font-weight: 500;">
+                            <input type="radio" name="role" value="staff" checked required style="width: 18px; height: 18px; cursor: pointer; accent-color: #212529;">
+                            <span>Staff</span>
+                        </label>
+                    </div>
+                </div>
+                <div class="form-row" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px;">
+                    <div class="form-group">
+                        <label>First Name</label>
+                        <input type="text" name="first_name" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Last Name</label>
+                        <input type="text" name="last_name" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Gender</label>
+                        <select name="gender" required>
+                            <option value="M">Male</option>
+                            <option value="F">Female</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" name="email" required>
+                    <small style="color: #6C757D; font-size: 0.8rem; margin-top: 4px; display: block;">Auto-generated password will be sent to this email</small>
+                </div>
+                <div class="form-row" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px;">
+                    <div class="form-group">
+                        <label>Employment Status</label>
+                        <select name="employment_status" required>
+                            <option value="full_time">Full-Time</option>
+                            <option value="part_time">Part-Time</option>
+                            <option value="contractual">Contractual</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Highest Degree Earned</label>
+                        <input type="text" name="highest_degree" placeholder="e.g., PhD, Master's">
+                    </div>
+                </div>
+                <div class="modal-footer" style="display: flex; justify-content: flex-end; gap: 12px; padding-top: 20px; border-top: 1px solid #E0E0E0; margin-top: 10px;">
+                    <button type="button" class="btn-secondary" onclick="closeModal('addFacultyModal')" style="padding: 12px 24px; background: #FFFFFF; border: 1px solid #DEE2E6; border-radius: 10px; color: #495057; font-family: 'Lexend', sans-serif; font-size: 0.95rem; font-weight: 600; cursor: pointer;">Cancel</button>
+                    <button type="submit" class="btn-primary" style="padding: 12px 24px; background: #F8F9FA; border: 1px solid rgba(255, 255, 255, 0.6); border-radius: 10px; color: #212529; font-family: 'Lexend', sans-serif; font-size: 0.95rem; font-weight: 600; cursor: pointer; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);">Add Faculty</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Add Section Modal -->
+    <div id="addSectionModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Add New Section</h2>
+                <span class="close" onclick="closeModal('addSectionModal')">&times;</span>
+            </div>
+            <form id="addSectionForm" onsubmit="submitQuickAddSection(event)">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label>Section Name</label>
+                    <input type="text" name="name" placeholder="e.g., CPE11S1" required>
+                    <small style="color: #6C757D; font-size: 0.8rem; margin-top: 4px; display: block;">
+                        <strong>Format:</strong> CPE[year][semester]S[number]<br>
+                        <strong>Examples:</strong> CPE11S1 (1st year, 1st sem, Section 1)
+                    </small>
+                </div>
+                <div class="form-group">
+                    <label>Curriculum</label>
+                    <select name="curriculum" required>
+                        {% for curriculum in curricula %}
+                        <option value="{{ curriculum.id }}">{{ curriculum.name }} ({{ curriculum.year }})</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-row" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px;">
+                    <div class="form-group">
+                        <label>Year Level</label>
+                        <select name="year_level" required>
+                            <option value="1">1st Year</option>
+                            <option value="2">2nd Year</option>
+                            <option value="3">3rd Year</option>
+                            <option value="4">4th Year</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Semester</label>
+                        <select name="semester" required>
+                            <option value="1">1st Semester</option>
+                            <option value="2">2nd Semester</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Max Students</label>
+                    <input type="number" name="max_students" min="1" value="40" required>
+                </div>
+                <div class="modal-footer" style="display: flex; justify-content: flex-end; gap: 12px; padding-top: 20px; border-top: 1px solid #E0E0E0; margin-top: 10px;">
+                    <button type="button" class="btn-secondary" onclick="closeModal('addSectionModal')" style="padding: 12px 24px; background: #FFFFFF; border: 1px solid #DEE2E6; border-radius: 10px; color: #495057; font-family: 'Lexend', sans-serif; font-size: 0.95rem; font-weight: 600; cursor: pointer;">Cancel</button>
+                    <button type="submit" class="btn-primary" style="padding: 12px 24px; background: #F8F9FA; border: 1px solid rgba(255, 255, 255, 0.6); border-radius: 10px; color: #212529; font-family: 'Lexend', sans-serif; font-size: 0.95rem; font-weight: 600; cursor: pointer; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);">Add Section</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Add Room Modal -->
+    <div id="addRoomModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Add New Room</h2>
+                <span class="close" onclick="closeModal('addRoomModal')">&times;</span>
+            </div>
+            <form id="addRoomForm" onsubmit="submitQuickAddRoom(event)">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label>Room Name</label>
+                    <input type="text" name="name" placeholder="e.g., Computer Laboratory 1" required>
+                </div>
+                <div class="form-row" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px;">
+                    <div class="form-group">
+                        <label>Room Number</label>
+                        <input type="text" name="room_number" placeholder="e.g., 201" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Capacity</label>
+                        <input type="number" name="capacity" min="1" value="40" required>
+                    </div>
+                </div>
+                <div class="form-row" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px;">
+                    <div class="form-group">
+                        <label>Campus</label>
+                        <select name="campus" required>
+                            <option value="casal">Casal</option>
+                            <option value="arlegui">Arlegui</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Room Type</label>
+                        <select name="room_type" required>
+                            <option value="lecture">Lecture</option>
+                            <option value="laboratory">Laboratory</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer" style="display: flex; justify-content: flex-end; gap: 12px; padding-top: 20px; border-top: 1px solid #E0E0E0; margin-top: 10px;">
+                    <button type="button" class="btn-secondary" onclick="closeModal('addRoomModal')" style="padding: 12px 24px; background: #FFFFFF; border: 1px solid #DEE2E6; border-radius: 10px; color: #495057; font-family: 'Lexend', sans-serif; font-size: 0.95rem; font-weight: 600; cursor: pointer;">Cancel</button>
+                    <button type="submit" class="btn-primary" style="padding: 12px 24px; background: #F8F9FA; border: 1px solid rgba(255, 255, 255, 0.6); border-radius: 10px; color: #212529; font-family: 'Lexend', sans-serif; font-size: 0.95rem; font-weight: 600; cursor: pointer; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);">Add Room</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Create Schedule Modal -->
+    <div id="createScheduleModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Create Schedule</h2>
+                <span class="close" onclick="closeModal('createScheduleModal')">&times;</span>
+            </div>
+            <form id="createScheduleForm" onsubmit="submitCreateSchedule(event)">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label>Course Code</label>
+                    <select name="course" id="course_select" required>
+                        <option value="">Select a course...</option>
+                        {% for course in all_courses %}
+                        <option value="{{ course.id }}">{{ course.course_code }} - {{ course.descriptive_title }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Instructor</label>
+                    <select name="faculty" required>
+                        <option value="">Select an instructor...</option>
+                        {% for faculty in faculty_list %}
+                        <option value="{{ faculty.id }}">{{ faculty.last_name }}, {{ faculty.first_name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Section</label>
+                    <select name="section" required>
+                        <option value="">Select a section...</option>
+                        {% for section in section_list %}
+                        <option value="{{ section.id }}">{{ section.name }} - {% if section.year_level == 1 %}1st{% elif section.year_level == 2 %}2nd{% elif section.year_level == 3 %}3rd{% else %}4th{% endif %} Year, {% if section.semester == 1 %}1st{% else %}2nd{% endif %} Semester</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Room</label>
+                    <select name="room" required>
+                        <option value="">Select a room...</option>
+                        {% for room in room_list %}
+                        <option value="{{ room.id }}">{{ room.get_room_type_display }}: {% if room.campus == 'arlegui' %}A{% else %}C{% endif %}-{{ room.room_number }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Day</label>
+                    <select name="day" required>
+                        <option value="">Select a day...</option>
+                        <option value="0">Monday</option>
+                        <option value="1">Tuesday</option>
+                        <option value="2">Wednesday</option>
+                        <option value="3">Thursday</option>
+                        <option value="4">Friday</option>
+                        <option value="5">Saturday</option>
+                    </select>
+                </div>
+                <div class="form-row" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px;">
+                    <div class="form-group">
+                        <label>Start Time</label>
+                        <input type="time" name="start_time" required>
+                    </div>
+                    <div class="form-group">
+                        <label>End Time</label>
+                        <input type="time" name="end_time" required>
+                    </div>
+                </div>
+                <div class="modal-footer" style="display: flex; justify-content: flex-end; gap: 12px; padding-top: 20px; border-top: 1px solid #E0E0E0; margin-top: 10px;">
+                    <button type="button" class="btn-secondary" onclick="closeModal('createScheduleModal')" style="padding: 12px 24px; background: #FFFFFF; border: 1px solid #DEE2E6; border-radius: 10px; color: #495057; font-family: 'Lexend', sans-serif; font-size: 0.95rem; font-weight: 600; cursor: pointer;">Cancel</button>
+                    <button type="submit" class="btn-primary" style="padding: 12px 24px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none; border-radius: 10px; color: #FFFFFF; font-family: 'Lexend', sans-serif; font-size: 0.95rem; font-weight: 600; cursor: pointer; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);">Create Schedule</button>
+                </div>
+            </form>
+        </div>
+    </div>
 
         <!-- Schedule Section -->
         <div class="schedule-section">
@@ -291,6 +609,21 @@
     </main>
 
     <script>
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+
         // Dropdown toggle
         function toggleDropdown() {
             document.getElementById('dropdownMenu').classList.toggle('show');
@@ -301,6 +634,175 @@
             if (!event.target.matches('.admin-section') && !event.target.closest('.admin-section')) {
                 document.getElementById('dropdownMenu').classList.remove('show');
             }
+            if (event.target.classList.contains('modal')) {
+                event.target.style.display = 'none';
+            }
+        }
+
+        // Modal functions
+        function openModal(modalId) {
+            document.getElementById(modalId).style.display = 'block';
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+        }
+
+        function openAddCourseModal() {
+            openModal('addCourseModal');
+        }
+
+        function openAddFacultyModal() {
+            openModal('addFacultyModal');
+        }
+
+        function openAddSectionModal() {
+            openModal('addSectionModal');
+        }
+
+        function openAddRoomModal() {
+            openModal('addRoomModal');
+        }
+
+        function openCreateScheduleModal() {
+            openModal('createScheduleModal');
+        }
+
+        // Submit functions
+        function submitQuickAddCourse(event) {
+            event.preventDefault();
+            const formData = new FormData(event.target);
+            
+            fetch('/admin/course/add/', {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: formData,
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showNotification('Course added successfully!', 'success');
+                    closeModal('addCourseModal');
+                    setTimeout(() => window.location.reload(), 1000);
+                } else {
+                    showNotification('Error adding course', 'error');
+                }
+            });
+        }
+
+        function submitQuickAddFaculty(event) {
+            event.preventDefault();
+            const formData = new FormData(event.target);
+            
+            fetch('/admin/faculty/add/', {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: formData,
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showNotification(data.message || 'Faculty added successfully!', 'success');
+                    closeModal('addFacultyModal');
+                    setTimeout(() => window.location.reload(), 1000);
+                } else {
+                    showNotification('Error adding faculty', 'error');
+                }
+            });
+        }
+
+        function submitQuickAddSection(event) {
+            event.preventDefault();
+            const formData = new FormData(event.target);
+            
+            fetch('/admin/section/add/', {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: formData,
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showNotification('Section added successfully!', 'success');
+                    closeModal('addSectionModal');
+                    setTimeout(() => window.location.reload(), 1000);
+                } else {
+                    const errorMsg = data.errors ? data.errors.join('\n') : 'Error adding section';
+                    showNotification(errorMsg, 'error');
+                }
+            });
+        }
+
+        function submitQuickAddRoom(event) {
+            event.preventDefault();
+            const formData = new FormData(event.target);
+            
+            fetch('/admin/room/add/', {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: formData,
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showNotification('Room added successfully!', 'success');
+                    closeModal('addRoomModal');
+                    setTimeout(() => window.location.reload(), 1000);
+                } else {
+                    showNotification('Error adding room', 'error');
+                }
+            });
+        }
+
+        function submitCreateSchedule(event) {
+            event.preventDefault();
+            const formData = new FormData(event.target);
+            
+            fetch('/admin/schedule/add/', {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: formData,
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showNotification('Schedule created successfully!', 'success');
+                    closeModal('createScheduleModal');
+                    setTimeout(() => window.location.reload(), 1000);
+                } else {
+                    const errorMsg = data.errors ? data.errors.join('\n') : 'Error creating schedule';
+                    showNotification(errorMsg, 'error');
+                }
+            });
+        }
+
+        function showNotification(message, type) {
+            const notification = document.createElement('div');
+            notification.className = `notification ${type} show`;
+            
+            if (message.includes('\n')) {
+                notification.style.whiteSpace = 'pre-line';
+                notification.style.textAlign = 'left';
+                notification.style.maxWidth = '500px';
+            }
+            
+            notification.textContent = message;
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+                setTimeout(() => notification.remove(), 300);
+            }, 3000);
         }
     </script>
 </body>

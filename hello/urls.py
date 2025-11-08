@@ -35,6 +35,8 @@ urlpatterns = [
     path('admin/room/edit/<int:room_id>/', views.edit_room, name='edit_room'),
     path('admin/room/delete/<int:room_id>/', views.delete_room, name='delete_room'),
     
+    path('admin/schedule/add/', views.add_schedule, name='add_schedule'),
+
     # Auth
     path('admin/logout/', views.admin_logout, name='admin_logout'),
     path('admin/password-reset/', 
