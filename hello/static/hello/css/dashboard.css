@@ -409,81 +409,6 @@ body {
     visibility: visible;
 }
 
-/* Data layout (Section and Status) */
-.card-data-table {
-    width: 100%;
-}
-
-.card-data-header {
-    display: grid;
-    grid-template-columns: 1fr auto;
-    gap: 10px;
-    padding: 8px 0;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
-    margin-bottom: 8px;
-}
-
-.card-data-header span {
-    font-family: 'Lexend', sans-serif;
-    font-size: 0.75rem;
-    font-weight: 600;
-    color: rgba(255, 255, 255, 0.7);
-    text-transform: uppercase;
-}
-
-/* Each row */
-.card-data-row {
-    display: grid;
-    grid-template-columns: 1fr auto;
-    gap: 10px;
-    padding: 10px 0;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-    align-items: center;
-}
-
-.card-data-row:last-child {
-    border-bottom: none;
-}
-
-/* Section name */
-.card-data-name {
-    font-family: 'Lexend', sans-serif;
-    font-size: 0.8rem;
-    font-weight: 500;
-    color: rgba(255, 255, 255, 0.9);
-}
-
-/* Status badge */
-.card-status-badge {
-    padding: 4px 12px;
-    border-radius: 12px;
-    font-family: 'Lexend', sans-serif;
-    font-size: 0.7rem;
-    font-weight: 600;
-    text-align: center;
-}
-
-.status-complete {
-    background: rgba(255, 255, 255, 0.2);
-    color: rgba(255, 255, 255, 0.95);
-}
-
-.status-no-schedule {
-    background: rgba(150, 150, 150, 0.3);
-    color: rgba(200, 200, 200, 1);
-}
-
-/* Empty message */
-.card-empty-message {
-    font-family: 'Lexend', sans-serif;
-    font-size: 0.85rem;
-    font-weight: 500;
-    color: rgba(255, 255, 255, 0.5);
-    text-align: center;
-    padding: 30px 20px;
-}
-
-
 .summary-card.section-card:hover::after {
     content: "";
     background-color: transparent;
@@ -821,8 +746,6 @@ body {
     background: #F8F9FA;
     border-right: 2px solid #CED4DA;
     position: relative;
-    /* Height = (number of 30-min slots) * 60px */
-    /* 7:00 AM to 9:30 PM = 14.5 hours = 29 slots = 1740px */
     height: 1740px;
 }
 
@@ -835,7 +758,6 @@ body {
     font-size: 0.75rem;
     font-weight: 600;
     color: #6C757D;
-    /* Center the label on the grid line */
     transform: translateY(-50%);
     background: #F8F9FA;
     padding: 4px 0;
@@ -846,7 +768,6 @@ body {
 .schedule-day-column {
     position: relative;
     border-right: 1px solid #DEE2E6;
-    /* Same height as time column */
     height: 1740px;
     background: #FFFFFF;
 }
@@ -863,7 +784,6 @@ body {
     right: 0;
     top: 0;
     bottom: 0;
-    /* Create horizontal lines every 60px (30 minutes) */
     background-image: repeating-linear-gradient(
         to bottom,
         #DEE2E6 0px,
@@ -918,22 +838,13 @@ body {
     text-overflow: ellipsis;
 }
 
-/* Welcome Card */
-.welcome-card {
-    background: #FFFFFF;
-    border-radius: 12px;
-    padding: 30px 40px;
-    margin-bottom: 30px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
 /* Quick Actions */
 .quick-actions {
-    background: #FFFFFF;
-    border-radius: 12px;
-    padding: 30px 40px;
+    background: transparent;
+    border-radius: 0;
+    padding: 0;
     margin-bottom: 30px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    box-shadow: none;
 }
 
 .quick-actions h2 {
@@ -946,38 +857,88 @@ body {
 
 .quick-actions-grid {
     display: grid;
-    grid-template-columns: repeat(5, 1fr);
+    grid-template-columns: repeat(3, 1fr);
     gap: 20px;
 }
 
-.quick-action-btn {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 15px;
-    padding: 30px 20px;
+.quick-action-card {
     background: #FFFFFF;
-    border: 2px solid #E9ECEF;
     border-radius: 12px;
-    color: #212529;
-    font-family: 'Lexend', sans-serif;
-    font-size: 1rem;
-    font-weight: 600;
+    padding: 25px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    position: relative;
+    overflow: visible;
     cursor: pointer;
     transition: all 0.3s ease;
-    text-align: center;
-    min-height: 140px;
+    min-height: 150px;
+    display: flex;
+    flex-direction: column;
 }
 
-.quick-action-btn:hover {
-    border-color: #212529;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+.quick-action-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
 }
 
-.quick-action-btn:active {
-    transform: translateY(0);
+.quick-action-card::before {
+    content: '';
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    width: 5px;
+    height: calc(100% - 16px);
+    border-radius: 3px;
+    transition: all 0.3s ease;
+}
+
+/* Color variations for each card */
+.quick-action-card.blue::before {
+    background: #2196F3;
+}
+
+.quick-action-card.green::before {
+    background: #4CAF50;
+}
+
+.quick-action-card.orange::before {
+    background: #FF9800;
+}
+
+.quick-action-card.yellow::before {
+    background: #FBC02D;
+}
+
+.quick-action-card.red::before {
+    background: #F44336;
+}
+
+.quick-action-title {
+    font-family: 'Lexend', sans-serif;
+    font-size: 1.125rem;
+    font-weight: 600;
+    margin: 0 0 20px 10px;
+    padding: 0;
+    text-align: left;
+}
+
+.quick-action-card.blue .quick-action-title {
+    color: #2196F3;
+}
+
+.quick-action-card.green .quick-action-title {
+    color: #4CAF50;
+}
+
+.quick-action-card.orange .quick-action-title {
+    color: #FF9800;
+}
+
+.quick-action-card.yellow .quick-action-title {
+    color: #FBC02D;
+}
+
+.quick-action-card.red .quick-action-title {
+    color: #F44336;
 }
 
 .quick-action-icon {
@@ -986,63 +947,48 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: 12px;
-    transition: all 0.3s ease;
+    border-radius: 8px;
+    background: transparent;
+    margin-left: 10px;
 }
 
 .quick-action-icon svg {
-    width: 32px;
-    height: 32px;
-    transition: all 0.3s ease;
+    width: 64px;
+    height: 64px;
+    fill: #C5C5C5;
 }
 
-/* Create Schedule Button - Special Styling (Blue) */
-.quick-action-btn.create-schedule-btn {
-    background: #E3F2FD;
-    border: 2px solid #2196F3;
-    color: #2196F3;
-}
-
-.quick-action-btn.create-schedule-btn .quick-action-icon {
-    background: #2196F3;
-}
-
-.quick-action-btn.create-schedule-btn .quick-action-icon svg {
-    fill: #FFFFFF;
-}
-
-.quick-action-btn.create-schedule-btn span {
-    color: #2196F3;
-}
-
-.quick-action-btn.create-schedule-btn:hover {
-    background: #BBDEFB;
-    border-color: #1976D2;
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(33, 150, 243, 0.3);
+/* Two-column layout for the last row */
+.quick-actions-grid > .quick-action-card:nth-child(4),
+.quick-actions-grid > .quick-action-card:nth-child(5) {
+    grid-column: span 1;
 }
 
 /* Responsive Design for Quick Actions */
-@media (max-width: 1400px) {
+@media (max-width: 1200px) {
     .quick-actions-grid {
-        grid-template-columns: repeat(3, 1fr);
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .quick-actions-grid > .quick-action-card:nth-child(4),
+    .quick-actions-grid > .quick-action-card:nth-child(5) {
+        grid-column: span 1;
     }
 }
 
 @media (max-width: 768px) {
     .quick-actions {
-        padding: 20px;
+        padding: 0;
     }
     
     .quick-actions-grid {
-        grid-template-columns: repeat(2, 1fr);
+        grid-template-columns: 1fr;
         gap: 15px;
     }
     
-    .quick-action-btn {
-        padding: 25px 15px;
-        min-height: 120px;
-        font-size: 0.9rem;
+    .quick-action-card {
+        padding: 20px;
+        min-height: 130px;
     }
     
     .quick-action-icon {
@@ -1051,46 +997,13 @@ body {
     }
     
     .quick-action-icon svg {
-        width: 24px;
-        height: 24px;
+        width: 48px;
+        height: 48px;
     }
-}
-
-@media (max-width: 480px) {
-    .quick-actions-grid {
-        grid-template-columns: 1fr;
-    }
-}
-
-/* Welcome Card Existing Styles */
-.welcome-card h1 {
-    font-family: 'Lexend', sans-serif;
-    font-size: 1.75rem;
-    font-weight: 700;
-    color: #212529;
-    margin-bottom: 12px;
-}
-
-@media (max-width: 768px) {
-    .schedule-wrapper {
-        flex-direction: column;
-    }
-
-    .courses-list {
-        flex-direction: row;
-        flex-wrap: wrap;
-    }
-
-    .schedule-grid-container {
-        max-height: 400px;
-    }
-
-    .schedule-grid {
-        min-width: 700px;
-    }
-
-    .schedule-header-cell {
-        min-width: 100px;
+    
+    .quick-action-title {
+        font-size: 1rem;
+        margin-bottom: 25px;
     }
 }
 
@@ -1197,6 +1110,10 @@ body {
     box-sizing: border-box;
 }
 
+.form-group input[type="time"] {
+    cursor: pointer;
+}
+
 .form-group select {
     padding-right: 40px;
     appearance: none;
@@ -1211,6 +1128,51 @@ body {
     outline: none;
     border-color: #ADB5BD;
     box-shadow: 0 0 0 3px rgba(173, 181, 189, 0.1);
+}
+
+.modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    padding-top: 20px;
+    border-top: 1px solid #E0E0E0;
+    margin-top: 10px;
+}
+
+.btn-secondary {
+    padding: 12px 24px;
+    background: #FFFFFF;
+    border: 1px solid #DEE2E6;
+    border-radius: 10px;
+    color: #495057;
+    font-family: 'Lexend', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-secondary:hover {
+    background: #F8F9FA;
+    border-color: #ADB5BD;
+}
+
+.btn-primary {
+    padding: 12px 24px;
+    background: #212529;
+    border: none;
+    border-radius: 10px;
+    color: #FFFFFF;
+    font-family: 'Lexend', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-primary:hover {
+    background: #495057;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 /* Notification Toast */
@@ -1248,14 +1210,6 @@ body {
     border-left: 4px solid #dc3545;
 }
 
-@media (max-width: 768px) {
-    .notification {
-        right: 20px;
-        left: 20px;
-        min-width: auto;
-    }
-}
-
 /* Responsive Design */
 @media (max-width: 768px) {
     .schedule-wrapper {
@@ -1278,5 +1232,10 @@ body {
     .schedule-header-cell {
         min-width: 100px;
     }
+    
+    .notification {
+        right: 20px;
+        left: 20px;
+        min-width: auto;
+    }
 }
-
