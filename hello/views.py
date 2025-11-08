@@ -56,6 +56,8 @@ def admin_dashboard(request):
         messages.error(request, 'You do not have permission to access this page.')
         return redirect('admin_login')
     
+    from django.db.models import Sum
+    
     # Get counts from database
     faculty_count = Faculty.objects.count()
     section_count = Section.objects.count()
@@ -65,13 +67,16 @@ def admin_dashboard(request):
     
     # Get section list with schedule status
     section_list = Section.objects.all().order_by('year_level', 'semester', 'name')
-    # Calculate total units for each section and check if schedule is complete (25 units)
+    
+    # Calculate total units for each section (counting unique courses only)
     for section in section_list:
-        # Get all schedules for this section and sum up the credit units
-        total_units = 0
-        schedules = section.schedules.select_related('course').all()
-        for schedule in schedules:
-            total_units += schedule.course.credit_units
+        # Get unique course IDs for this section to avoid double-counting
+        unique_course_ids = section.schedules.values_list('course', flat=True).distinct()
+        
+        # Sum credit units for unique courses only
+        total_units = Course.objects.filter(id__in=unique_course_ids).aggregate(
+            total=Sum('credit_units')
+        )['total'] or 0
         
         section.total_units = total_units
         section.has_schedule = total_units >= 25  # Complete if 25 or more units
@@ -101,9 +106,7 @@ def admin_dashboard(request):
     
     # Generate time slots from 7:30 AM to 9:30 PM (30-minute intervals)
     time_slots = []
-    # Start at 7:30
     time_slots.append("07:30")
-    # Then 8:00 onwards
     for hour in range(8, 22):
         for minute in ['00', '30']:
             if hour == 21 and minute == '30':
