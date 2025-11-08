@@ -8,6 +8,7 @@ from django.core.exceptions import ValidationError
 from django.contrib.auth.models import User
 from django.core.mail import send_mail
 from django.conf import settings
+from django.db.models import Sum
 from datetime import datetime, timedelta
 import random
 import string
@@ -57,10 +58,14 @@ def admin_dashboard(request):
         return redirect('admin_login')
     
     from django.db.models import Sum
+    import json
     
     # Get counts from database
     faculty_count = Faculty.objects.count()
     section_count = Section.objects.count()
+    
+    # Get all curricula for forms
+    curricula = Curriculum.objects.all()
     
     # Get faculty list with their total units
     faculty_list = Faculty.objects.all().order_by('last_name', 'first_name')
@@ -68,16 +73,16 @@ def admin_dashboard(request):
     # Get section list with schedule status
     section_list = Section.objects.all().order_by('year_level', 'semester', 'name')
     
+    # Get room list for schedule creation
+    room_list = Room.objects.all().order_by('campus', 'room_number')
+    
     # Calculate total units for each section (counting unique courses only)
     for section in section_list:
         # Get unique course IDs for this section to avoid double-counting
         unique_course_ids = section.schedules.values_list('course', flat=True).distinct()
         
         # Sum credit units for unique courses only
-        total_units = Course.objects.filter(id__in=unique_course_ids).aggregate(
-            total=Sum('credit_units')
-        )['total'] or 0
-        
+        total_units = Course.objects.filter(id__in=unique_course_ids).aggregate(total=Sum('credit_units'))['total'] or 0
         section.total_units = total_units
         section.has_schedule = total_units >= 25  # Complete if 25 or more units
     
@@ -224,6 +229,11 @@ def course_view(request):
         'selected_year': int(selected_year) if selected_year else None,
         'selected_semester': int(selected_semester) if selected_semester else None,
     }
+    
+    # Check if we should open a modal (from quick actions)
+    if request.GET.get('openModal') == 'addCourse':
+        context['open_add_modal'] = True
+    
     return render(request, 'hello/course.html', context)
 
 @login_required(login_url='admin_login')
@@ -406,6 +416,10 @@ def section_view(request):
         'sections': sections,
         'curricula': curricula,
     }
+    
+    # Check if we should open a modal (from quick actions)
+    if request.GET.get('openModal') == 'addSection':
+        context['open_add_modal'] = True
     
     return render(request, 'hello/section.html', context)
 
@@ -631,6 +645,10 @@ def faculty_view(request):
         'faculties': faculties,
         'courses': courses,
     }
+    
+    # Check if we should open a modal (from quick actions)
+    if request.GET.get('openModal') == 'addFaculty':
+        context['open_add_modal'] = True
     
     return render(request, 'hello/faculty.html', context)
 
@@ -905,6 +923,10 @@ def room_view(request):
         'user': request.user,
         'rooms': rooms,
     }
+    
+    # Check if we should open a modal (from quick actions)
+    if request.GET.get('openModal') == 'addRoom':
+        context['open_add_modal'] = True
     
     return render(request, 'hello/room.html', context)
 
