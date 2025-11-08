@@ -981,50 +981,45 @@ body {
 }
 
 .quick-action-icon {
-    width: 48px;
-    height: 48px;
+    width: 64px;
+    height: 64px;
     display: flex;
     align-items: center;
     justify-content: center;
-    background: #F8F9FA;
-    border-radius: 10px;
+    border-radius: 12px;
     transition: all 0.3s ease;
-}
-
-.quick-action-btn:hover .quick-action-icon {
-    background: #212529;
-}
-
-.quick-action-btn:hover .quick-action-icon svg {
-    fill: #FFFFFF;
 }
 
 .quick-action-icon svg {
-    width: 24px;
-    height: 24px;
-    fill: #212529;
+    width: 32px;
+    height: 32px;
     transition: all 0.3s ease;
 }
 
-/* Create Schedule Button - Special Styling */
+/* Create Schedule Button - Special Styling (Blue) */
 .quick-action-btn.create-schedule-btn {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    border: 2px solid transparent;
-    color: #FFFFFF;
+    background: #E3F2FD;
+    border: 2px solid #2196F3;
+    color: #2196F3;
 }
 
 .quick-action-btn.create-schedule-btn .quick-action-icon {
-    background: rgba(255, 255, 255, 0.2);
+    background: #2196F3;
 }
 
 .quick-action-btn.create-schedule-btn .quick-action-icon svg {
     fill: #FFFFFF;
 }
 
+.quick-action-btn.create-schedule-btn span {
+    color: #2196F3;
+}
+
 .quick-action-btn.create-schedule-btn:hover {
-    border-color: #FFFFFF;
+    background: #BBDEFB;
+    border-color: #1976D2;
     transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+    box-shadow: 0 6px 20px rgba(33, 150, 243, 0.3);
 }
 
 /* Responsive Design for Quick Actions */
@@ -1051,13 +1046,13 @@ body {
     }
     
     .quick-action-icon {
-        width: 40px;
-        height: 40px;
+        width: 48px;
+        height: 48px;
     }
     
     .quick-action-icon svg {
-        width: 20px;
-        height: 20px;
+        width: 24px;
+        height: 24px;
     }
 }
 
