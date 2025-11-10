@@ -132,41 +132,41 @@
                         </div>
 
                         <div class="card-body">
-    <div class="info-row">
-        <div class="info-group">
-            <div class="info-label">STATUS</div>
-            <div class="info-value status-value" 
-                 id="status-{{ section.id }}"
-                 onclick="toggleStatus(event, {{ section.id }})"
-                 style="cursor: pointer; color: {% if section.status == 'complete' %}#28a745{% else %}#dc3545{% endif %};">
-                {{ section.get_status_display }}
-            </div>
-        </div>
-        <div class="info-group">
-            <div class="info-label">YEAR LEVEL</div>
-            <div class="info-value">
-                {% if section.year_level == 1 %}1st Year
-                {% elif section.year_level == 2 %}2nd Year
-                {% elif section.year_level == 3 %}3rd Year
-                {% else %}4th Year{% endif %}
-            </div>
-        </div>
-        <div class="info-group">
-            <div class="info-label">SEMESTER</div>
-            <div class="info-value">
-                {% if section.semester == 1 %}1st{% else %}2nd{% endif %}
-            </div>
-        </div>
-        <div class="info-group">
-            <div class="info-label">CURRICULUM</div>
-            <div class="info-value">{{ section.curriculum.name }} ({{ section.curriculum.year }})</div>
-        </div>
-        <div class="info-group">
-            <div class="info-label">TOTAL UNITS</div>
-            <div class="info-value">{{ section.calculated_total_units }}</div>
-        </div>
-    </div>
-</div>
+                            <div class="info-row">
+                                <div class="info-group">
+                                    <div class="info-label">STATUS</div>
+                                    <div class="info-value status-value" 
+                                         id="status-{{ section.id }}"
+                                         onclick="toggleStatus(event, {{ section.id }})"
+                                         style="cursor: pointer; color: {% if section.status == 'complete' %}#28a745{% else %}#dc3545{% endif %};">
+                                        {{ section.get_status_display }}
+                                    </div>
+                                </div>
+                                <div class="info-group">
+                                    <div class="info-label">YEAR LEVEL</div>
+                                    <div class="info-value">
+                                        {% if section.year_level == 1 %}1st Year
+                                        {% elif section.year_level == 2 %}2nd Year
+                                        {% elif section.year_level == 3 %}3rd Year
+                                        {% else %}4th Year{% endif %}
+                                    </div>
+                                </div>
+                                <div class="info-group">
+                                    <div class="info-label">SEMESTER</div>
+                                    <div class="info-value">
+                                        {% if section.semester == 1 %}1st{% else %}2nd{% endif %}
+                                    </div>
+                                </div>
+                                <div class="info-group">
+                                    <div class="info-label">CURRICULUM</div>
+                                    <div class="info-value">{{ section.curriculum.name }} ({{ section.curriculum.year }})</div>
+                                </div>
+                                <div class="info-group">
+                                    <div class="info-label">TOTAL UNITS</div>
+                                    <div class="info-value">{{ section.calculated_total_units }}</div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                     {% endfor %}
                 </div>
@@ -310,73 +310,75 @@
                         <option value="5">Saturday</option>
                     </select>
                 </div>
-                <!-- Replace the existing time inputs in your modal -->
-<div class="form-row" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px;">
-    <div class="form-group">
-        <label>Start Time</label>
-        <div class="time-input-trigger" onclick="openTimePicker('start_time')">
-            <span class="time-display" id="start_time_display">07:30 AM</span>
-            <svg class="time-picker-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                <path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"/>
-            </svg>
+                <div class="form-row" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px;">
+                    <div class="form-group">
+                        <label>Start Time</label>
+                        <div class="time-input-trigger" onclick="openTimePicker('start_time')">
+                            <span class="time-display" id="start_time_display">07:30 AM</span>
+                            <svg class="time-picker-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                                <path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"/>
+                            </svg>
+                        </div>
+                        <input type="hidden" name="start_time" id="start_time" value="07:30" required>
+                    </div>
+                    <div class="form-group">
+                        <label>End Time</label>
+                        <div class="time-input-trigger" onclick="openTimePicker('end_time')">
+                            <span class="time-display" id="end_time_display">08:30 AM</span>
+                            <svg class="time-picker-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                                <path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"/>
+                            </svg>
+                        </div>
+                        <input type="hidden" name="end_time" id="end_time" value="08:30" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-secondary" onclick="closeModal('createScheduleModal')">Cancel</button>
+                    <button type="submit" class="btn-primary">Create Schedule</button>
+                </div>
+            </form>
         </div>
-        <input type="hidden" name="start_time" id="start_time" value="07:30" required>
     </div>
-    <div class="form-group">
-        <label>End Time</label>
-        <div class="time-input-trigger" onclick="openTimePicker('end_time')">
-            <span class="time-display" id="end_time_display">08:30 AM</span>
-            <svg class="time-picker-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                <path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"/>
-            </svg>
-        </div>
-        <input type="hidden" name="end_time" id="end_time" value="08:30" required>
-    </div>
-</div>
 
-<!-- Add the time picker modal at the bottom of your HTML, before the closing body tag -->
-<div id="timePickerModal" class="time-picker-modal">
-    <div class="time-picker-modal-content">
-        <div class="time-picker-header">
-            <h3 id="timePickerTitle">Select Time</h3>
-            <button class="time-picker-close" onclick="closeTimePicker()">&times;</button>
-        </div>
-        <div class="time-picker-3-column">
-            <!-- Hours Column -->
-            <div class="time-picker-column hours-column">
-                <div class="time-picker-items" id="hoursList">
-                    <!-- Hours will be populated by JavaScript -->
+    <!-- Time Picker Modal -->
+    <div id="timePickerModal" class="time-picker-modal">
+        <div class="time-picker-modal-content">
+            <div class="time-picker-header">
+                <h3 id="timePickerTitle">Select Time</h3>
+                <button class="time-picker-close" onclick="closeTimePicker()">&times;</button>
+            </div>
+            <div class="time-picker-3-column">
+                <div class="time-picker-column hours-column">
+                    <div class="time-picker-items" id="hoursList"></div>
+                </div>
+                <div class="time-picker-column minutes-column">
+                    <div class="time-picker-items" id="minutesList"></div>
+                </div>
+                <div class="time-picker-column period-column">
+                    <div class="time-picker-items" id="periodList"></div>
                 </div>
             </div>
-            
-            <!-- Minutes Column -->
-            <div class="time-picker-column minutes-column">
-                <div class="time-picker-items" id="minutesList">
-                    <!-- Minutes will be populated by JavaScript -->
-                </div>
+            <div class="time-picker-footer">
+                <button type="button" class="time-picker-btn" onclick="closeTimePicker()">Cancel</button>
+                <button type="button" class="time-picker-btn primary" onclick="confirmTimeSelection()">OK</button>
             </div>
-            
-            <!-- Period Column -->
-            <div class="time-picker-column period-column">
-                <div class="time-picker-items" id="periodList">
-                    <!-- AM/PM will be populated by JavaScript -->
-                </div>
-            </div>
-        </div>
-        <div class="time-picker-footer">
-            <button type="button" class="time-picker-btn" onclick="closeTimePicker()">Cancel</button>
-            <button type="button" class="time-picker-btn primary" onclick="confirmTimeSelection()">OK</button>
         </div>
     </div>
-</div>
 
     <script>
-    let currentSectionId = null;
-// Time Picker Functions with Continuous Scrolling
+let currentSectionId = null;
+let currentTimeField = null;
+let selectedHour = 7;
+let selectedMinute = 30;
+let selectedPeriod = 'AM';
+let isScrolling = {};
+
+// ===============================
+// TIME PICKER
+// ===============================
 function openTimePicker(fieldId) {
     currentTimeField = fieldId;
-    
-    // Parse current time if exists
+
     const currentTime = document.getElementById(fieldId).value;
     if (currentTime) {
         const [time, period] = convertTo12Hour(currentTime);
@@ -385,10 +387,13 @@ function openTimePicker(fieldId) {
         selectedMinute = parseInt(minutes);
         selectedPeriod = period;
     }
-    
+
     populateTimePicker();
     document.getElementById('timePickerModal').style.display = 'flex';
-    document.getElementById('timePickerTitle').textContent = `Select ${fieldId.replace('_', ' ').toUpperCase()}`;
+    document.getElementById('timePickerTitle').textContent =
+        `Select ${fieldId.replace('_', ' ').toUpperCase()}`;
+
+    setTimeout(() => setupScrollListeners(), 200);
 }
 
 function closeTimePicker() {
@@ -396,269 +401,339 @@ function closeTimePicker() {
     currentTimeField = null;
 }
 
+// ===============================
+// POPULATE TIME PICKER
+// ===============================
 function populateTimePicker() {
     const hoursList = document.getElementById('hoursList');
     const minutesList = document.getElementById('minutesList');
     const periodList = document.getElementById('periodList');
-    
-    // Clear existing content
+
     hoursList.innerHTML = '';
     minutesList.innerHTML = '';
     periodList.innerHTML = '';
-    
-    // Create hours with continuous looping (1-12 repeated 3 times)
-    const hoursArray = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
-    const repeatedHours = [...hoursArray, ...hoursArray, ...hoursArray];
-    
-    repeatedHours.forEach((hour, index) => {
+
+    // HOURS — infinite scroll (5 repeats)
+    const hourValues = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
+    const repeatedHours = Array(5).fill(hourValues).flat();
+
+    repeatedHours.forEach(hour => {
         const item = document.createElement('button');
         item.className = 'time-picker-item';
         item.dataset.value = hour;
-        if (hour === selectedHour && index >= 12 && index < 24) {
-            item.classList.add('selected');
-        }
         item.textContent = hour.toString().padStart(2, '0');
         item.onclick = () => selectTimeItem('hour', hour);
         hoursList.appendChild(item);
     });
-    
-    // Create minutes with continuous looping (00-55 repeated 3 times)
-    const minutesArray = [];
-    for (let minute = 0; minute < 60; minute += 5) {
-        minutesArray.push(minute);
-    }
-    const repeatedMinutes = [...minutesArray, ...minutesArray, ...minutesArray];
-    
-    repeatedMinutes.forEach((minute, index) => {
+
+    // MINUTES — infinite scroll (5 repeats)
+    const minuteValues = [];
+    for (let m = 0; m < 60; m += 5) minuteValues.push(m);
+    const repeatedMinutes = Array(5).fill(minuteValues).flat();
+
+    repeatedMinutes.forEach(minute => {
         const item = document.createElement('button');
         item.className = 'time-picker-item';
         item.dataset.value = minute;
-        if (minute === selectedMinute && index >= 12 && index < 24) {
-            item.classList.add('selected');
-        }
         item.textContent = minute.toString().padStart(2, '0');
         item.onclick = () => selectTimeItem('minute', minute);
         minutesList.appendChild(item);
     });
-    
-    // Create period with continuous looping (AM/PM repeated 3 times)
-    const periodsArray = ['AM', 'PM'];
-    const repeatedPeriods = [...periodsArray, ...periodsArray, ...periodsArray];
-    
-    repeatedPeriods.forEach((period, index) => {
+
+    // PERIOD — stay at top (no infinite scroll)
+    ['AM', 'PM'].forEach(p => {
         const item = document.createElement('button');
         item.className = 'time-picker-item';
-        item.dataset.value = period;
-        if (period === selectedPeriod && index >= 1 && index < 3) {
-            item.classList.add('selected');
-        }
-        item.textContent = period;
-        item.onclick = () => selectTimeItem('period', period);
+        item.dataset.value = p;
+        item.textContent = p;
+        item.onclick = () => selectTimeItem('period', p);
         periodList.appendChild(item);
     });
-    
-    // Scroll to the middle section where selected items are
-    setTimeout(() => {
-        scrollToSelectedSection(hoursList, 12); // Scroll to middle section (items 12-23)
-        scrollToSelectedSection(minutesList, 12);
-        scrollToSelectedSection(periodList, 1);
-    }, 100);
-}
 
-function scrollToSelectedSection(container, startIndex) {
-    const items = container.querySelectorAll('.time-picker-item');
-    if (items.length > startIndex) {
-        const targetItem = items[startIndex];
-        targetItem.scrollIntoView({ behavior: 'instant', block: 'center' });
-    }
-}
-
-function selectTimeItem(type, value) {
-    switch (type) {
-        case 'hour':
-            selectedHour = value;
-            break;
-        case 'minute':
-            selectedMinute = value;
-            break;
-        case 'period':
-            selectedPeriod = value;
-            break;
-    }
-    
-    // Update visual selection
-    updateSelectionVisual(type, value);
-    
-    // Auto-scroll to keep selection in middle
     setTimeout(() => {
-        const container = type === 'hour' ? document.getElementById('hoursList') :
-                         type === 'minute' ? document.getElementById('minutesList') :
-                         document.getElementById('periodList');
-        scrollToSelectedItem(container, value, type);
+        scrollToValue(hoursList, selectedHour, 'hour', true);
+        scrollToValue(minutesList, selectedMinute, 'minute', true);
+        scrollToValue(periodList, selectedPeriod, 'period', true);
     }, 50);
 }
 
-function updateSelectionVisual(type, value) {
-    const containers = {
-        'hour': document.getElementById('hoursList'),
-        'minute': document.getElementById('minutesList'),
-        'period': document.getElementById('periodList')
-    };
-    
-    const container = containers[type];
-    if (!container) return;
-    
-    // Remove selected class from all items
-    container.querySelectorAll('.time-picker-item').forEach(item => {
-        item.classList.remove('selected');
+// ===============================
+// SCROLL TO VALUE
+// ===============================
+function scrollToValue(container, value, type, instant = false) {
+    const items = Array.from(container.querySelectorAll('.time-picker-item'));
+
+    // For period as well as hours/minutes, pick the matching item closest to the center
+    // This avoids always picking the first matching element in repeated lists.
+    const center = container.getBoundingClientRect().top + container.clientHeight / 2;
+
+    // Filter matching items
+    const matching = items.filter(i => {
+        if (type === 'period') return i.dataset.value === value;
+        return parseInt(i.dataset.value) === value;
     });
-    
-    // Add selected class to matching items in the middle section
-    container.querySelectorAll('.time-picker-item').forEach((item, index) => {
-        const itemValue = type === 'hour' || type === 'minute' ? 
-                         parseInt(item.dataset.value) : item.dataset.value;
-        
-        if (itemValue === value) {
-            // Check if this item is in the middle section
-            const totalItems = container.querySelectorAll('.time-picker-item').length;
-            const sectionSize = type === 'period' ? 2 : 12;
-            const middleStart = type === 'period' ? 2 : 12;
-            const middleEnd = type === 'period' ? 4 : 24;
-            
-            if (index >= middleStart && index < middleEnd) {
-                item.classList.add('selected');
+
+    if (matching.length) {
+        // Find the matching item whose midpoint is closest to center
+        let closest = matching[0];
+        let minDist = Infinity;
+        matching.forEach(item => {
+            const rect = item.getBoundingClientRect();
+            const mid = rect.top + rect.height / 2;
+            const dist = Math.abs(center - mid);
+            if (dist < minDist) {
+                minDist = dist;
+                closest = item;
             }
+        });
+
+        if (closest) {
+            closest.scrollIntoView({
+                behavior: instant ? 'auto' : 'smooth',
+                block: 'center'
+            });
         }
-    });
+    }
+
+    updateSelectionVisual(type, value);
 }
 
-function scrollToSelectedItem(container, value, type) {
-    const items = container.querySelectorAll('.time-picker-item');
-    const sectionSize = type === 'period' ? 2 : 12;
-    
-    // Find the first item in the middle section that matches the value
-    let targetIndex = -1;
-    items.forEach((item, index) => {
-        const itemValue = type === 'hour' || type === 'minute' ? 
-                         parseInt(item.dataset.value) : item.dataset.value;
-        
-        if (itemValue === value && index >= sectionSize && index < sectionSize * 2) {
-            if (targetIndex === -1) {
-                targetIndex = index;
-            }
-        }
-    });
-    
-    if (targetIndex !== -1 && items[targetIndex]) {
-        items[targetIndex].scrollIntoView({ behavior: 'smooth', block: 'center' });
+// ===============================
+// SELECT ITEM
+// ===============================
+function selectTimeItem(type, value) {
+    if (type === 'hour') selectedHour = value;
+    if (type === 'minute') selectedMinute = value;
+
+    // PERIOD TOGGLE
+    if (type === 'period') {
+        selectedPeriod = value;
+
+        const list = document.getElementById('periodList');
+        // Use scrollToValue to center the selected period
+        scrollToValue(list, value, 'period');
+        updateSelectionVisual('period', value);
+        return;
+    }
+
+    const list =
+        type === 'hour'
+            ? document.getElementById('hoursList')
+            : document.getElementById('minutesList');
+
+    scrollToValue(list, value, type);
+}
+
+// ===============================
+// SCROLL LISTENERS
+// ===============================
+function setupScrollListeners() {
+    const hoursList = document.getElementById('hoursList');
+    const minutesList = document.getElementById('minutesList');
+
+    if (!hoursList.dataset.added) {
+        hoursList.addEventListener('scroll', () => handleScroll(hoursList, 'hour'));
+        hoursList.dataset.added = true;
+    }
+    if (!minutesList.dataset.added) {
+        minutesList.addEventListener('scroll', () => handleScroll(minutesList, 'minute'));
+        minutesList.dataset.added = true;
     }
 }
 
+// ===============================
+// INFINITE SCROLL DOWN ONLY
+// ===============================
+function handleScroll(container, type) {
+    const items = Array.from(container.querySelectorAll('.time-picker-item'));
+    if (!items.length) return;
+
+    const itemHeight = items[0].offsetHeight;
+    const maxScroll = container.scrollHeight - container.clientHeight;
+
+    // Loop downward only
+    if (container.scrollTop >= maxScroll - itemHeight) {
+        container.scrollTop = itemHeight;
+    }
+
+    // find closest item to center
+    const center = container.getBoundingClientRect().top + container.clientHeight / 2;
+    let closest = null;
+    let minDist = Infinity;
+
+    items.forEach(item => {
+        const rect = item.getBoundingClientRect();
+        const mid = rect.top + rect.height / 2;
+        const dist = Math.abs(center - mid);
+        if (dist < minDist) {
+            minDist = dist;
+            closest = item;
+        }
+    });
+
+    if (closest) {
+        const value = parseInt(closest.dataset.value);
+
+        if (type === 'hour') selectedHour = value;
+        if (type === 'minute') selectedMinute = value;
+
+        updateSelectionVisual(type, value);
+    }
+}
+
+// ===============================
+// Update selection visuals
+// ===============================
+function updateSelectionVisual(type, value) {
+    try {
+        const id = type === 'hour' ? 'hoursList' : type === 'minute' ? 'minutesList' : 'periodList';
+        const list = document.getElementById(id);
+        if (!list) return;
+        const items = Array.from(list.querySelectorAll('.time-picker-item'));
+        const center = list.getBoundingClientRect().top + list.clientHeight / 2;
+
+        items.forEach(item => item.classList.remove('selected'));
+
+        // For repeated lists (hours/minutes) pick the matching item closest to center
+        const matching = items.filter(i => {
+            if (type === 'period') return i.dataset.value === value;
+            return parseInt(i.dataset.value) === value;
+        });
+
+        if (matching.length) {
+            let closest = matching[0];
+            let minDist = Infinity;
+            matching.forEach(item => {
+                const rect = item.getBoundingClientRect();
+                const mid = rect.top + rect.height / 2;
+                const dist = Math.abs(center - mid);
+                if (dist < minDist) {
+                    minDist = dist;
+                    closest = item;
+                }
+            });
+
+            if (closest) closest.classList.add('selected');
+        }
+    } catch (e) {
+        console.error('updateSelectionVisual error', e);
+    }
+}
+
+// ===============================
+// FINALIZE SELECTION
+// ===============================
 function confirmTimeSelection() {
     if (!currentTimeField) return;
-    
+
     const time24 = convertTo24Hour(selectedHour, selectedMinute, selectedPeriod);
-    const timeDisplay = `${selectedHour.toString().padStart(2, '0')}:${selectedMinute.toString().padStart(2, '0')} ${selectedPeriod}`;
-    
-    // Update the hidden input and display
+    const display = `${selectedHour.toString().padStart(2, '0')}:${selectedMinute
+        .toString().padStart(2, '0')} ${selectedPeriod}`;
+
     document.getElementById(currentTimeField).value = time24;
-    document.getElementById(`${currentTimeField}_display`).textContent = timeDisplay;
-    
+    document.getElementById(`${currentTimeField}_display`).textContent = display;
+
     closeTimePicker();
 }
 
-function convertTo12Hour(time24) {
-    const [hours, minutes] = time24.split(':').map(Number);
-    const period = hours >= 12 ? 'PM' : 'AM';
-    const hour12 = hours % 12 || 12;
-    return [`${hour12.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`, period];
+// ===============================
+// TIME CONVERSION
+// ===============================
+function convertTo12Hour(t) {
+    const [h, m] = t.split(':').map(Number);
+    const period = h >= 12 ? 'PM' : 'AM';
+    const h12 = h % 12 || 12;
+    return [`${h12.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`, period];
 }
 
-function convertTo24Hour(hour12, minute, period) {
-    let hour24 = hour12;
-    if (period === 'PM' && hour12 !== 12) {
-        hour24 = hour12 + 12;
-    } else if (period === 'AM' && hour12 === 12) {
-        hour24 = 0;
+function convertTo24Hour(h12, m, p) {
+    let h = h12;
+    if (p === 'PM' && h12 !== 12) h += 12;
+    if (p === 'AM' && h12 === 12) h = 0;
+    return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`;
+}
+
+// ===============================
+// Small helpers for Create Schedule modal
+// ===============================
+// CSRF cookie helper (Django)
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
     }
-    return `${hour24.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+    return cookieValue;
 }
 
-// Add scroll event listeners for infinite scrolling effect
-document.addEventListener('DOMContentLoaded', function() {
-    // Wait for time picker modal to be created
+function fetchWithCSRF(url, options = {}) {
+    if (!options.headers) options.headers = {};
+    options.headers['X-CSRFToken'] = getCookie('csrftoken');
+    return fetch(url, options);
+}
+
+function openModal(modalId) {
+    const el = document.getElementById(modalId);
+    if (el) el.style.display = 'block';
+}
+
+function closeModal(modalId) {
+    const el = document.getElementById(modalId);
+    if (el) el.style.display = 'none';
+}
+
+function openCreateScheduleModal() {
+    openModal('createScheduleModal');
+}
+
+function showNotification(message, type='info') {
+    const notification = document.createElement('div');
+    notification.className = `notification ${type} show`;
+    notification.textContent = message;
+    document.body.appendChild(notification);
     setTimeout(() => {
-        const hoursList = document.getElementById('hoursList');
-        const minutesList = document.getElementById('minutesList');
-        const periodList = document.getElementById('periodList');
-        
-        if (hoursList) {
-            hoursList.addEventListener('scroll', function() {
-                handleScroll(this, 'hour');
-            });
-        }
-        
-        if (minutesList) {
-            minutesList.addEventListener('scroll', function() {
-                handleScroll(this, 'minute');
-            });
-        }
-        
-        if (periodList) {
-            periodList.addEventListener('scroll', function() {
-                handleScroll(this, 'period');
-            });
-        }
-    }, 1000);
-});
-
-function handleScroll(container, type) {
-    const items = container.querySelectorAll('.time-picker-item');
-    if (items.length === 0) return;
-    
-    const containerHeight = container.clientHeight;
-    const scrollTop = container.scrollTop;
-    const itemHeight = items[0].offsetHeight;
-    
-    // Calculate which item is in the middle
-    const middleIndex = Math.floor((scrollTop + containerHeight / 2) / itemHeight);
-    
-    if (middleIndex >= 0 && middleIndex < items.length) {
-        const middleItem = items[middleIndex];
-        const value = type === 'hour' || type === 'minute' ? 
-                     parseInt(middleItem.dataset.value) : middleItem.dataset.value;
-        
-        // Update selection
-        switch (type) {
-            case 'hour':
-                selectedHour = value;
-                break;
-            case 'minute':
-                selectedMinute = value;
-                break;
-            case 'period':
-                selectedPeriod = value;
-                break;
-        }
-        
-        // Update visual selection
-        updateSelectionVisual(type, value);
-    }
-    
-    // Implement infinite scroll by jumping to middle section when near edges
-    const totalHeight = items.length * itemHeight;
-    const buffer = itemHeight * 2; // 2 items buffer
-    
-    if (scrollTop < buffer) {
-        // Near top, jump to middle of second section
-        const targetScroll = (items.length / 3) * itemHeight + containerHeight / 2 - itemHeight / 2;
-        container.scrollTo({ top: targetScroll, behavior: 'instant' });
-    } else if (scrollTop > totalHeight - containerHeight - buffer) {
-        // Near bottom, jump to middle of second section
-        const targetScroll = (items.length / 3) * itemHeight + containerHeight / 2 - itemHeight / 2;
-        container.scrollTo({ top: targetScroll, behavior: 'instant' });
-    }
+        notification.classList.remove('show');
+        setTimeout(() => notification.remove(), 300);
+    }, 3000);
 }
-    </script>
+
+function submitCreateSchedule(event) {
+    event.preventDefault();
+    const form = event.target;
+    const formData = new FormData(form);
+
+    fetchWithCSRF('/admin/schedule/add/', {
+        method: 'POST',
+        body: formData
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            showNotification('Schedule created successfully!', 'success');
+            closeModal('createScheduleModal');
+            // If a section is selected, reload its schedule view; otherwise reload the page
+            if (currentSectionId) {
+                setTimeout(() => loadScheduleView(currentSectionId, document.getElementById('scheduleSectionName').textContent, document.getElementById('scheduleCurriculum').textContent), 500);
+            } else {
+                setTimeout(() => window.location.reload(), 800);
+            }
+        } else {
+            const err = data.errors ? data.errors.join(', ') : (data.error || 'Unknown error');
+            showNotification('Error creating schedule: ' + err, 'error');
+        }
+    })
+    .catch(err => {
+        console.error('submitCreateSchedule error', err);
+        showNotification('Error creating schedule', 'error');
+    });
+}
+</script>
+
 </body>
 </html>
