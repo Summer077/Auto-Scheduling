@@ -132,43 +132,41 @@
                         </div>
 
                         <div class="card-body">
-                            <div class="info-row">
-                                <div class="info-group">
-                                    <div class="info-label">STATUS</div>
-                                    <div class="info-value status-value" 
-                                         id="status-{{ section.id }}"
-                                         onclick="toggleStatus(event, {{ section.id }})"
-                                         style="cursor: pointer; color: {% if section.status == 'complete' %}#28a745{% else %}#dc3545{% endif %};">
-                                        {{ section.get_status_display }}
-                                    </div>
-                                </div>
-                                <div class="info-group">
-                                    <div class="info-label">YEAR LEVEL</div>
-                                    <div class="info-value">
-                                        {% if section.year_level == 1 %}1st Year
-                                        {% elif section.year_level == 2 %}2nd Year
-                                        {% elif section.year_level == 3 %}3rd Year
-                                        {% else %}4th Year{% endif %}
-                                    </div>
-                                </div>
-                                <div class="info-group">
-                                    <div class="info-label">SEMESTER</div>
-                                    <div class="info-value">
-                                        {% if section.semester == 1 %}1st{% else %}2nd{% endif %}
-                                    </div>
-                                </div>
-                                <div class="info-group">
-                                    <div class="info-label">CURRICULUM</div>
-                                    <div class="info-value">{{ section.curriculum.name }} ({{ section.curriculum.year }})</div>
-                                </div>
-                            </div>
-                            <div class="info-row" style="margin-top: 16px;">
-                                <div class="info-group">
-                                    <div class="info-label">TOTAL UNITS</div>
-                                    <div class="info-value">{{ section.calculated_total_units }}</div>
-                                </div>
-                            </div>
-                        </div>
+    <div class="info-row">
+        <div class="info-group">
+            <div class="info-label">STATUS</div>
+            <div class="info-value status-value" 
+                 id="status-{{ section.id }}"
+                 onclick="toggleStatus(event, {{ section.id }})"
+                 style="cursor: pointer; color: {% if section.status == 'complete' %}#28a745{% else %}#dc3545{% endif %};">
+                {{ section.get_status_display }}
+            </div>
+        </div>
+        <div class="info-group">
+            <div class="info-label">YEAR LEVEL</div>
+            <div class="info-value">
+                {% if section.year_level == 1 %}1st Year
+                {% elif section.year_level == 2 %}2nd Year
+                {% elif section.year_level == 3 %}3rd Year
+                {% else %}4th Year{% endif %}
+            </div>
+        </div>
+        <div class="info-group">
+            <div class="info-label">SEMESTER</div>
+            <div class="info-value">
+                {% if section.semester == 1 %}1st{% else %}2nd{% endif %}
+            </div>
+        </div>
+        <div class="info-group">
+            <div class="info-label">CURRICULUM</div>
+            <div class="info-value">{{ section.curriculum.name }} ({{ section.curriculum.year }})</div>
+        </div>
+        <div class="info-group">
+            <div class="info-label">TOTAL UNITS</div>
+            <div class="info-value">{{ section.calculated_total_units }}</div>
+        </div>
+    </div>
+</div>
                     </div>
                     {% endfor %}
                 </div>

@@ -756,28 +756,23 @@ body {
 
 .info-row {
     display: grid;
-    grid-template-columns: repeat(4, 1fr); /* 4 equal columns */
-    gap: 20px; /* Space between columns */
+    grid-template-columns: repeat(5, 1fr); /* Changed from 4 to 5 */
+    gap: 8px; /* Reduced gap to fit all 5 columns */
     margin-bottom: 0;
     width: 100%;
-}
-
-.info-row:first-child {
-    padding-bottom: 0;
-    margin-bottom: 0;
-    border-bottom: none;
+    padding: 4px 0;
 }
 
 .info-group {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 2px;
     text-align: left;
 }
 
 .info-label {
     font-family: 'Lexend', sans-serif;
-    font-size: 0.7rem;
+    font-size: 0.65rem; /* Slightly smaller to fit */
     font-weight: 600;
     color: #868E96;
     text-transform: uppercase;
@@ -786,7 +781,7 @@ body {
 
 .info-value {
     font-family: 'Lexend', sans-serif;
-    font-size: 0.9rem;
+    font-size: 0.8rem; /* Slightly smaller to fit */
     font-weight: 600;
     color: #212529;
     word-wrap: break-word;

@@ -143,9 +143,13 @@ def admin_dashboard(request):
         unique_course_ids = section.schedules.values_list('course', flat=True).distinct()
         
         # Sum credit units for unique courses only
-        total_units = Course.objects.filter(id__in=unique_course_ids).aggregate(total=Sum('credit_units'))['total'] or 0
-        section.total_units = total_units
-        section.has_schedule = total_units >= 25  # Complete if 25 or more units
+        calculated_units = Course.objects.filter(id__in=unique_course_ids).aggregate(total=Sum('credit_units'))['total'] or 0
+        
+        # Add as a temporary attribute (not the property)
+        section.calculated_total_units = calculated_units
+        
+        # Use the actual status field from the database
+        section.has_schedule = (section.status == 'complete')
     
     # Get all activities from last 2 days
     today = timezone.now().date()
