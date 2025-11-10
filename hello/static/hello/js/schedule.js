@@ -2,12 +2,503 @@ console.log('schedule.js loaded successfully');
 
 let currentSectionId = null;
 let currentTimeField = null;
+let currentEditScheduleId = null;
 let selectedHour = 7;
 let selectedMinute = 30;
 let selectedPeriod = 'AM';
 
 // ===============================
-// TIME PICKER
+// TAB SWITCHING
+// ===============================
+function switchTab(tabName) {
+    // Remove active class from all tabs
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    document.querySelectorAll('.tab-content').forEach(content => {
+        content.classList.remove('active');
+    });
+    
+    // Add active class to selected tab
+    if (tabName === 'generate') {
+        document.querySelector('.tab-btn:first-child').classList.add('active');
+        document.getElementById('generateTab').classList.add('active');
+    } else {
+        document.querySelector('.tab-btn:last-child').classList.add('active');
+        document.getElementById('manualTab').classList.add('active');
+    }
+}
+
+// ===============================
+// MODAL MANAGEMENT
+// ===============================
+function openScheduleModal() {
+    switchTab('manual'); // Default to manual tab
+    openModal('scheduleModal');
+}
+
+function openModal(modalId) {
+    const el = document.getElementById(modalId);
+    if (el) el.style.display = 'block';
+}
+
+function closeModal(modalId) {
+    const el = document.getElementById(modalId);
+    if (el) el.style.display = 'none';
+}
+
+// ===============================
+// ALERT SYSTEM
+// ===============================
+function showAlert(message, type = 'info') {
+    const container = document.querySelector('.alert-container') || createAlertContainer();
+    
+    const alert = document.createElement('div');
+    alert.className = `alert ${type}`;
+    
+    let icon = '';
+    switch(type) {
+        case 'success':
+            icon = '<svg stroke="currentColor" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"></path></svg>';
+            break;
+        case 'warning':
+            icon = '<svg stroke="currentColor" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"></path></svg>';
+            break;
+        case 'error':
+            icon = '<svg stroke="currentColor" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"></path></svg>';
+            break;
+        default: // info
+            icon = '<svg stroke="currentColor" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M13 16h-1v-4h1m0-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"></path></svg>';
+    }
+    
+    alert.innerHTML = `
+        ${icon}
+        <p class="alert-text">${message}</p>
+    `;
+    
+    container.appendChild(alert);
+    
+    // Auto-remove after 5 seconds
+    setTimeout(() => {
+        alert.style.animation = 'fadeOut 0.3s ease';
+        setTimeout(() => alert.remove(), 300);
+    }, 5000);
+    
+    // Click to dismiss
+    alert.addEventListener('click', () => {
+        alert.style.animation = 'fadeOut 0.3s ease';
+        setTimeout(() => alert.remove(), 300);
+    });
+}
+
+function createAlertContainer() {
+    const container = document.createElement('div');
+    container.className = 'alert-container';
+    document.body.appendChild(container);
+    return container;
+}
+
+// ===============================
+// LOADING OVERLAY
+// ===============================
+function showLoading() {
+    const overlay = document.getElementById('loadingOverlay');
+    if (overlay) {
+        overlay.classList.add('show');
+    }
+}
+
+function hideLoading() {
+    const overlay = document.getElementById('loadingOverlay');
+    if (overlay) {
+        overlay.classList.remove('show');
+    }
+}
+
+// ===============================
+// GENERATE SCHEDULE
+// ===============================
+function updateGenerateFilters() {
+    const select = document.getElementById('generate_section_select');
+    const selectedOption = select.options[select.selectedIndex];
+    
+    if (selectedOption.value) {
+        document.getElementById('generate_curriculum_display').value = selectedOption.dataset.curriculum;
+        
+        const yearLevel = selectedOption.dataset.year;
+        const yearText = yearLevel == 1 ? '1st Year' : yearLevel == 2 ? '2nd Year' : yearLevel == 3 ? '3rd Year' : '4th Year';
+        document.getElementById('generate_year_display').value = yearText;
+        
+        const semester = selectedOption.dataset.semester;
+        const semText = semester == 1 ? '1st Semester' : '2nd Semester';
+        document.getElementById('generate_semester_display').value = semText;
+    } else {
+        document.getElementById('generate_curriculum_display').value = '';
+        document.getElementById('generate_year_display').value = '';
+        document.getElementById('generate_semester_display').value = '';
+    }
+}
+
+function submitGenerateSchedule(event) {
+    event.preventDefault();
+    const form = event.target;
+    const formData = new FormData(form);
+    const sectionId = formData.get('section');
+    
+    if (!sectionId) {
+        showAlert('Please select a section', 'error');
+        return;
+    }
+    
+    // Show loading
+    showLoading();
+    closeModal('scheduleModal');
+    
+    fetchWithCSRF('/admin/schedule/generate/', {
+        method: 'POST',
+        body: formData
+    })
+    .then(res => res.json())
+    .then(data => {
+        hideLoading();
+        
+        if (data.success) {
+            let message = `Successfully generated ${data.schedules_created} schedule entries!`;
+            
+            if (data.conflicts && data.conflicts.length > 0) {
+                showAlert(`${message} Some conflicts detected.`, 'warning');
+                console.log('Conflicts:', data.conflicts);
+            } else {
+                showAlert(message, 'success');
+            }
+            
+            // Reload the schedule view
+            if (data.section_id) {
+                const sectionCard = document.querySelector(`[data-section-id="${data.section_id}"]`);
+                if (sectionCard) {
+                    const sectionName = sectionCard.querySelector('.card-title').textContent;
+                    const curriculum = sectionCard.querySelector('.card-subtitle').textContent;
+                    setTimeout(() => loadScheduleView(data.section_id, sectionName, curriculum), 500);
+                }
+            }
+        } else {
+            const err = data.errors ? data.errors.join(', ') : (data.error || 'Unknown error');
+            showAlert('Error generating schedule: ' + err, 'error');
+        }
+    })
+    .catch(err => {
+        hideLoading();
+        console.error('submitGenerateSchedule error', err);
+        showAlert('Error generating schedule', 'error');
+    });
+}
+
+// ===============================
+// MANUAL SCHEDULE CREATION
+// ===============================
+function submitCreateSchedule(event) {
+    event.preventDefault();
+    const form = event.target;
+    const formData = new FormData(form);
+
+    fetchWithCSRF('/admin/schedule/add/', {
+        method: 'POST',
+        body: formData
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            showAlert('Schedule created successfully!', 'success');
+            closeModal('scheduleModal');
+            if (currentSectionId) {
+                setTimeout(() => {
+                    const sectionName = document.getElementById('scheduleSectionName').textContent;
+                    const curriculum = document.getElementById('scheduleCurriculum').textContent;
+                    loadScheduleView(currentSectionId, sectionName, curriculum);
+                }, 500);
+            } else {
+                setTimeout(() => window.location.reload(), 800);
+            }
+        } else {
+            const err = data.errors ? data.errors.join(', ') : (data.error || 'Unknown error');
+            showAlert('Error creating schedule: ' + err, 'error');
+        }
+    })
+    .catch(err => {
+        console.error('submitCreateSchedule error', err);
+        showAlert('Error creating schedule', 'error');
+    });
+}
+
+// ===============================
+// EDIT SCHEDULE
+// ===============================
+function openEditScheduleModal(scheduleId) {
+    currentEditScheduleId = scheduleId;
+    
+    // Fetch schedule data
+    fetch(`/admin/schedule/edit/${scheduleId}/`)
+        .then(res => res.json())
+        .then(data => {
+            document.getElementById('edit_schedule_id').value = data.id;
+            document.getElementById('edit_course_select').value = data.course;
+            document.getElementById('edit_faculty_select').value = data.faculty;
+            document.getElementById('edit_room_select').value = data.room;
+            document.getElementById('edit_day_select').value = data.day;
+            
+            // Set times
+            document.getElementById('edit_start_time').value = data.start_time;
+            document.getElementById('edit_end_time').value = data.end_time;
+            
+            const [startTime, startPeriod] = convertTo12Hour(data.start_time);
+            document.getElementById('edit_start_time_display').textContent = `${startTime} ${startPeriod}`;
+            
+            const [endTime, endPeriod] = convertTo12Hour(data.end_time);
+            document.getElementById('edit_end_time_display').textContent = `${endTime} ${endPeriod}`;
+            
+            openModal('editScheduleModal');
+        })
+        .catch(err => {
+            console.error('Error fetching schedule data:', err);
+            showAlert('Error loading schedule data', 'error');
+        });
+}
+
+function submitEditSchedule(event) {
+    event.preventDefault();
+    const form = event.target;
+    const formData = new FormData(form);
+    const scheduleId = document.getElementById('edit_schedule_id').value;
+    
+    fetchWithCSRF(`/admin/schedule/edit/${scheduleId}/`, {
+        method: 'POST',
+        body: formData
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            showAlert('Schedule updated successfully!', 'success');
+            closeModal('editScheduleModal');
+            if (currentSectionId) {
+                setTimeout(() => {
+                    const sectionName = document.getElementById('scheduleSectionName').textContent;
+                    const curriculum = document.getElementById('scheduleCurriculum').textContent;
+                    loadScheduleView(currentSectionId, sectionName, curriculum);
+                }, 500);
+            }
+        } else {
+            const err = data.errors ? data.errors.join(', ') : (data.error || 'Unknown error');
+            showAlert('Error updating schedule: ' + err, 'error');
+        }
+    })
+    .catch(err => {
+        console.error('submitEditSchedule error', err);
+        showAlert('Error updating schedule', 'error');
+    });
+}
+
+function deleteScheduleFromEdit() {
+    const scheduleId = document.getElementById('edit_schedule_id').value;
+    
+    if (!confirm('Are you sure you want to delete this schedule?')) {
+        return;
+    }
+    
+    fetchWithCSRF(`/admin/schedule/delete/${scheduleId}/`, {
+        method: 'POST'
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            showAlert('Schedule deleted successfully!', 'success');
+            closeModal('editScheduleModal');
+            if (currentSectionId) {
+                setTimeout(() => {
+                    const sectionName = document.getElementById('scheduleSectionName').textContent;
+                    const curriculum = document.getElementById('scheduleCurriculum').textContent;
+                    loadScheduleView(currentSectionId, sectionName, curriculum);
+                }, 500);
+            }
+        } else {
+            showAlert('Error deleting schedule', 'error');
+        }
+    })
+    .catch(err => {
+        console.error('deleteScheduleFromEdit error', err);
+        showAlert('Error deleting schedule', 'error');
+    });
+}
+
+// ===============================
+// SCHEDULE BLOCK CLICK HANDLER
+// ===============================
+function handleScheduleBlockClick(scheduleId) {
+    openEditScheduleModal(scheduleId);
+}
+
+// ===============================
+// LOAD SCHEDULE VIEW
+// ===============================
+function loadScheduleView(sectionId, sectionName, curriculum) {
+    currentSectionId = sectionId;
+    
+    // Update header
+    document.getElementById('scheduleSectionName').textContent = sectionName;
+    document.getElementById('scheduleCurriculum').textContent = curriculum;
+    document.getElementById('sidebarCurriculum').textContent = curriculum;
+    
+    // Show schedule view, hide empty state
+    document.getElementById('scheduleEmptyState').style.display = 'none';
+    document.getElementById('scheduleView').style.display = 'flex';
+    
+    // Fetch schedule data
+    fetch(`/admin/section/${sectionId}/schedule-data/`)
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                renderScheduleGrid(data.schedules, sectionName);
+                renderCoursesSidebar(data.courses);
+            } else {
+                showAlert('Error loading schedule data', 'error');
+            }
+        })
+        .catch(err => {
+            console.error('Error loading schedule:', err);
+            showAlert('Error loading schedule', 'error');
+        });
+}
+
+// ===============================
+// RENDER SCHEDULE GRID
+// ===============================
+function renderScheduleGrid(schedules, sectionName = '') {
+    // Clear existing schedule blocks
+    document.querySelectorAll('.schedule-block').forEach(block => block.remove());
+    
+    // Render time labels
+    renderTimeLabels();
+    
+    // Render each schedule
+    schedules.forEach(schedule => {
+        const dayColumn = document.querySelector(`.schedule-day-column[data-day="${schedule.day}"]`);
+        if (!dayColumn) return;
+        
+        const block = document.createElement('div');
+        block.className = 'schedule-block';
+        block.dataset.scheduleId = schedule.id;
+        block.style.borderLeftColor = schedule.course_color;
+        block.style.background = `${schedule.course_color}15`;
+        
+        // Calculate position and height (matching section.html logic)
+        const top = calculateTopPosition(schedule.start_time);
+        const duration = calculateDuration(schedule.start_time, schedule.end_time);
+        const height = (duration / 30) * 60; // 60px per 30 minutes
+        
+        block.style.top = `${top}px`;
+        block.style.height = `${height}px`;
+        
+        // Use section_name from API or fallback to passed sectionName
+        const displaySectionName = schedule.section_name || sectionName;
+        
+        block.innerHTML = `
+            <div class="schedule-course-code">${schedule.course_code}</div>
+            <div class="schedule-details">${schedule.start_time} - ${schedule.end_time}</div>
+            <div class="schedule-details">Room: ${schedule.room}</div>
+            <div class="schedule-details">Section: ${displaySectionName}</div>
+        `;
+        
+        // Add click handler
+        block.addEventListener('click', () => handleScheduleBlockClick(schedule.id));
+        
+        dayColumn.appendChild(block);
+    });
+}
+
+function renderTimeLabels() {
+    const timeColumn = document.getElementById('timeColumn');
+    timeColumn.innerHTML = '';
+    
+    // Generate time labels from 7:30 AM to 9:30 PM (matching section.html format)
+    const times = generateTimeSlots();
+    
+    times.forEach((time) => {
+        const label = document.createElement('div');
+        label.className = 'time-label';
+        label.textContent = time;  // Use 24-hour format without AM/PM
+        label.style.top = `${calculateTopPosition(time)}px`;
+        timeColumn.appendChild(label);
+    });
+}
+
+function generateTimeSlots() {
+    const slots = [];
+    // Start at 7:30 AM
+    slots.push('07:30');
+    // 8:00 to 21:00
+    for (let hour = 8; hour <= 21; hour++) {
+        slots.push(`${hour.toString().padStart(2, '0')}:00`);
+        if (hour < 21) {
+            slots.push(`${hour.toString().padStart(2, '0')}:30`);
+        }
+    }
+    // End at 9:30 PM
+    slots.push('21:30');
+    return slots;
+}
+
+function timeToMinutes(time) {
+    const [hours, minutes] = time.split(':').map(Number);
+    return hours * 60 + minutes;
+}
+
+// Calculate top position from time string (60px per 30 minutes, offset from 7:00 AM)
+function calculateTopPosition(timeStr) {
+    const [hours, minutes] = timeStr.split(':').map(Number);
+    const totalMinutes = (hours * 60 + minutes) - (7 * 60); // Offset from 7:00 AM
+    return (totalMinutes / 30) * 60; // 60px per 30 minutes
+}
+
+// Calculate duration in minutes between two times
+function calculateDuration(startTime, endTime) {
+    const startMinutes = timeToMinutes(startTime);
+    const endMinutes = timeToMinutes(endTime);
+    return endMinutes - startMinutes;
+}
+
+// ===============================
+// RENDER COURSES SIDEBAR
+// ===============================
+function renderCoursesSidebar(courses) {
+    const coursesList = document.getElementById('coursesList');
+    coursesList.innerHTML = '';
+    
+    if (courses.length === 0) {
+        coursesList.innerHTML = '<p style="color: #6C757D; font-size: 0.875rem;">No courses scheduled yet.</p>';
+        return;
+    }
+    
+    courses.forEach(course => {
+        const courseItem = document.createElement('div');
+        courseItem.className = 'course-item';
+        courseItem.style.borderLeftColor = course.color;
+        
+        courseItem.innerHTML = `
+            <div class="course-details">
+                <div class="course-code">${course.course_code}</div>
+                <div class="course-title">${course.descriptive_title}</div>
+                <div class="course-info">
+                    <span>Lec: ${course.lecture_hours}h | Lab: ${course.laboratory_hours}h</span>
+                    <span>Units: ${course.credit_units}</span>
+                </div>
+            </div>
+        `;
+        
+        coursesList.appendChild(courseItem);
+    });
+}
+
+// ===============================
+// TIME PICKER (Keep existing code)
 // ===============================
 function openTimePicker(fieldId) {
     currentTimeField = fieldId;
@@ -34,9 +525,6 @@ function closeTimePicker() {
     currentTimeField = null;
 }
 
-// ===============================
-// POPULATE TIME PICKER
-// ===============================
 function populateTimePicker() {
     const hoursList = document.getElementById('hoursList');
     const minutesList = document.getElementById('minutesList');
@@ -46,7 +534,7 @@ function populateTimePicker() {
     minutesList.innerHTML = '';
     periodList.innerHTML = '';
 
-    // HOURS - Create array with repeats for infinite scroll
+    // HOURS
     const hourValues = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
     const repeatedHours = [];
     for (let i = 0; i < 20; i++) {
@@ -62,7 +550,7 @@ function populateTimePicker() {
         hoursList.appendChild(item);
     });
 
-    // MINUTES - Create array with repeats for infinite scroll
+    // MINUTES
     const minuteValues = [];
     for (let m = 0; m < 60; m += 5) minuteValues.push(m);
     const repeatedMinutes = [];
@@ -79,8 +567,7 @@ function populateTimePicker() {
         minutesList.appendChild(item);
     });
 
-    // PERIOD - Add spacers for centering
-    // Add 4 empty spacers at top
+    // PERIOD
     for (let i = 0; i < 4; i++) {
         const spacer = document.createElement('div');
         spacer.className = 'time-picker-item time-picker-spacer';
@@ -88,7 +575,6 @@ function populateTimePicker() {
         periodList.appendChild(spacer);
     }
     
-    // Add AM
     const amItem = document.createElement('button');
     amItem.className = 'time-picker-item';
     amItem.dataset.value = 'AM';
@@ -96,7 +582,6 @@ function populateTimePicker() {
     amItem.onclick = () => selectTimeItem('period', 'AM');
     periodList.appendChild(amItem);
     
-    // Add PM
     const pmItem = document.createElement('button');
     pmItem.className = 'time-picker-item';
     pmItem.dataset.value = 'PM';
@@ -104,7 +589,6 @@ function populateTimePicker() {
     pmItem.onclick = () => selectTimeItem('period', 'PM');
     periodList.appendChild(pmItem);
     
-    // Add 4 empty spacers at bottom
     for (let i = 0; i < 4; i++) {
         const spacer = document.createElement('div');
         spacer.className = 'time-picker-item time-picker-spacer';
@@ -112,27 +596,19 @@ function populateTimePicker() {
         periodList.appendChild(spacer);
     }
 
-    // Initialize scroll positions after DOM is ready
     setTimeout(() => {
-        // Start hours and minutes in the middle of their repeated arrays
         const hoursMiddle = Math.floor(hoursList.scrollHeight / 2);
         const minutesMiddle = Math.floor(minutesList.scrollHeight / 2);
         
         hoursList.scrollTop = hoursMiddle;
         minutesList.scrollTop = minutesMiddle;
         
-        // Then scroll to selected values
         scrollToValue(hoursList, selectedHour, 'hour', true);
         scrollToValue(minutesList, selectedMinute, 'minute', true);
-        
-        // Center the selected period
         centerPeriod(selectedPeriod);
     }, 100);
 }
 
-// ===============================
-// CENTER PERIOD
-// ===============================
 function centerPeriod(period) {
     const periodList = document.getElementById('periodList');
     const items = Array.from(periodList.querySelectorAll('.time-picker-item'));
@@ -143,28 +619,21 @@ function centerPeriod(period) {
         const itemTop = targetItem.offsetTop;
         const itemHeight = targetItem.offsetHeight;
         
-        // Calculate scroll position to center the item
         periodList.scrollTop = itemTop - (containerHeight / 2) + (itemHeight / 2);
-        
         updateSelectionVisual('period', period);
     }
 }
 
-// ===============================
-// SCROLL TO VALUE
-// ===============================
 function scrollToValue(container, value, type, instant = false) {
     const items = Array.from(container.querySelectorAll('.time-picker-item'));
     const center = container.getBoundingClientRect().top + container.clientHeight / 2;
 
-    // Find all matching items
     const matching = items.filter(i => {
         if (type === 'period') return i.dataset.value === value;
         return parseInt(i.dataset.value) === value;
     });
 
     if (matching.length) {
-        // Find the one closest to current center
         let closest = matching[0];
         let minDist = Infinity;
         matching.forEach(item => {
@@ -188,9 +657,6 @@ function scrollToValue(container, value, type, instant = false) {
     updateSelectionVisual(type, value);
 }
 
-// ===============================
-// SELECT ITEM
-// ===============================
 function selectTimeItem(type, value) {
     if (type === 'hour') {
         selectedHour = value;
@@ -206,13 +672,9 @@ function selectTimeItem(type, value) {
     }
 }
 
-// ===============================
-// SCROLL LISTENERS
-// ===============================
 function setupScrollListeners() {
     const hoursList = document.getElementById('hoursList');
     const minutesList = document.getElementById('minutesList');
-    const periodList = document.getElementById('periodList');
 
     if (!hoursList.dataset.added) {
         hoursList.addEventListener('scroll', () => handleInfiniteScroll(hoursList, 'hour'));
@@ -222,17 +684,9 @@ function setupScrollListeners() {
         minutesList.addEventListener('scroll', () => handleInfiniteScroll(minutesList, 'minute'));
         minutesList.dataset.added = true;
     }
-    if (!periodList.dataset.added) {
-        periodList.addEventListener('scroll', () => handlePeriodScroll(periodList));
-        periodList.dataset.added = true;
-    }
 }
 
-// ===============================
-// INFINITE SCROLL HANDLER
-// ===============================
 function handleInfiniteScroll(container, type) {
-    // Prevent recursive calls
     if (container.dataset.isAdjusting === 'true') {
         return;
     }
@@ -242,9 +696,8 @@ function handleInfiniteScroll(container, type) {
     const clientHeight = container.clientHeight;
     
     const maxScroll = scrollHeight - clientHeight;
-    const buffer = clientHeight * 0.5; // 50% buffer zone
+    const buffer = clientHeight * 0.5;
 
-    // When scrolling near the top, jump to equivalent position near bottom
     if (scrollTop < buffer) {
         container.dataset.isAdjusting = 'true';
         const offset = scrollTop;
@@ -254,7 +707,6 @@ function handleInfiniteScroll(container, type) {
         }, 100);
     }
     
-    // When scrolling near the bottom, jump to equivalent position near top
     else if (scrollTop > maxScroll - buffer) {
         container.dataset.isAdjusting = 'true';
         const offset = scrollTop - maxScroll;
@@ -264,19 +716,9 @@ function handleInfiniteScroll(container, type) {
         }, 100);
     }
 
-    // Update selected value based on center
     updateSelectedFromScroll(container, type);
-
-    // Debounced snap-to-center on scroll end
-    clearTimeout(container.snapTimeout);
-    container.snapTimeout = setTimeout(() => {
-        snapSelectedToCenter(container, type);
-    }, 150);
 }
 
-// ===============================
-// UPDATE SELECTED FROM SCROLL
-// ===============================
 function updateSelectedFromScroll(container, type) {
     const items = Array.from(container.querySelectorAll('.time-picker-item'));
     const center = container.getBoundingClientRect().top + container.clientHeight / 2;
@@ -304,112 +746,6 @@ function updateSelectedFromScroll(container, type) {
     }
 }
 
-// ===============================
-// SNAP SELECTED TO CENTER (after scroll ends)
-// ===============================
-function snapSelectedToCenter(container, type) {
-    if (container.dataset.isAdjusting === 'true') return;
-    
-    const items = Array.from(container.querySelectorAll('.time-picker-item'));
-    const center = container.getBoundingClientRect().top + container.clientHeight / 2;
-    
-    let closest = null;
-    let minDist = Infinity;
-
-    items.forEach(item => {
-        const rect = item.getBoundingClientRect();
-        const mid = rect.top + rect.height / 2;
-        const dist = Math.abs(center - mid);
-        if (dist < minDist) {
-            minDist = dist;
-            closest = item;
-        }
-    });
-
-    if (closest) {
-        // Smooth scroll the closest item to center
-        closest.scrollIntoView({
-            behavior: 'smooth',
-            block: 'center'
-        });
-
-        const value = parseInt(closest.dataset.value);
-        if (!isNaN(value)) {
-            if (type === 'hour') selectedHour = value;
-            if (type === 'minute') selectedMinute = value;
-            updateSelectionVisual(type, value);
-        }
-    }
-}
-
-// ===============================
-// HANDLE PERIOD COLUMN SCROLL
-// ===============================
-function handlePeriodScroll(container) {
-    // Update selected value based on center
-    const items = Array.from(container.querySelectorAll('.time-picker-item:not(.time-picker-spacer)'));
-    const center = container.getBoundingClientRect().top + container.clientHeight / 2;
-    
-    let closest = null;
-    let minDist = Infinity;
-
-    items.forEach(item => {
-        const rect = item.getBoundingClientRect();
-        const mid = rect.top + rect.height / 2;
-        const dist = Math.abs(center - mid);
-        if (dist < minDist) {
-            minDist = dist;
-            closest = item;
-        }
-    });
-
-    if (closest) {
-        selectedPeriod = closest.dataset.value;
-        updateSelectionVisual('period', selectedPeriod);
-    }
-
-    // Debounced snap-to-center on scroll end
-    clearTimeout(container.snapTimeout);
-    container.snapTimeout = setTimeout(() => {
-        snapPeriodToCenter(container);
-    }, 150);
-}
-
-// ===============================
-// SNAP PERIOD TO CENTER
-// ===============================
-function snapPeriodToCenter(container) {
-    const items = Array.from(container.querySelectorAll('.time-picker-item:not(.time-picker-spacer)'));
-    const center = container.getBoundingClientRect().top + container.clientHeight / 2;
-    
-    let closest = null;
-    let minDist = Infinity;
-
-    items.forEach(item => {
-        const rect = item.getBoundingClientRect();
-        const mid = rect.top + rect.height / 2;
-        const dist = Math.abs(center - mid);
-        if (dist < minDist) {
-            minDist = dist;
-            closest = item;
-        }
-    });
-
-    if (closest) {
-        // Smooth scroll the closest item to center
-        closest.scrollIntoView({
-            behavior: 'smooth',
-            block: 'center'
-        });
-
-        selectedPeriod = closest.dataset.value;
-        updateSelectionVisual('period', selectedPeriod);
-    }
-}
-
-// ===============================
-// Update selection visuals
-// ===============================
 function updateSelectionVisual(type, value) {
     try {
         const id = type === 'hour' ? 'hoursList' : type === 'minute' ? 'minutesList' : 'periodList';
@@ -421,7 +757,6 @@ function updateSelectionVisual(type, value) {
 
         items.forEach(item => item.classList.remove('selected'));
 
-        // For repeated lists (hours/minutes) pick the matching item closest to center
         const matching = items.filter(i => {
             if (type === 'period') return i.dataset.value === value;
             return parseInt(i.dataset.value) === value;
@@ -447,9 +782,6 @@ function updateSelectionVisual(type, value) {
     }
 }
 
-// ===============================
-// FINALIZE SELECTION
-// ===============================
 function confirmTimeSelection() {
     if (!currentTimeField) return;
 
@@ -463,9 +795,6 @@ function confirmTimeSelection() {
     closeTimePicker();
 }
 
-// ===============================
-// TIME CONVERSION
-// ===============================
 function convertTo12Hour(t) {
     const [h, m] = t.split(':').map(Number);
     const period = h >= 12 ? 'PM' : 'AM';
@@ -504,271 +833,220 @@ function fetchWithCSRF(url, options = {}) {
     return fetch(url, options);
 }
 
-function openModal(modalId) {
-    const el = document.getElementById(modalId);
-    if (el) el.style.display = 'block';
-}
-
-function closeModal(modalId) {
-    const el = document.getElementById(modalId);
-    if (el) el.style.display = 'none';
-}
-
-function openCreateScheduleModal() {
-    openModal('createScheduleModal');
-}
-
-function showNotification(message, type='info') {
-    const notification = document.createElement('div');
-    notification.className = `notification ${type} show`;
-    notification.textContent = message;
-    document.body.appendChild(notification);
-    setTimeout(() => {
-        notification.classList.remove('show');
-        setTimeout(() => notification.remove(), 300);
-    }, 3000);
-}
-
-function submitCreateSchedule(event) {
-    event.preventDefault();
-    const form = event.target;
-    const formData = new FormData(form);
-
-    fetchWithCSRF('/admin/schedule/add/', {
-        method: 'POST',
-        body: formData
-    })
-    .then(res => res.json())
-    .then(data => {
-        if (data.success) {
-            showNotification('Schedule created successfully!', 'success');
-            closeModal('createScheduleModal');
-            if (currentSectionId) {
-                setTimeout(() => loadScheduleView(currentSectionId, document.getElementById('scheduleSectionName').textContent, document.getElementById('scheduleCurriculum').textContent), 500);
-            } else {
-                setTimeout(() => window.location.reload(), 800);
-            }
-        } else {
-            const err = data.errors ? data.errors.join(', ') : (data.error || 'Unknown error');
-            showNotification('Error creating schedule: ' + err, 'error');
-        }
-    })
-    .catch(err => {
-        console.error('submitCreateSchedule error', err);
-        showNotification('Error creating schedule', 'error');
-    });
-}
-
 // ===============================
-// SCHEDULE VIEW FUNCTIONS
+// SEARCH AND FILTER
 // ===============================
-function loadScheduleView(sectionId, sectionName, curriculumInfo) {
-    currentSectionId = sectionId;
-    
-    // Show schedule view, hide empty state
-    document.getElementById('scheduleEmptyState').style.display = 'none';
-    document.getElementById('scheduleView').style.display = 'block';
-    
-    // Update header
-    document.getElementById('scheduleSectionName').textContent = sectionName;
-    document.getElementById('scheduleCurriculum').textContent = curriculumInfo;
-    // Match section.html: show 'Curriculum: ' prefix in sidebar
-    document.getElementById('sidebarCurriculum').textContent = 'Curriculum: ' + curriculumInfo;
-
-    // Update selected state on section cards (match section.html behavior)
-    document.querySelectorAll('.section-card').forEach(card => card.classList.remove('selected'));
-    const cardEl = document.querySelector(`.section-card[data-section-id="${sectionId}"]`);
-    if (cardEl) cardEl.classList.add('selected');
-    
-    // Fetch schedule data
-    fetch(`/admin/section/${sectionId}/schedule-data/`)
-        .then(res => res.json())
-        .then(data => {
-            if (data.success) {
-                renderSchedule(data.schedules);
-                renderCoursesList(data.courses);
-            } else {
-                console.error('Error loading schedule:', data.error);
-                showNotification('Error loading schedule data', 'error');
-            }
-        })
-        .catch(err => {
-            console.error('Error loading schedule view:', err);
-            showNotification('Error loading schedule', 'error');
-        });
-}
-
-function renderSchedule(schedules) {
-    const dayColumns = document.querySelectorAll('.schedule-day-column');
-    
-    // Clear previous schedules
-    dayColumns.forEach(col => col.innerHTML = '');
-    
-    // Group schedules by day
-    const schedulesByDay = {};
-    schedules.forEach(schedule => {
-        if (!schedulesByDay[schedule.day]) {
-            schedulesByDay[schedule.day] = [];
-        }
-        schedulesByDay[schedule.day].push(schedule);
-    });
-    
-    // Render schedules for each day
-    dayColumns.forEach(col => {
-        const day = parseInt(col.dataset.day);
-        const daySchedules = schedulesByDay[day] || [];
-        
-        daySchedules.forEach(schedule => {
-            const block = document.createElement('div');
-            block.className = 'schedule-block';
-
-            // Use pixel-based positioning/height to match section.html rendering
-            const topPx = calculateTopPosition(schedule.start_time);
-            const heightPx = schedule.duration_px || calculateDuration(schedule.start_time, schedule.end_time);
-
-            // Apply translucent background and colored left border like section view
-            const color = schedule.course_color || '#007bff';
-            block.style.backgroundColor = hexToRGBA(color, 0.25);
-            block.style.borderLeftColor = color;
-            block.style.top = `${topPx}px`;
-            block.style.height = `${heightPx}px`;
-
-            // Inner content matches section.html structure/classes so CSS applies
-            block.innerHTML = `
-                <div class="schedule-course-code">${schedule.course_code}</div>
-                <div class="schedule-details">${schedule.start_time} - ${schedule.end_time}</div>
-                <div class="schedule-details">Room: ${schedule.room}</div>
-                <div class="schedule-details">Section: ${schedule.section_name || ''}</div>
-            `;
-
-            col.appendChild(block);
-        });
-    });
-}
-
-function renderCoursesList(courses) {
-    const coursesList = document.getElementById('coursesList');
-    coursesList.innerHTML = '';
-
-    if (!courses || courses.length === 0) {
-        coursesList.innerHTML = '<div class="card-empty-message">No courses available</div>';
-        return;
-    }
-
-    courses.forEach(course => {
-        const courseItem = document.createElement('div');
-        courseItem.className = 'course-item';
-        // Use left border color like section.css expects
-        if (course.color) courseItem.style.borderLeftColor = course.color;
-        courseItem.innerHTML = `
-            <div class="course-details">
-                <div class="course-code">${course.course_code}</div>
-                <div class="course-title">${course.descriptive_title}</div>
-                <div class="course-info">
-                    <span>Lecture: ${course.lecture_hours || 0}h</span>
-                    <span>Laboratory: ${course.laboratory_hours || 0}h</span>
-                    <span>Credit Unit: ${course.credit_units || ''}</span>
-                </div>
-            </div>
-        `;
-        coursesList.appendChild(courseItem);
-    });
-}
-
-function calculateTopPosition(startTime) {
-    // Return pixel offset from 7:00 AM based on CSS grid mapping (60px per 30 minutes)
-    const [hours, minutes] = startTime.split(':').map(Number);
-    const totalMinutes = (hours * 60) + minutes;
-    const dayStart = 7 * 60; // 7:00 AM
-    const offsetMinutes = totalMinutes - dayStart;
-    // 60px per 30 minutes -> pixels = (minutes / 30) * 60
-    return (offsetMinutes / 30) * 60;
-}
-
-function calculateDuration(startTime, endTime) {
-    const [startHour, startMin] = startTime.split(':').map(Number);
-    const [endHour, endMin] = endTime.split(':').map(Number);
-
-    const startMinutes = (startHour * 60) + startMin;
-    const endMinutes = (endHour * 60) + endMin;
-    const durationMinutes = endMinutes - startMinutes;
-
-    // Return pixels: 60px per 30 minutes
-    return (durationMinutes / 30) * 60;
-}
-
-// Helper to convert hex color to rgba
-function hexToRGBA(hex, alpha) {
-    try {
-        const clean = (hex || '#007bff').replace('#', '');
-        const r = parseInt(clean.substring(0,2), 16);
-        const g = parseInt(clean.substring(2,4), 16);
-        const b = parseInt(clean.substring(4,6), 16);
-        return `rgba(${r}, ${g}, ${b}, ${alpha})`;
-    } catch (e) {
-        return `rgba(0,123,255,${alpha})`;
-    }
-}
-
 function filterSections() {
     const searchInput = document.getElementById('searchInput').value.toLowerCase();
     const sectionCards = document.querySelectorAll('.section-card');
     
     sectionCards.forEach(card => {
-        const name = card.dataset.sectionName || '';
-        const curriculum = card.dataset.curriculum || '';
+        const sectionName = card.dataset.sectionName;
+        const curriculum = card.dataset.curriculum;
         
-        if (name.includes(searchInput) || curriculum.includes(searchInput)) {
-            card.style.display = 'block';
+        if (sectionName.includes(searchInput) || curriculum.includes(searchInput)) {
+            card.style.display = 'flex';
         } else {
             card.style.display = 'none';
         }
     });
 }
 
+// ===============================
+// SECTION MENU TOGGLE
+// ===============================
 function toggleSectionMenu(event, sectionId) {
     event.stopPropagation();
+    
+    // Close all other menus
+    document.querySelectorAll('.section-dropdown-menu').forEach(menu => {
+        if (menu.id !== `sectionMenu${sectionId}`) {
+            menu.classList.remove('show');
+        }
+    });
+    
+    // Toggle current menu
     const menu = document.getElementById(`sectionMenu${sectionId}`);
-    if (menu) {
-        menu.classList.toggle('show');
-    }
+    menu.classList.toggle('show');
 }
 
-function openEditSectionModal(sectionId) {
-    // TODO: Implement edit section
-    console.log('Edit section:', sectionId);
-}
-
-function deleteSection(sectionId, sectionName) {
-    if (confirm(`Are you sure you want to delete ${sectionName}?`)) {
-        fetchWithCSRF(`/admin/section/delete/${sectionId}/`, {
-            method: 'POST'
-        })
-        .then(res => res.json())
-        .then(data => {
-            if (data.success) {
-                showNotification('Section deleted successfully!', 'success');
-                setTimeout(() => window.location.reload(), 1000);
-            } else {
-                showNotification('Error deleting section', 'error');
-            }
+// Close menus when clicking outside
+document.addEventListener('click', (event) => {
+    if (!event.target.closest('.dropdown-menu-container')) {
+        document.querySelectorAll('.section-dropdown-menu').forEach(menu => {
+            menu.classList.remove('show');
         });
     }
+});
+
+// ===============================
+// DROPDOWN TOGGLE (Admin)
+// ===============================
+function toggleDropdown() {
+    const dropdown = document.getElementById('dropdownMenu');
+    dropdown.classList.toggle('show');
 }
 
+// Close dropdown when clicking outside
+document.addEventListener('click', (event) => {
+    if (!event.target.closest('.admin-section')) {
+        const dropdown = document.getElementById('dropdownMenu');
+        if (dropdown) {
+            dropdown.classList.remove('show');
+        }
+    }
+});
+
+// ===============================
+// STATUS TOGGLE
+// ===============================
 function toggleStatus(event, sectionId) {
     event.stopPropagation();
+    
+    if (!confirm('Are you sure you want to toggle the status of this section?')) {
+        return;
+    }
+    
     fetchWithCSRF(`/admin/section/${sectionId}/toggle-status/`, {
         method: 'POST'
     })
     .then(res => res.json())
     .then(data => {
         if (data.success) {
-            const statusEl = document.getElementById(`status-${sectionId}`);
-            if (statusEl) {
-                statusEl.textContent = data.status_display;
-                statusEl.style.color = data.status === 'complete' ? '#28a745' : '#dc3545';
-            }
+            const statusElement = document.getElementById(`status-${sectionId}`);
+            statusElement.textContent = data.status_display;
+            showAlert('Status updated successfully!', 'success');
+        } else {
+            showAlert('Error updating status', 'error');
         }
+    })
+    .catch(err => {
+        console.error('toggleStatus error', err);
+        showAlert('Error updating status', 'error');
     });
 }
+
+// ===============================
+// SECTION CRUD OPERATIONS
+// ===============================
+function openEditSectionModal(sectionId) {
+    // This function would need to be implemented similar to edit schedule
+    // For now, show a placeholder
+    showAlert('Edit section functionality - to be implemented', 'info');
+}
+
+function deleteSection(sectionId, sectionName) {
+    if (!confirm(`Are you sure you want to delete section ${sectionName}? This action cannot be undone.`)) {
+        return;
+    }
+    
+    fetchWithCSRF(`/admin/section/delete/${sectionId}/`, {
+        method: 'POST'
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            showAlert(`Section ${sectionName} deleted successfully!`, 'success');
+            setTimeout(() => window.location.reload(), 1000);
+        } else {
+            const err = data.errors ? data.errors.join(', ') : 'Unknown error';
+            showAlert(`Error deleting section: ${err}`, 'error');
+        }
+    })
+    .catch(err => {
+        console.error('deleteSection error', err);
+        showAlert('Error deleting section', 'error');
+    });
+}
+
+// ===============================
+// EXPORT AND PRINT FUNCTIONS
+// ===============================
+function exportSchedule() {
+    if (!currentSectionId) {
+        showAlert('Please select a section first', 'warning');
+        return;
+    }
+    
+    showAlert('Export to PDF functionality - to be implemented', 'info');
+    // TODO: Implement PDF export functionality
+}
+
+function printSchedule() {
+    if (!currentSectionId) {
+        showAlert('Please select a section first', 'warning');
+        return;
+    }
+    
+    const scheduleView = document.getElementById('scheduleView');
+    const printWindow = window.open('', '_blank');
+    
+    printWindow.document.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>Schedule - ${document.getElementById('scheduleSectionName').textContent}</title>
+            <style>
+                body {
+                    font-family: 'Lexend', Arial, sans-serif;
+                    padding: 20px;
+                }
+                h1 {
+                    text-align: center;
+                    margin-bottom: 10px;
+                }
+                .subtitle {
+                    text-align: center;
+                    color: #666;
+                    margin-bottom: 30px;
+                }
+                .schedule-grid-wrapper {
+                    border: 1px solid #CED4DA;
+                    border-radius: 8px;
+                    overflow: hidden;
+                }
+                /* Copy relevant CSS for schedule grid */
+                @media print {
+                    .no-print {
+                        display: none;
+                    }
+                }
+            </style>
+        </head>
+        <body>
+            <h1>${document.getElementById('scheduleSectionName').textContent}</h1>
+            <div class="subtitle">${document.getElementById('scheduleCurriculum').textContent}</div>
+            ${scheduleView.innerHTML}
+        </body>
+        </html>
+    `);
+    
+    printWindow.document.close();
+    setTimeout(() => {
+        printWindow.print();
+    }, 500);
+}
+
+// ===============================
+// INITIALIZATION
+// ===============================
+document.addEventListener('DOMContentLoaded', () => {
+    console.log('Schedule page initialized');
+    
+    // Create alert container if it doesn't exist
+    if (!document.querySelector('.alert-container')) {
+        createAlertContainer();
+    }
+    
+    // Add loading overlay if it doesn't exist
+    if (!document.getElementById('loadingOverlay')) {
+        const overlay = document.createElement('div');
+        overlay.id = 'loadingOverlay';
+        overlay.className = 'loading-overlay';
+        overlay.innerHTML = `
+            <div class="loader"></div>
+            <p class="loading-text">Generating Schedule...</p>
+        `;
+        document.body.appendChild(overlay);
+    }
+});

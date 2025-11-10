@@ -8,7 +8,7 @@ from django.core.exceptions import ValidationError
 from django.contrib.auth.models import User
 from django.core.mail import send_mail, EmailMessage
 from django.conf import settings
-from django.db.models import Sum
+from django.db.models import Sum, Q
 from datetime import datetime, timedelta
 import random
 import string
@@ -1657,3 +1657,229 @@ def delete_curriculum(request, curriculum_id):
         
         return JsonResponse({'success': True})
     return JsonResponse({'success': False})
+
+@login_required
+def generate_schedule(request):
+    """Generate schedule automatically using AI/algorithm"""
+    if request.method == 'POST':
+        try:
+            section_id = request.POST.get('section')
+            section = Section.objects.get(id=section_id)
+            
+            # Get all courses for this section's year/semester/curriculum
+            courses = Course.objects.filter(
+                curriculum=section.curriculum,
+                year_level=section.year_level,
+                semester=section.semester
+            )
+            
+            if not courses.exists():
+                return JsonResponse({
+                    'success': False,
+                    'errors': ['No courses found for this section configuration.']
+                })
+            
+            # Clear existing schedules for this section
+            Schedule.objects.filter(section=section).delete()
+            
+            # Time slots: 7:30 AM to 9:30 PM
+            time_slots = [
+                ('07:30', '09:00'), ('09:00', '10:30'), ('10:30', '12:00'),
+                ('13:00', '14:30'), ('14:30', '16:00'), ('16:00', '17:30'),
+                ('17:30', '19:00'), ('19:00', '20:30')
+            ]
+            
+            # Available days (0=Monday to 5=Saturday)
+            days = [0, 1, 2, 3, 4, 5]
+            
+            # Get available faculty and rooms
+            available_faculty = list(Faculty.objects.all())
+            available_rooms = list(Room.objects.all())
+            
+            generated_schedules = []
+            conflicts = []
+            
+            # Simple scheduling algorithm
+            for course in courses:
+                # Calculate how many sessions needed based on hours
+                total_hours = course.lecture_hours + course.laboratory_hours
+                sessions_needed = max(1, total_hours // 2)  # Assuming 1.5-2 hour sessions
+                
+                scheduled_sessions = 0
+                attempts = 0
+                max_attempts = 50
+                
+                while scheduled_sessions < sessions_needed and attempts < max_attempts:
+                    attempts += 1
+                    
+                    # Random day and time slot
+                    day = random.choice(days)
+                    start_time, end_time = random.choice(time_slots)
+                    
+                    # Random faculty (prefer specialized)
+                    faculty = None
+                    specialized = [f for f in available_faculty if course in f.specialization.all()]
+                    if specialized:
+                        faculty = random.choice(specialized)
+                    elif available_faculty:
+                        faculty = random.choice(available_faculty)
+                    
+                    # Random room (prefer lab rooms for lab courses)
+                    room = None
+                    if available_rooms:
+                        if course.laboratory_hours > 0:
+                            lab_rooms = [r for r in available_rooms if r.room_type == 'laboratory']
+                            room = random.choice(lab_rooms) if lab_rooms else random.choice(available_rooms)
+                        else:
+                            lecture_rooms = [r for r in available_rooms if r.room_type == 'lecture']
+                            room = random.choice(lecture_rooms) if lecture_rooms else random.choice(available_rooms)
+                    
+                    # Check for conflicts
+                    conflict = False
+                    
+                    # Check section conflict (same section, overlapping time)
+                    section_conflicts = Schedule.objects.filter(
+                        section=section,
+                        day=day,
+                        start_time__lt=end_time,
+                        end_time__gt=start_time
+                    )
+                    if section_conflicts.exists():
+                        conflict = True
+                    
+                    # Check faculty conflict
+                    if faculty:
+                        faculty_conflicts = Schedule.objects.filter(
+                            faculty=faculty,
+                            day=day,
+                            start_time__lt=end_time,
+                            end_time__gt=start_time
+                        )
+                        if faculty_conflicts.exists():
+                            conflict = True
+                    
+                    # Check room conflict
+                    if room:
+                        room_conflicts = Schedule.objects.filter(
+                            room=room,
+                            day=day,
+                            start_time__lt=end_time,
+                            end_time__gt=start_time
+                        )
+                        if room_conflicts.exists():
+                            conflict = True
+                    
+                    if not conflict:
+                        # Create schedule
+                        schedule = Schedule.objects.create(
+                            course=course,
+                            section=section,
+                            faculty=faculty,
+                            room=room,
+                            day=day,
+                            start_time=start_time,
+                            end_time=end_time
+                        )
+                        generated_schedules.append(schedule)
+                        scheduled_sessions += 1
+                
+                if scheduled_sessions < sessions_needed:
+                    conflicts.append(f"{course.course_code} - Only {scheduled_sessions}/{sessions_needed} sessions scheduled")
+            
+            # Update section status
+            section.status = 'complete' if len(generated_schedules) > 0 else 'incomplete'
+            section.save()
+            
+            # Log activity
+            log_activity(
+                user=request.user,
+                action='add',
+                entity_type='schedule',
+                entity_name=f"Generated schedule for {section.name}",
+                message=f'Auto-generated {len(generated_schedules)} schedule entries for {section.name}'
+            )
+            
+            return JsonResponse({
+                'success': True,
+                'message': f'Successfully generated {len(generated_schedules)} schedule entries',
+                'schedules_created': len(generated_schedules),
+                'conflicts': conflicts,
+                'section_id': section.id
+            })
+            
+        except Section.DoesNotExist:
+            return JsonResponse({
+                'success': False,
+                'errors': ['Section not found']
+            })
+        except Exception as e:
+            import traceback
+            print(f"Error generating schedule: {str(e)}")
+            print(traceback.format_exc())
+            return JsonResponse({
+                'success': False,
+                'errors': [f'Error generating schedule: {str(e)}']
+            })
+    
+    return JsonResponse({
+        'success': False,
+        'errors': ['Invalid request method']
+    })
+
+@login_required
+def edit_schedule(request, schedule_id):
+    """Edit existing schedule entry"""
+    schedule = get_object_or_404(Schedule, id=schedule_id)
+    
+    if request.method == 'POST':
+        try:
+            course_id = request.POST.get('course')
+            faculty_id = request.POST.get('faculty')
+            room_id = request.POST.get('room')
+            day = request.POST.get('day')
+            start_time = request.POST.get('start_time')
+            end_time = request.POST.get('end_time')
+            
+            course = Course.objects.get(id=course_id)
+            faculty = Faculty.objects.get(id=faculty_id) if faculty_id else None
+            room = Room.objects.get(id=room_id) if room_id else None
+            
+            schedule.course = course
+            schedule.faculty = faculty
+            schedule.room = room
+            schedule.day = int(day)
+            schedule.start_time = start_time
+            schedule.end_time = end_time
+            
+            schedule.full_clean()
+            schedule.save()
+            
+            log_activity(
+                user=request.user,
+                action='edit',
+                entity_type='schedule',
+                entity_name=f"{course.course_code} - {schedule.section.name}",
+                message=f'Edited schedule: {course.course_code} for {schedule.section.name}'
+            )
+            
+            return JsonResponse({
+                'success': True,
+                'message': 'Schedule updated successfully'
+            })
+            
+        except Exception as e:
+            return JsonResponse({
+                'success': False,
+                'errors': [str(e)]
+            })
+    
+    # Return schedule data for editing
+    return JsonResponse({
+        'id': schedule.id,
+        'course': schedule.course.id,
+        'faculty': schedule.faculty.id if schedule.faculty else '',
+        'room': schedule.room.id if schedule.room else '',
+        'day': schedule.day,
+        'start_time': schedule.start_time,
+        'end_time': schedule.end_time
+    })
