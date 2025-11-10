@@ -922,15 +922,16 @@ body {
     padding: 30px;
 }
 
+/* Windows Settings Style Form Groups */
 .form-group {
-    margin-bottom: 20px;
+    margin-bottom: 24px;
 }
 
 .form-group label {
     display: block;
     margin-bottom: 8px;
     font-family: 'Lexend', sans-serif;
-    font-size: 0.9rem;
+    font-size: 0.875rem;
     font-weight: 600;
     color: #212529;
 }
@@ -938,37 +939,202 @@ body {
 .form-group input,
 .form-group select {
     width: 100%;
-    padding: 12px 16px;
-    border: 1px solid #DEE2E6;
-    border-radius: 10px;
+    padding: 10px 12px;
+    border: 1px solid #D1D1D1;
+    border-radius: 6px;
     font-family: 'Lexend', sans-serif;
-    font-size: 0.95rem;
+    font-size: 0.875rem;
     color: #212529;
     background-color: #FFFFFF;
-    transition: border-color 0.3s, box-shadow 0.3s;
+    transition: all 0.2s ease;
     box-sizing: border-box;
-}
-
-.form-group select {
-    padding-right: 40px;
-    appearance: none;
-    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23495057' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
-    background-repeat: no-repeat;
-    background-position: right 12px center;
-    background-size: 20px;
 }
 
 .form-group input:focus,
 .form-group select:focus {
     outline: none;
-    border-color: #ADB5BD;
-    box-shadow: 0 0 0 3px rgba(173, 181, 189, 0.1);
+    border-color: #0078D4;
+    box-shadow: 0 0 0 2px rgba(0, 120, 212, 0.2);
+}
+
+.form-group input:hover,
+.form-group select:hover {
+    border-color: #9A9A9A;
+}
+
+.form-group input:disabled,
+.form-group select:disabled {
+    background-color: #F6F6F6;
+    color: #9A9A9A;
+    border-color: #E1E1E1;
+    cursor: not-allowed;
+}
+
+/* Windows-style select dropdown */
+.form-group select {
+    padding-right: 40px;
+    appearance: none;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23666666'%3e%3cpath d='M7 10l5 5 5-5z'/%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    background-size: 16px;
+}
+
+.form-group select:focus {
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%230078D4'%3e%3cpath d='M7 10l5 5 5-5z'/%3e%3c/svg%3e");
 }
 
 .form-row {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
     gap: 16px;
+}
+
+/* Time input specific styling (like Windows Date & Time settings) */
+.form-group input[type="time"],
+.form-group input[type="date"] {
+    padding: 10px 12px;
+    font-family: 'Lexend', sans-serif;
+}
+
+/* Toggle switch style (like "Set time automatically" toggle) */
+.toggle-group {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 24px;
+}
+
+.toggle-label {
+    font-family: 'Lexend', sans-serif;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #212529;
+}
+
+.toggle-switch {
+    position: relative;
+    width: 44px;
+    height: 24px;
+}
+
+.toggle-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.toggle-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #E1E1E1;
+    transition: .2s;
+    border-radius: 24px;
+}
+
+.toggle-slider:before {
+    position: absolute;
+    content: "";
+    height: 20px;
+    width: 20px;
+    left: 2px;
+    bottom: 2px;
+    background-color: white;
+    transition: .2s;
+    border-radius: 50%;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+input:checked + .toggle-slider {
+    background-color: #0078D4;
+}
+
+input:checked + .toggle-slider:before {
+    transform: translateX(20px);
+}
+
+/* Manual time setting container (appears when toggle is off) */
+.manual-time-container {
+    margin-top: 16px;
+    padding: 16px;
+    background-color: #F8F8F8;
+    border-radius: 6px;
+    border: 1px solid #E1E1E1;
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-8px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Required field styling */
+.form-group.required label:after {
+    content: " *";
+    color: #E81123;
+}
+
+/* Error state */
+.form-group.error input,
+.form-group.error select {
+    border-color: #E81123;
+}
+
+.form-group.error input:focus,
+.form-group.error select:focus {
+    box-shadow: 0 0 0 2px rgba(232, 17, 35, 0.2);
+}
+
+.error-message {
+    font-family: 'Lexend', sans-serif;
+    font-size: 0.75rem;
+    color: #E81123;
+    margin-top: 4px;
+    display: none;
+}
+
+.form-group.error .error-message {
+    display: block;
+}
+
+/* Success state */
+.form-group.success input,
+.form-group.success select {
+    border-color: #107C10;
+}
+
+.form-group.success input:focus,
+.form-group.success select:focus {
+    box-shadow: 0 0 0 2px rgba(16, 124, 16, 0.2);
+}
+
+/* Compact form group variant */
+.form-group.compact {
+    margin-bottom: 16px;
+}
+
+.form-group.compact label {
+    margin-bottom: 6px;
+    font-size: 0.8125rem;
+}
+
+.form-group.compact input,
+.form-group.compact select {
+    padding: 8px 10px;
+    font-size: 0.8125rem;
+}
+
+/* Help text */
+.help-text {
+    font-family: 'Lexend', sans-serif;
+    font-size: 0.75rem;
+    color: #666666;
+    margin-top: 4px;
+    line-height: 1.4;
 }
 
 .modal-footer {
@@ -1015,6 +1181,241 @@ body {
 .btn-secondary:hover {
     background: #F8F9FA;
     border-color: #ADB5BD;
+}
+
+/* Windows Style Time Picker */
+.time-picker-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    padding: 16px;
+    background: #FFFFFF;
+    border-radius: 8px;
+    border: 1px solid #E1E1E1;
+}
+
+.time-picker-column {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: #FFFFFF;
+    border-radius: 6px;
+    border: 1px solid #E1E1E1;
+    overflow: hidden;
+    height: 200px;
+    position: relative;
+}
+
+.time-picker-column::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    height: 40px;
+    background: #E8F0FE;
+    transform: translateY(-50%);
+    z-index: 1;
+    pointer-events: none;
+}
+
+.time-picker-column::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(
+        to bottom,
+        #FFFFFF 0%,
+        transparent 20%,
+        transparent 80%,
+        #FFFFFF 100%
+    );
+    pointer-events: none;
+    z-index: 2;
+}
+
+.time-picker-items {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    overflow-y: scroll;
+    height: 100%;
+    scroll-behavior: smooth;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+
+.time-picker-items::-webkit-scrollbar {
+    display: none;
+}
+
+.time-picker-item {
+    padding: 12px 16px;
+    font-family: 'Lexend', sans-serif;
+    font-size: 0.875rem;
+    color: #666666;
+    text-align: center;
+    min-width: 60px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    position: relative;
+    z-index: 3;
+}
+
+.time-picker-item.selected {
+    color: #0078D4;
+    font-weight: 600;
+    background: #E8F0FE;
+}
+
+.time-picker-item:hover {
+    background: #F5F5F5;
+}
+
+/* Time picker modal */
+.time-picker-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 3000;
+}
+
+.time-picker-modal-content {
+    background: #FFFFFF;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+    min-width: 300px;
+}
+
+.time-picker-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #E1E1E1;
+}
+
+.time-picker-header h3 {
+    margin: 0;
+    font-family: 'Lexend', sans-serif;
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: #212529;
+}
+
+.time-picker-close {
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    color: #666666;
+    padding: 0;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.time-picker-close:hover {
+    color: #212529;
+}
+
+/* 3-column layout for time picker */
+.time-picker-3-column {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 8px;
+    margin-bottom: 20px;
+}
+
+.time-picker-column {
+    height: 200px;
+}
+
+.time-picker-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+}
+
+.time-picker-btn {
+    padding: 8px 16px;
+    border: 1px solid #D1D1D1;
+    border-radius: 4px;
+    background: #FFFFFF;
+    font-family: 'Lexend', sans-serif;
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.time-picker-btn.primary {
+    background: #0078D4;
+    border-color: #0078D4;
+    color: #FFFFFF;
+}
+
+.time-picker-btn:hover {
+    background: #F5F5F5;
+}
+
+.time-picker-btn.primary:hover {
+    background: #106EBE;
+    border-color: #106EBE;
+}
+
+/* Time input trigger */
+.time-input-trigger {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 12px;
+    border: 1px solid #D1D1D1;
+    border-radius: 6px;
+    background: #FFFFFF;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.time-input-trigger:hover {
+    border-color: #9A9A9A;
+}
+
+.time-input-trigger:focus {
+    outline: none;
+    border-color: #0078D4;
+    box-shadow: 0 0 0 2px rgba(0, 120, 212, 0.2);
+}
+
+.time-display {
+    font-family: 'Lexend', sans-serif;
+    font-size: 0.875rem;
+    color: #212529;
+}
+
+.time-picker-icon {
+    width: 16px;
+    height: 16px;
+    fill: #666666;
 }
 
 /* Notification Toast */
@@ -1148,6 +1549,33 @@ body {
 .dropdown-item.delete-item:hover {
     background: #FFF5F5;
     color: #C82333;
+}
+
+/* Responsive Design for Form Groups */
+@media (max-width: 768px) {
+    .form-row {
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+    
+    .toggle-group {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+    }
+    
+    .manual-time-container {
+        padding: 12px;
+    }
+    
+    .time-picker-3-column {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+    
+    .time-picker-column {
+        height: 150px;
+    }
 }
 
 /* Responsive Design */
