@@ -7,6 +7,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Schedule Management - ASSIST</title>
     <link rel="stylesheet" href="{% static 'hello/css/schedule.css' %}">
+    <link rel="stylesheet" href="{% static 'hello/css/section.css' %}">
 </head>
 <body>
     <!-- Top Navigation Bar -->
@@ -94,11 +95,11 @@
                 {% if sections %}
                 <div class="sections-container">
                     {% for section in sections %}
-                    <div class="section-card" 
-                         data-section-id="{{ section.id }}" 
-                         data-section-name="{{ section.name|lower }}"
-                         data-curriculum="{{ section.curriculum.name|lower }}"
-                         onclick="loadScheduleView({{ section.id }}, '{{ section.name }}', '{{ section.curriculum.name }} ({{ section.curriculum.year }})')">
+                <div class="section-card" 
+                    data-section-id="{{ section.id }}" 
+                    data-section-name="{{ section.name|lower }}"
+                    data-curriculum="{{ section.curriculum.name|lower }}"
+                    onclick="event.target.closest('.triple-dot-btn, .status-value, .dropdown-item, .section-dropdown-menu') || loadScheduleView({{ section.id }}, '{{ section.name }}', '{{ section.curriculum.name }} ({{ section.curriculum.year }})')">
                         <div class="card-header">
                             <div class="card-header-left">
                                 <div class="card-title">{{ section.name }}</div>
@@ -106,7 +107,7 @@
                             </div>
                             <div class="card-header-right">
                                 <div class="dropdown-menu-container">
-                                    <button class="triple-dot-btn" onclick="toggleSectionMenu(event, {{ section.id }})">
+                                    <button class="triple-dot-btn" onclick="event.preventDefault(); event.stopPropagation(); toggleSectionMenu(event, {{ section.id }})">
                                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
                                             <circle cx="12" cy="6" r="2"/>
                                             <circle cx="12" cy="12" r="2"/>
@@ -137,8 +138,7 @@
                                     <div class="info-label">STATUS</div>
                                     <div class="info-value status-value" 
                                          id="status-{{ section.id }}"
-                                         onclick="toggleStatus(event, {{ section.id }})"
-                                         style="cursor: pointer; color: {% if section.status == 'complete' %}#28a745{% else %}#dc3545{% endif %};">
+                                         onclick="event.preventDefault(); event.stopPropagation(); toggleStatus(event, {{ section.id }})">
                                         {{ section.get_status_display }}
                                     </div>
                                 </div>
@@ -186,7 +186,7 @@
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
                         <path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z"/>
                     </svg>
-                    <p>Select a section to view schedule</p>
+                    <p>Select a section to view its schedule</p>
                 </div>
 
                 <div class="schedule-view" id="scheduleView" style="display: none;">
@@ -226,7 +226,9 @@
                                 </div>
 
                                 <!-- Time Column -->
-                                <div class="schedule-time-column" id="timeColumn"></div>
+                                <div class="schedule-time-column" id="timeColumn">
+                                    <!-- Time labels will be added by JavaScript -->
+                                </div>
 
                                 <!-- Day Columns -->
                                 <div class="schedule-day-column" data-day="0"></div>
@@ -241,7 +243,9 @@
                         <div class="courses-sidebar">
                             <h3>COURSES</h3>
                             <p class="sidebar-curriculum" id="sidebarCurriculum">Curriculum</p>
-                            <div id="coursesList" class="courses-list"></div>
+                            <div id="coursesList" class="courses-list">
+                                <!-- Courses will be populated by JavaScript -->
+                            </div>
                         </div>
                     </div>
                 </div>

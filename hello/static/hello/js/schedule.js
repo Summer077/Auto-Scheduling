@@ -558,3 +558,217 @@ function submitCreateSchedule(event) {
         showNotification('Error creating schedule', 'error');
     });
 }
+
+// ===============================
+// SCHEDULE VIEW FUNCTIONS
+// ===============================
+function loadScheduleView(sectionId, sectionName, curriculumInfo) {
+    currentSectionId = sectionId;
+    
+    // Show schedule view, hide empty state
+    document.getElementById('scheduleEmptyState').style.display = 'none';
+    document.getElementById('scheduleView').style.display = 'block';
+    
+    // Update header
+    document.getElementById('scheduleSectionName').textContent = sectionName;
+    document.getElementById('scheduleCurriculum').textContent = curriculumInfo;
+    // Match section.html: show 'Curriculum: ' prefix in sidebar
+    document.getElementById('sidebarCurriculum').textContent = 'Curriculum: ' + curriculumInfo;
+
+    // Update selected state on section cards (match section.html behavior)
+    document.querySelectorAll('.section-card').forEach(card => card.classList.remove('selected'));
+    const cardEl = document.querySelector(`.section-card[data-section-id="${sectionId}"]`);
+    if (cardEl) cardEl.classList.add('selected');
+    
+    // Fetch schedule data
+    fetch(`/admin/section/${sectionId}/schedule-data/`)
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                renderSchedule(data.schedules);
+                renderCoursesList(data.courses);
+            } else {
+                console.error('Error loading schedule:', data.error);
+                showNotification('Error loading schedule data', 'error');
+            }
+        })
+        .catch(err => {
+            console.error('Error loading schedule view:', err);
+            showNotification('Error loading schedule', 'error');
+        });
+}
+
+function renderSchedule(schedules) {
+    const dayColumns = document.querySelectorAll('.schedule-day-column');
+    
+    // Clear previous schedules
+    dayColumns.forEach(col => col.innerHTML = '');
+    
+    // Group schedules by day
+    const schedulesByDay = {};
+    schedules.forEach(schedule => {
+        if (!schedulesByDay[schedule.day]) {
+            schedulesByDay[schedule.day] = [];
+        }
+        schedulesByDay[schedule.day].push(schedule);
+    });
+    
+    // Render schedules for each day
+    dayColumns.forEach(col => {
+        const day = parseInt(col.dataset.day);
+        const daySchedules = schedulesByDay[day] || [];
+        
+        daySchedules.forEach(schedule => {
+            const block = document.createElement('div');
+            block.className = 'schedule-block';
+
+            // Use pixel-based positioning/height to match section.html rendering
+            const topPx = calculateTopPosition(schedule.start_time);
+            const heightPx = schedule.duration_px || calculateDuration(schedule.start_time, schedule.end_time);
+
+            // Apply translucent background and colored left border like section view
+            const color = schedule.course_color || '#007bff';
+            block.style.backgroundColor = hexToRGBA(color, 0.25);
+            block.style.borderLeftColor = color;
+            block.style.top = `${topPx}px`;
+            block.style.height = `${heightPx}px`;
+
+            // Inner content matches section.html structure/classes so CSS applies
+            block.innerHTML = `
+                <div class="schedule-course-code">${schedule.course_code}</div>
+                <div class="schedule-details">${schedule.start_time} - ${schedule.end_time}</div>
+                <div class="schedule-details">Room: ${schedule.room}</div>
+                <div class="schedule-details">Section: ${schedule.section_name || ''}</div>
+            `;
+
+            col.appendChild(block);
+        });
+    });
+}
+
+function renderCoursesList(courses) {
+    const coursesList = document.getElementById('coursesList');
+    coursesList.innerHTML = '';
+
+    if (!courses || courses.length === 0) {
+        coursesList.innerHTML = '<div class="card-empty-message">No courses available</div>';
+        return;
+    }
+
+    courses.forEach(course => {
+        const courseItem = document.createElement('div');
+        courseItem.className = 'course-item';
+        // Use left border color like section.css expects
+        if (course.color) courseItem.style.borderLeftColor = course.color;
+        courseItem.innerHTML = `
+            <div class="course-details">
+                <div class="course-code">${course.course_code}</div>
+                <div class="course-title">${course.descriptive_title}</div>
+                <div class="course-info">
+                    <span>Lecture: ${course.lecture_hours || 0}h</span>
+                    <span>Laboratory: ${course.laboratory_hours || 0}h</span>
+                    <span>Credit Unit: ${course.credit_units || ''}</span>
+                </div>
+            </div>
+        `;
+        coursesList.appendChild(courseItem);
+    });
+}
+
+function calculateTopPosition(startTime) {
+    // Return pixel offset from 7:00 AM based on CSS grid mapping (60px per 30 minutes)
+    const [hours, minutes] = startTime.split(':').map(Number);
+    const totalMinutes = (hours * 60) + minutes;
+    const dayStart = 7 * 60; // 7:00 AM
+    const offsetMinutes = totalMinutes - dayStart;
+    // 60px per 30 minutes -> pixels = (minutes / 30) * 60
+    return (offsetMinutes / 30) * 60;
+}
+
+function calculateDuration(startTime, endTime) {
+    const [startHour, startMin] = startTime.split(':').map(Number);
+    const [endHour, endMin] = endTime.split(':').map(Number);
+
+    const startMinutes = (startHour * 60) + startMin;
+    const endMinutes = (endHour * 60) + endMin;
+    const durationMinutes = endMinutes - startMinutes;
+
+    // Return pixels: 60px per 30 minutes
+    return (durationMinutes / 30) * 60;
+}
+
+// Helper to convert hex color to rgba
+function hexToRGBA(hex, alpha) {
+    try {
+        const clean = (hex || '#007bff').replace('#', '');
+        const r = parseInt(clean.substring(0,2), 16);
+        const g = parseInt(clean.substring(2,4), 16);
+        const b = parseInt(clean.substring(4,6), 16);
+        return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+    } catch (e) {
+        return `rgba(0,123,255,${alpha})`;
+    }
+}
+
+function filterSections() {
+    const searchInput = document.getElementById('searchInput').value.toLowerCase();
+    const sectionCards = document.querySelectorAll('.section-card');
+    
+    sectionCards.forEach(card => {
+        const name = card.dataset.sectionName || '';
+        const curriculum = card.dataset.curriculum || '';
+        
+        if (name.includes(searchInput) || curriculum.includes(searchInput)) {
+            card.style.display = 'block';
+        } else {
+            card.style.display = 'none';
+        }
+    });
+}
+
+function toggleSectionMenu(event, sectionId) {
+    event.stopPropagation();
+    const menu = document.getElementById(`sectionMenu${sectionId}`);
+    if (menu) {
+        menu.classList.toggle('show');
+    }
+}
+
+function openEditSectionModal(sectionId) {
+    // TODO: Implement edit section
+    console.log('Edit section:', sectionId);
+}
+
+function deleteSection(sectionId, sectionName) {
+    if (confirm(`Are you sure you want to delete ${sectionName}?`)) {
+        fetchWithCSRF(`/admin/section/delete/${sectionId}/`, {
+            method: 'POST'
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                showNotification('Section deleted successfully!', 'success');
+                setTimeout(() => window.location.reload(), 1000);
+            } else {
+                showNotification('Error deleting section', 'error');
+            }
+        });
+    }
+}
+
+function toggleStatus(event, sectionId) {
+    event.stopPropagation();
+    fetchWithCSRF(`/admin/section/${sectionId}/toggle-status/`, {
+        method: 'POST'
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            const statusEl = document.getElementById(`status-${sectionId}`);
+            if (statusEl) {
+                statusEl.textContent = data.status_display;
+                statusEl.style.color = data.status === 'complete' ? '#28a745' : '#dc3545';
+            }
+        }
+    });
+}
