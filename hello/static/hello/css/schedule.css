@@ -1,0 +1,1249 @@
+/* Import Lexend Font */
+@import url('https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&display=swap');
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Lexend', sans-serif;
+    background-color: #E9ECEF;
+    min-height: 100vh;
+}
+
+/* Top Navigation Bar */
+.top-nav {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 70px;
+    background: #FFFFFF;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 40px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    z-index: 1000;
+}
+
+.page-title {
+    font-family: 'Lexend', sans-serif;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #212529;
+}
+
+.admin-section {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+    position: relative;
+    padding: 8px 12px;
+    border-radius: 8px;
+    transition: background 0.3s;
+}
+
+.admin-section:hover {
+    background: #F8F9FA;
+}
+
+.admin-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: #ADB5BD;
+}
+
+.admin-name {
+    font-family: 'Lexend', sans-serif;
+    font-size: 1rem;
+    font-weight: 500;
+    color: #212529;
+}
+
+.dropdown-icon {
+    width: 20px;
+    height: 20px;
+    fill: #495057;
+}
+
+/* Dropdown Menu */
+.dropdown-menu {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    margin-top: 8px;
+    background: #FFFFFF;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    min-width: 150px;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-10px);
+    transition: all 0.3s;
+    z-index: 1100;
+}
+
+.dropdown-menu.show {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.dropdown-menu a {
+    display: block;
+    padding: 12px 16px;
+    color: #212529;
+    text-decoration: none;
+    font-family: 'Lexend', sans-serif;
+    font-size: 0.95rem;
+    transition: background 0.3s;
+}
+
+.dropdown-menu a:hover {
+    background: #F8F9FA;
+}
+
+/* Sidebar Navigation */
+.sidebar {
+    position: fixed;
+    top: 70px;
+    left: 0;
+    width: 200px;
+    height: calc(100vh - 70px);
+    background: #E9ECEF;
+    padding: 20px 0;
+    overflow-y: auto;
+}
+
+.nav-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 24px;
+    color: #212529;
+    text-decoration: none;
+    font-family: 'Lexend', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 500;
+    transition: all 0.3s;
+    position: relative;
+    margin: 4px 12px;
+    border-radius: 12px;
+    background: transparent;
+}
+
+.nav-item svg {
+    width: 20px;
+    height: 20px;
+    fill: #495057;
+    transition: fill 0.3s;
+}
+
+.nav-item:hover {
+    background: rgba(248, 249, 250, 0.5);
+}
+
+.nav-item.active {
+    background: #F8F9FA;
+    color: #212529;
+    border: 1px solid rgba(255, 255, 255, 0.6);
+    box-shadow: 
+        0 6px 12px rgba(0, 0, 0, 0.12),
+        0 2px 4px rgba(0, 0, 0, 0.08),
+        inset 0 1px 0 rgba(255, 255, 255, 0.8);
+    padding-left: 19px;
+    transform: translateY(-1px);
+}
+
+.nav-item.active::before {
+    content: '';
+    position: absolute;
+    left: -12px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 5px;
+    height: 100%;
+    background: #212529;
+    border-radius: 2.5px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.nav-item.active svg {
+    fill: #212529;
+}
+
+/* Main Content Area */
+.main-content {
+    margin-left: 200px;
+    margin-top: 70px;
+    padding: 40px;
+    min-height: calc(100vh - 70px);
+}
+
+/* Content Wrapper - Vertical Layout */
+.content-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+}
+
+.left-panel {
+    display: flex;
+    flex-direction: column;
+}
+
+.right-panel {
+    background: #FFFFFF;
+    border-radius: 12px;
+    padding: 30px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    min-height: 600px;
+}
+
+/* Schedule Empty State */
+.schedule-empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    color: #6C757D;
+}
+
+.schedule-empty-state svg {
+    width: 80px;
+    height: 80px;
+    fill: #CED4DA;
+    margin-bottom: 20px;
+}
+
+.schedule-empty-state p {
+    font-size: 1.125rem;
+    font-weight: 500;
+}
+
+/* Schedule View */
+.schedule-view {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.schedule-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 30px;
+    padding-bottom: 20px;
+    border-bottom: 2px solid #E9ECEF;
+}
+
+.schedule-title-section h2 {
+    font-family: 'Lexend', sans-serif;
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: #212529;
+    margin-bottom: 8px;
+}
+
+.schedule-title-section p {
+    font-family: 'Lexend', sans-serif;
+    font-size: 0.95rem;
+    color: #6C757D;
+    font-weight: 500;
+}
+
+.schedule-actions {
+    display: flex;
+    gap: 12px;
+}
+
+.btn-export,
+.btn-print {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 18px;
+    background: #F8F9FA;
+    border: 1px solid #DEE2E6;
+    border-radius: 8px;
+    color: #495057;
+    font-family: 'Lexend', sans-serif;
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.btn-export:hover,
+.btn-print:hover {
+    background: #E9ECEF;
+    border-color: #ADB5BD;
+    transform: translateY(-1px);
+}
+
+/* Schedule Content */
+.schedule-content {
+    display: grid;
+    grid-template-columns: 1fr 320px;
+    gap: 30px;
+}
+
+/* GRID-BASED SCHEDULE CONTAINER - Match Dashboard */
+.schedule-grid-wrapper {
+    flex: 1;
+    overflow-x: auto;
+    overflow-y: auto;
+    max-height: 600px;
+    background: #FFFFFF;
+    position: relative;
+    border: 1px solid #CED4DA;
+    border-radius: 12px;
+}
+
+.schedule-grid-wrapper::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+
+.schedule-grid-wrapper::-webkit-scrollbar-track {
+    background: #F8F9FA;
+}
+
+.schedule-grid-wrapper::-webkit-scrollbar-thumb {
+    background: #ADB5BD;
+    border-radius: 5px;
+}
+
+.schedule-grid-wrapper::-webkit-scrollbar-thumb:hover {
+    background: #6C757D;
+}
+
+/* GRID LAYOUT */
+.schedule-grid {
+    display: grid;
+    grid-template-columns: 80px repeat(6, 1fr);
+    min-width: 900px;
+    position: relative;
+}
+
+/* HEADER ROW */
+.schedule-header-row {
+    display: contents;
+}
+
+.schedule-header-cell {
+    background: #FFFFFF;
+    padding: 14px 12px;
+    text-align: center;
+    font-family: 'Lexend', sans-serif;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #495057;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    border-bottom: 2px solid #CED4DA;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    min-width: 130px;
+}
+
+.schedule-header-cell:first-child {
+    width: 80px;
+    min-width: 80px;
+    background: #F8F9FA;
+    border-right: 2px solid #CED4DA;
+    z-index: 101;
+}
+
+/* TIME COLUMN (labels on grid lines) */
+.schedule-time-column {
+    grid-column: 1;
+    grid-row: 2;
+    background: #F8F9FA;
+    border-right: 2px solid #CED4DA;
+    position: relative;
+    height: 1740px;
+}
+
+.time-label {
+    position: absolute;
+    left: 0;
+    right: 0;
+    text-align: center;
+    font-family: 'Lexend', sans-serif;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #6C757D;
+    transform: translateY(-50%);
+    background: #F8F9FA;
+    padding: 4px 0;
+    z-index: 10;
+}
+
+/* DAY COLUMNS (with horizontal grid lines) */
+.schedule-day-column {
+    position: relative;
+    border-right: 1px solid #DEE2E6;
+    height: 1740px;
+    background: #FFFFFF;
+}
+
+.schedule-day-column:last-child {
+    border-right: none;
+}
+
+/* HORIZONTAL GRID LINES */
+.schedule-day-column::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    background-image: repeating-linear-gradient(
+        to bottom,
+        #DEE2E6 0px,
+        #DEE2E6 1px,
+        transparent 1px,
+        transparent 60px
+    );
+    pointer-events: none;
+    z-index: 1;
+}
+
+/* SCHEDULE BLOCKS (absolutely positioned) */
+.schedule-block {
+    position: absolute;
+    left: 6px;
+    right: 6px;
+    border-radius: 6px;
+    padding: 12px 10px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    gap: 4px;
+    border-left: 5px solid;
+    border-top: 1px solid #DEE2E6;
+    border-right: 1px solid #DEE2E6;
+    border-bottom: 1px solid #DEE2E6;
+    z-index: 10;
+    box-sizing: border-box;
+    overflow: hidden;
+    transition: all 0.2s ease;
+}
+
+.schedule-course-code {
+    font-family: 'Lexend', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #212529;
+    line-height: 1.2;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.schedule-details {
+    font-family: 'Lexend', sans-serif;
+    font-size: 0.7rem;
+    font-weight: 500;
+    color: #2d3436;
+    line-height: 1.4;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Courses Sidebar - Updated */
+.courses-sidebar {
+    background: #F8F9FA;
+    border-radius: 12px;
+    padding: 20px;
+    overflow-y: auto;
+    max-height: 600px;
+}
+
+.courses-sidebar::-webkit-scrollbar {
+    width: 8px;
+}
+
+.courses-sidebar::-webkit-scrollbar-track {
+    background: #E9ECEF;
+    border-radius: 4px;
+}
+
+.courses-sidebar::-webkit-scrollbar-thumb {
+    background: #ADB5BD;
+    border-radius: 4px;
+}
+
+.courses-sidebar::-webkit-scrollbar-thumb:hover {
+    background: #6C757D;
+}
+
+.courses-sidebar h3 {
+    font-family: 'Lexend', sans-serif;
+    font-size: 0.875rem;
+    font-weight: 700;
+    color: #212529;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.sidebar-curriculum {
+    font-family: 'Lexend', sans-serif;
+    font-size: 0.75rem;
+    color: #6C757D;
+    margin-bottom: 20px;
+    font-weight: 500;
+}
+
+.courses-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.course-item {
+    display: flex;
+    gap: 12px;
+    background: #FFFFFF;
+    padding: 12px;
+    border-radius: 8px;
+    border-left: 4px solid #ADB5BD;
+}
+
+.course-details {
+    flex: 1;
+}
+
+.course-code {
+    font-size: 0.875rem;
+    font-weight: 700;
+    color: #212529;
+    margin-bottom: 4px;
+}
+
+.course-title {
+    font-size: 0.75rem;
+    color: #495057;
+    margin-bottom: 8px;
+    font-weight: 500;
+}
+
+.course-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.course-info span {
+    font-size: 0.7rem;
+    color: #6C757D;
+    font-weight: 500;
+}
+
+/* Sections Container - Scrollable with proper structure */
+.sections-container {
+    background: #FFFFFF;
+    border-radius: 12px;
+    padding: 30px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    max-height: 600px; /* Set maximum height */
+    overflow-y: auto; /* Enable vertical scrolling */
+}
+
+/* Scrollbar Styling for Sections Container */
+.sections-container::-webkit-scrollbar {
+    width: 10px;
+}
+
+.sections-container::-webkit-scrollbar-track {
+    background: #F8F9FA;
+    border-radius: 5px;
+}
+
+.sections-container::-webkit-scrollbar-thumb {
+    background: #ADB5BD;
+    border-radius: 5px;
+}
+
+.sections-container::-webkit-scrollbar-thumb:hover {
+    background: #6C757D;
+}
+
+/* Top Controls */
+.top-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 32px;
+    gap: 20px;
+}
+
+/* Search Container */
+.search-container {
+    position: relative;
+    flex: 1;
+    max-width: 400px;
+}
+
+.search-icon {
+    position: absolute;
+    left: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 20px;
+    height: 20px;
+    fill: #6C757D;
+    pointer-events: none;
+}
+
+.search-container input {
+    width: 100%;
+    padding: 12px 16px 12px 48px;
+    background: #FFFFFF;
+    border: 1px solid #DEE2E6;
+    border-radius: 12px;
+    font-family: 'Lexend', sans-serif;
+    font-size: 0.95rem;
+    color: #212529;
+    transition: all 0.3s;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.search-container input:focus {
+    outline: none;
+    border-color: #ADB5BD;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.08);
+}
+
+.search-container input::placeholder {
+    color: #ADB5BD;
+}
+
+/* Add Section Button */
+.add-section-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 24px;
+    background: #F8F9FA;
+    border: 1px solid rgba(255, 255, 255, 0.6);
+    border-radius: 12px;
+    color: #212529;
+    font-family: 'Lexend', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s;
+    box-shadow: 
+        0 6px 12px rgba(0, 0, 0, 0.12),
+        0 2px 4px rgba(0, 0, 0, 0.08),
+        inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+
+.add-section-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 
+        0 8px 16px rgba(0, 0, 0, 0.15),
+        0 3px 6px rgba(0, 0, 0, 0.1),
+        inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+
+.add-section-btn svg {
+    width: 18px;
+    height: 18px;
+    fill: #212529;
+}
+
+/* Section Cards - Fixed to prevent nesting */
+.section-card {
+    background: #FFFFFF;
+    border-radius: 12px;
+    padding: 24px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    border: 2px solid #ADB5BD;
+    transition: border-color 0.2s ease, transform 0.2s ease;
+    cursor: pointer;
+    width: 100%;
+    flex-shrink: 0; /* Prevent cards from shrinking */
+}
+
+.section-card.selected {
+    border-color: #343A40;
+    transform: scale(0.99);
+}
+
+.section-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+}
+
+
+/* Card Header */
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 20px;
+}
+
+.card-header-left {
+    flex: 1;
+}
+
+.card-title {
+    font-family: 'Lexend', sans-serif;
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #212529;
+    margin-bottom: 4px;
+}
+
+.card-subtitle {
+    font-family: 'Lexend', sans-serif;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #6C757D;
+}
+
+/* View Schedule Button */
+.view-schedule-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 8px 12px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    border-radius: 6px;
+    transition: all 0.3s;
+    color: #495057;
+    font-family: 'Lexend', sans-serif;
+    font-size: 0.875rem;
+    font-weight: 500;
+    text-decoration: none;
+}
+
+.view-schedule-btn:hover {
+    background: #E9ECEF;
+    color: #212529;
+}
+
+.view-schedule-btn svg {
+    width: 16px;
+    height: 16px;
+    fill: currentColor;
+}
+
+/* Update Card Body to display horizontally */
+.card-body {
+    padding: 20px 0;
+}
+
+.info-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr); /* 4 equal columns */
+    gap: 20px; /* Space between columns */
+    margin-bottom: 0;
+    width: 100%;
+}
+
+.info-row:first-child {
+    padding-bottom: 0;
+    margin-bottom: 0;
+    border-bottom: none;
+}
+
+.info-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    text-align: left;
+}
+
+.info-label {
+    font-family: 'Lexend', sans-serif;
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: #868E96;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.info-value {
+    font-family: 'Lexend', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #212529;
+    word-wrap: break-word;
+}
+
+/* Card Footer */
+.card-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 16px;
+    border-top: 1px solid #E9ECEF;
+}
+
+.card-footer-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.student-avatar {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: #ADB5BD;
+}
+
+.student-name {
+    font-family: 'Lexend', sans-serif;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #495057;
+}
+
+.delete-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 8px 12px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    border-radius: 6px;
+    transition: all 0.3s;
+    color: #DC3545;
+    font-family: 'Lexend', sans-serif;
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.delete-btn:hover {
+    background: #F8F9FA;
+}
+
+.delete-btn svg {
+    width: 16px;
+    height: 16px;
+    fill: currentColor;
+}
+
+/* Empty State */
+.empty-state {
+    text-align: center;
+    padding: 80px 20px;
+    background: #FFFFFF;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.empty-state svg {
+    width: 80px;
+    height: 80px;
+    fill: #CED4DA;
+    margin-bottom: 24px;
+}
+
+.empty-state p {
+    font-size: 1.125rem;
+    color: #6C757D;
+    margin-bottom: 24px;
+    font-weight: 500;
+}
+
+/* Modal Styles */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 2000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0, 0, 0, 0.5);
+}
+
+.modal-content {
+    background-color: #FFFFFF;
+    margin: 5% auto;
+    padding: 0;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 600px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 24px 30px;
+    border-bottom: 1px solid #E0E0E0;
+}
+
+.modal-header h2 {
+    margin: 0;
+    font-family: 'Lexend', sans-serif;
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #212529;
+}
+
+.close {
+    color: #ADB5BD;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: color 0.3s;
+    line-height: 1;
+}
+
+.close:hover,
+.close:focus {
+    color: #495057;
+}
+
+.modal form {
+    padding: 30px;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-family: 'Lexend', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #212529;
+}
+
+.form-group input,
+.form-group select {
+    width: 100%;
+    padding: 12px 16px;
+    border: 1px solid #DEE2E6;
+    border-radius: 10px;
+    font-family: 'Lexend', sans-serif;
+    font-size: 0.95rem;
+    color: #212529;
+    background-color: #FFFFFF;
+    transition: border-color 0.3s, box-shadow 0.3s;
+    box-sizing: border-box;
+}
+
+.form-group select {
+    padding-right: 40px;
+    appearance: none;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23495057' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    background-size: 20px;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+    outline: none;
+    border-color: #ADB5BD;
+    box-shadow: 0 0 0 3px rgba(173, 181, 189, 0.1);
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+}
+
+.modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    padding-top: 20px;
+    border-top: 1px solid #E0E0E0;
+    margin-top: 10px;
+}
+
+.btn-primary {
+    padding: 12px 24px;
+    background: #F8F9FA;
+    border: 1px solid rgba(255, 255, 255, 0.6);
+    border-radius: 10px;
+    color: #212529;
+    font-family: 'Lexend', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.btn-primary:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.12);
+}
+
+.btn-secondary {
+    padding: 12px 24px;
+    background: #FFFFFF;
+    border: 1px solid #DEE2E6;
+    border-radius: 10px;
+    color: #495057;
+    font-family: 'Lexend', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.btn-secondary:hover {
+    background: #F8F9FA;
+    border-color: #ADB5BD;
+}
+
+/* Notification Toast */
+.notification {
+    position: fixed;
+    top: 90px;
+    right: 40px;
+    padding: 16px 24px;
+    background: #FFFFFF;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    font-family: 'Lexend', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 500;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateX(400px);
+    transition: all 0.3s ease;
+    z-index: 2000;
+    min-width: 250px;
+    max-width: 400px;
+}
+
+.notification.show {
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(0);
+}
+
+.notification.success {
+    border-left: 4px solid #28a745;
+}
+
+.notification.error {
+    border-left: 4px solid #dc3545;
+}
+
+/* Card Header Right */
+.card-header-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* Triple Dot Button */
+.triple-dot-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 6px;
+    transition: all 0.3s;
+    color: #495057;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.triple-dot-btn:hover {
+    background: #E9ECEF;
+    color: #212529;
+}
+
+.triple-dot-btn svg {
+    width: 20px;
+    height: 20px;
+    fill: currentColor;
+}
+
+/* Dropdown Menu Container */
+.dropdown-menu-container {
+    position: relative;
+}
+
+/* Section Dropdown Menu */
+.section-dropdown-menu {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    background: #FFFFFF;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    min-width: 140px;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-10px);
+    transition: all 0.3s;
+    z-index: 100;
+    border: 1px solid #E9ECEF;
+    display: none;
+}
+
+.section-dropdown-menu.show {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+    display: block;
+}
+
+/* Dropdown Items */
+.dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    padding: 12px 16px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-family: 'Lexend', sans-serif;
+    font-size: 0.875rem;
+    color: #495057;
+    transition: background 0.3s;
+    text-align: left;
+}
+
+.dropdown-item:hover {
+    background: #F8F9FA;
+}
+
+.dropdown-item svg {
+    width: 16px;
+    height: 16px;
+    fill: currentColor;
+}
+
+.dropdown-item.delete-item {
+    color: #DC3545;
+}
+
+.dropdown-item.delete-item:hover {
+    background: #FFF5F5;
+    color: #C82333;
+}
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+    .schedule-content {
+        grid-template-columns: 1fr 280px;
+    }
+}
+
+@media (max-width: 768px) {
+    .sidebar {
+        width: 70px;
+    }
+
+    .nav-item span {
+        display: none;
+    }
+
+    .nav-item {
+        justify-content: center;
+        padding: 14px;
+    }
+
+    .nav-item.active {
+        padding-left: 14px;
+    }
+
+    .main-content {
+        margin-left: 70px;
+        padding: 20px;
+    }
+
+    .top-controls {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .search-container {
+        max-width: 100%;
+    }
+
+    .modal-content {
+        width: 95%;
+        margin: 10% auto;
+    }
+
+    .notification {
+        right: 20px;
+        left: 20px;
+        min-width: auto;
+    }
+    
+    .card-footer {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+    }
+    
+    .card-footer-right {
+        width: 100%;
+        justify-content: flex-end;
+    }
+    
+    .schedule-content {
+        grid-template-columns: 1fr;
+    }
+    
+    .courses-sidebar {
+        display: none;
+    }
+}
+
+@media (max-width: 1024px) {
+    .info-row {
+        grid-template-columns: repeat(2, 1fr); /* 2 columns on tablets */
+        gap: 16px 20px;
+    }
+}
+
+@media (max-width: 768px) {
+    .sections-container {
+        max-height: 500px;
+        padding: 20px;
+    }
+    
+    .section-card {
+        padding: 20px;
+    }
+    
+    .info-row {
+        grid-template-columns: 1fr; /* 1 column on mobile */
+        gap: 12px;
+    }
+}

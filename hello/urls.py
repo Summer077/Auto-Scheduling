@@ -11,6 +11,8 @@ urlpatterns = [
     path('admin/course/delete/<int:course_id>/', views.delete_course, name='delete_course'),
     path('admin/section/<int:section_id>/schedule-data/', views.get_section_schedule, name='get_section_schedule'),
     path('admin/room/<int:room_id>/schedule-data/', views.get_room_schedule, name='get_room_schedule'),
+    path('admin/schedule/', views.schedule_view, name='schedule_view'),
+    path('admin/schedule/delete/<int:schedule_id>/', views.delete_schedule, name='delete_schedule'),
     
     # Section CRUD operations
     path('admin/section/add/', views.add_section, name='add_section'),

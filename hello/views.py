@@ -1141,3 +1141,53 @@ def get_room_schedule(request, room_id):
             'success': False,
             'error': str(e)
         }, status=500)
+    
+@login_required(login_url='admin_login')
+def schedule_view(request):
+    """Schedule management page"""
+    if not (request.user.is_staff or request.user.is_superuser):
+        messages.error(request, 'You do not have permission to access this page.')
+        return redirect('admin_login')
+    
+    # Get all schedules with related data
+    schedules = Schedule.objects.select_related(
+        'course', 'section', 'faculty', 'room', 'section__curriculum'
+    ).all().order_by('section__name', 'day', 'start_time')
+    
+    # Get data needed for the create schedule modal
+    all_courses = Course.objects.all().order_by('course_code')
+    faculty_list = Faculty.objects.all().order_by('last_name', 'first_name')
+    section_list = Section.objects.all().order_by('year_level', 'semester', 'name')
+    room_list = Room.objects.all().order_by('campus', 'room_number')
+    
+    context = {
+        'user': request.user,
+        'schedules': schedules,
+        'all_courses': all_courses,
+        'faculty_list': faculty_list,
+        'section_list': section_list,
+        'room_list': room_list,
+    }
+    
+    return render(request, 'hello/schedule.html', context)
+
+@login_required(login_url='admin_login')
+def delete_schedule(request, schedule_id):
+    """Delete schedule"""
+    if request.method == 'POST':
+        schedule = get_object_or_404(Schedule, id=schedule_id)
+        course_code = schedule.course.course_code
+        section_name = schedule.section.name
+        
+        schedule.delete()
+        
+        log_activity(
+            user=request.user,
+            action='delete',
+            entity_type='schedule',
+            entity_name=f"{course_code} - {section_name}",
+            message=f'Deleted schedule: {course_code} for {section_name}'
+        )
+        
+        return JsonResponse({'success': True})
+    return JsonResponse({'success': False})
