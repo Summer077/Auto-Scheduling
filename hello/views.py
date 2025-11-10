@@ -1,12 +1,12 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login, logout
 from django.contrib import messages
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required, user_passes_test
 from django.http import JsonResponse
 from django.utils import timezone
 from django.core.exceptions import ValidationError
 from django.contrib.auth.models import User
-from django.core.mail import send_mail
+from django.core.mail import send_mail, EmailMessage
 from django.conf import settings
 from django.db.models import Sum
 from datetime import datetime, timedelta
@@ -14,6 +14,10 @@ import random
 import string
 from .models import Course, Curriculum, Activity, Faculty, Section, Schedule, Room
 from .forms import CourseForm, CurriculumForm
+
+# Helper function to check if user is admin
+def is_admin(user):
+    return user.is_staff and user.is_superuser
 
 def admin_login(request):
     """Handle admin login with custom template"""
@@ -34,7 +38,11 @@ def admin_login(request):
                 if not remember_me:
                     request.session.set_expiry(0)
                 
-                return redirect('admin_dashboard')
+                # Redirect based on user role
+                if user.is_superuser:
+                    return redirect('admin_dashboard')
+                else:
+                    return redirect('staff_dashboard')  # Create this view for staff
             else:
                 messages.error(request, 'You do not have admin privileges.')
         else:
@@ -51,73 +59,106 @@ def admin_logout(request):
 @login_required
 def add_schedule(request):
     """Add a new schedule entry"""
-    if request.method == 'POST' and request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+    if request.method == 'POST':
         try:
             # Extract schedule data from POST
+            course_id = request.POST.get('course')
             section_id = request.POST.get('section')
             faculty_id = request.POST.get('faculty')
             room_id = request.POST.get('room')
-            activity_id = request.POST.get('activity')
             day = request.POST.get('day')
             start_time = request.POST.get('start_time')
-            duration = request.POST.get('duration')
+            end_time = request.POST.get('end_time')
 
             # Get related objects
+            course = Course.objects.get(id=course_id)
             section = Section.objects.get(id=section_id)
-            faculty = Faculty.objects.get(id=faculty_id)
-            room = Room.objects.get(id=room_id)
-            activity = Activity.objects.get(id=activity_id)
+            faculty = Faculty.objects.get(id=faculty_id) if faculty_id else None
+            room = Room.objects.get(id=room_id) if room_id else None
 
             # Create new schedule
             schedule = Schedule(
+                course=course,
                 section=section,
                 faculty=faculty,
                 room=room,
-                activity=activity,
-                day=day,
+                day=int(day),
                 start_time=start_time,
-                duration=duration
+                end_time=end_time
             )
             
-            # Validate and save
+            # Validate and save (duration will be calculated automatically in save method)
             schedule.full_clean()
             schedule.save()
 
+            # Log activity
+            log_activity(
+                user=request.user,
+                action='add',
+                entity_type='schedule',
+                entity_name=f"{course.course_code} - {section.name}",
+                message=f'Created schedule: {course.course_code} for {section.name} on {dict(Schedule.DAY_CHOICES)[int(day)]}'
+            )
+
             return JsonResponse({
                 'success': True,
-                'message': 'Schedule added successfully'
+                'message': 'Schedule created successfully'
             })
             
-        except (Section.DoesNotExist, Faculty.DoesNotExist, Room.DoesNotExist, Activity.DoesNotExist) as e:
+        except Course.DoesNotExist:
             return JsonResponse({
                 'success': False,
-                'message': f'Required object not found: {str(e)}'
+                'errors': ['Course not found']
+            })
+        except Section.DoesNotExist:
+            return JsonResponse({
+                'success': False,
+                'errors': ['Section not found']
+            })
+        except Faculty.DoesNotExist:
+            return JsonResponse({
+                'success': False,
+                'errors': ['Faculty not found']
+            })
+        except Room.DoesNotExist:
+            return JsonResponse({
+                'success': False,
+                'errors': ['Room not found']
             })
         except ValidationError as e:
+            error_messages = []
+            if hasattr(e, 'error_dict'):
+                for field, errors in e.error_dict.items():
+                    for error in errors:
+                        error_messages.append(error.message)
+            else:
+                error_messages = [str(e)]
+            
             return JsonResponse({
                 'success': False,
-                'message': str(e)
+                'errors': error_messages
             })
         except Exception as e:
+            import traceback
+            print(f"Error creating schedule: {str(e)}")
+            print(traceback.format_exc())
             return JsonResponse({
                 'success': False,
-                'message': f'Error adding schedule: {str(e)}'
+                'errors': [f'Error creating schedule: {str(e)}']
             })
             
     return JsonResponse({
         'success': False,
-        'message': 'Invalid request method'
+        'errors': ['Invalid request method']
     })
 
 @login_required(login_url='admin_login')
+@user_passes_test(is_admin, login_url='admin_login')
 def admin_dashboard(request):
     """
     Admin dashboard - displays summary statistics and recent activities
+    ONLY accessible by superusers (admins)
     """
-    if not (request.user.is_staff or request.user.is_superuser):
-        messages.error(request, 'You do not have permission to access this page.')
-        return redirect('admin_login')
-    
     from django.db.models import Sum
     import json
     
@@ -228,471 +269,29 @@ def log_activity(user, action, entity_type, entity_name, message):
     )
 
 def generate_password(length=12):
-    """Generate a random password"""
-    characters = string.ascii_letters + string.digits + "!@#$%^&*"
-    password = ''.join(random.choice(characters) for i in range(length))
-    return password
-
-@login_required(login_url='admin_login')
-def course_view(request):
-    """Course management page with filtering"""
-    if not (request.user.is_staff or request.user.is_superuser):
-        messages.error(request, 'You do not have permission to access this page.')
-        return redirect('admin_login')
+    """Generate a random password with at least one uppercase, lowercase, digit, and special character"""
+    # Ensure password has at least one of each required type
+    password_chars = [
+        random.choice(string.ascii_uppercase),
+        random.choice(string.ascii_lowercase),
+        random.choice(string.digits),
+        random.choice("!@#$%^&*")
+    ]
     
-    # Get all curricula
-    curricula = Curriculum.objects.all()
+    # Fill the rest with random characters
+    all_chars = string.ascii_letters + string.digits + "!@#$%^&*"
+    password_chars += [random.choice(all_chars) for _ in range(length - 4)]
     
-    # Get selected filters from GET parameters
-    selected_curriculum_id = request.GET.get('curriculum')
-    selected_year = request.GET.get('year')
-    selected_semester = request.GET.get('semester')
-    
-    # Get courses based on filters
-    courses = Course.objects.all()
-    
-    selected_curriculum = None
-    if selected_curriculum_id:
-        selected_curriculum = get_object_or_404(Curriculum, id=selected_curriculum_id)
-        courses = courses.filter(curriculum=selected_curriculum)
-    elif curricula.exists():
-        selected_curriculum = curricula.first()
-        courses = courses.filter(curriculum=selected_curriculum)
-    
-    if selected_year:
-        courses = courses.filter(year_level=selected_year)
-    
-    if selected_semester:
-        courses = courses.filter(semester=selected_semester)
-    
-    # Group courses by year and semester
-    grouped_courses = {}
-    for course in courses:
-        key = (course.year_level, course.semester)
-        if key not in grouped_courses:
-            grouped_courses[key] = {
-                'display': course.get_year_semester_display(),
-                'courses': [],
-                'total_units': 0
-            }
-        grouped_courses[key]['courses'].append(course)
-        grouped_courses[key]['total_units'] += course.credit_units
-    
-    # Academic levels for dropdown
-    academic_levels = []
-    for year in range(1, 5):
-        for sem in range(1, 3):
-            academic_levels.append({
-                'year': year,
-                'semester': sem,
-                'display': f"{dict(Course.YEAR_CHOICES)[year]}, {dict(Course.SEMESTER_CHOICES)[sem]}"
-            })
-    
-    context = {
-        'user': request.user,
-        'curricula': curricula,
-        'selected_curriculum': selected_curriculum,
-        'grouped_courses': grouped_courses,
-        'academic_levels': academic_levels,
-        'selected_year': int(selected_year) if selected_year else None,
-        'selected_semester': int(selected_semester) if selected_semester else None,
-    }
-    return render(request, 'hello/course.html', context)
-
-@login_required(login_url='admin_login')
-def add_course(request):
-    """Add new course"""
-    if request.method == 'POST':
-        form = CourseForm(request.POST)
-        if form.is_valid():
-            course = form.save()
-            
-            # Log activity
-            log_activity(
-                user=request.user,
-                action='add',
-                entity_type='course',
-                entity_name=course.course_code,
-                message=f'Added course: {course.course_code} - {course.descriptive_title}'
-            )
-            
-            return JsonResponse({'success': True})
-        else:
-            return JsonResponse({'success': False, 'errors': form.errors})
-    
-    return JsonResponse({'success': False})
-
-@login_required(login_url='admin_login')
-def edit_course(request, course_id):
-    """Edit existing course"""
-    course = get_object_or_404(Course, id=course_id)
-    
-    if request.method == 'POST':
-        form = CourseForm(request.POST, instance=course)
-        if form.is_valid():
-            updated_course = form.save()
-            
-            # Log activity
-            log_activity(
-                user=request.user,
-                action='edit',
-                entity_type='course',
-                entity_name=updated_course.course_code,
-                message=f'Edited course: {updated_course.course_code} - {updated_course.descriptive_title}'
-            )
-            
-            return JsonResponse({'success': True})
-        else:
-            return JsonResponse({'success': False, 'errors': form.errors})
-    
-    # Return course data for editing
-    course_data = {
-        'id': course.id,
-        'curriculum': course.curriculum.id,
-        'course_code': course.course_code,
-        'descriptive_title': course.descriptive_title,
-        'laboratory_hours': course.laboratory_hours,
-        'lecture_hours': course.lecture_hours,
-        'credit_units': course.credit_units,
-        'year_level': course.year_level,
-        'semester': course.semester,
-    }
-    return JsonResponse(course_data)
-
-@login_required(login_url='admin_login')
-def delete_course(request, course_id):
-    """Delete course"""
-    if request.method == 'POST':
-        course = get_object_or_404(Course, id=course_id)
-        course_code = course.course_code
-        course_title = course.descriptive_title
-        
-        course.delete()
-        
-        # Log activity
-        log_activity(
-            user=request.user,
-            action='delete',
-            entity_type='course',
-            entity_name=course_code,
-            message=f'Deleted course: {course_code} - {course_title}'
-        )
-        
-        return JsonResponse({'success': True})
-    return JsonResponse({'success': False})
-
-@login_required(login_url='admin_login')
-def add_curriculum(request):
-    """Add new curriculum"""
-    if request.method == 'POST':
-        form = CurriculumForm(request.POST)
-        if form.is_valid():
-            curriculum = form.save()
-            
-            # Log activity
-            log_activity(
-                user=request.user,
-                action='add',
-                entity_type='curriculum',
-                entity_name=curriculum.name,
-                message=f'Added curriculum: {curriculum.name} ({curriculum.year})'
-            )
-            
-            return JsonResponse({'success': True})
-        else:
-            return JsonResponse({'success': False, 'errors': form.errors})
-    
-    return JsonResponse({'success': False})
-
-@login_required(login_url='admin_login')
-def delete_curriculum(request, curriculum_id):
-    """Delete curriculum"""
-    if request.method == 'POST':
-        curriculum = get_object_or_404(Curriculum, id=curriculum_id)
-        curriculum_name = curriculum.name
-        curriculum_year = curriculum.year
-        
-        curriculum.delete()
-        
-        # Log activity
-        log_activity(
-            user=request.user,
-            action='delete',
-            entity_type='curriculum',
-            entity_name=curriculum_name,
-            message=f'Deleted curriculum: {curriculum_name} ({curriculum_year})'
-        )
-        
-        return JsonResponse({'success': True})
-    return JsonResponse({'success': False})
-
-@login_required
-def edit_curriculum(request, curriculum_id):
-    if request.method == 'GET':
-        try:
-            curriculum = Curriculum.objects.get(id=curriculum_id)
-            return JsonResponse({
-                'id': curriculum.id,
-                'name': curriculum.name,
-                'year': curriculum.year
-            })
-        except Curriculum.DoesNotExist:
-            return JsonResponse({'error': 'Curriculum not found'}, status=404)
-    
-    elif request.method == 'POST':
-        try:
-            curriculum = Curriculum.objects.get(id=curriculum_id)
-            curriculum.name = request.POST.get('name')
-            curriculum.year = request.POST.get('year')
-            curriculum.save()
-            
-            # Log activity
-            log_activity(
-                user=request.user,
-                action='edit',
-                entity_type='curriculum',
-                entity_name=curriculum.name,
-                message=f'Edited curriculum: {curriculum.name} ({curriculum.year})'
-            )
-            
-            return JsonResponse({'success': True})
-        except Curriculum.DoesNotExist:
-            return JsonResponse({'success': False, 'error': 'Curriculum not found'}, status=404)
-        except Exception as e:
-            return JsonResponse({'success': False, 'errors': str(e)})
-        
-@login_required(login_url='admin_login')
-def section_view(request):
-    """Section management page"""
-    if not (request.user.is_staff or request.user.is_superuser):
-        messages.error(request, 'You do not have permission to access this page.')
-        return redirect('admin_login')
-    
-    # Get all sections with related data
-    sections = Section.objects.select_related('curriculum').all()
-    
-    # Get all curricula for the add/edit form
-    curricula = Curriculum.objects.all()
-    
-    context = {
-        'user': request.user,
-        'sections': sections,
-        'curricula': curricula,
-    }
-    
-    return render(request, 'hello/section.html', context)
-
-@login_required(login_url='admin_login')
-def add_section(request):
-    """Add new section with validation"""
-    if request.method == 'POST':
-        try:
-            name = request.POST.get('name')
-            curriculum_id = request.POST.get('curriculum')
-            year_level = int(request.POST.get('year_level'))
-            semester = int(request.POST.get('semester'))
-            max_students = int(request.POST.get('max_students', 40))
-            
-            section = Section(
-                name=name,
-                curriculum_id=curriculum_id,
-                year_level=year_level,
-                semester=semester,
-                max_students=max_students
-            )
-            
-            section.full_clean()
-            section.save()
-            
-            log_activity(
-                user=request.user,
-                action='add',
-                entity_type='section',
-                entity_name=section.name,
-                message=f'Added section: {section.name}'
-            )
-            
-            return JsonResponse({'success': True})
-            
-        except ValidationError as e:
-            error_messages = []
-            if hasattr(e, 'error_dict'):
-                for field, errors in e.error_dict.items():
-                    for error in errors:
-                        error_messages.append(error.message)
-            else:
-                error_messages = [str(e)]
-            
-            return JsonResponse({
-                'success': False, 
-                'errors': error_messages
-            })
-            
-        except Exception as e:
-            return JsonResponse({
-                'success': False, 
-                'errors': [str(e)]
-            })
-    
-    return JsonResponse({'success': False})
-
-
-@login_required(login_url='admin_login')
-def edit_section(request, section_id):
-    """Edit existing section with validation"""
-    section = get_object_or_404(Section, id=section_id)
-    
-    if request.method == 'POST':
-        try:
-            section.name = request.POST.get('name')
-            section.curriculum_id = request.POST.get('curriculum')
-            section.year_level = int(request.POST.get('year_level'))
-            section.semester = int(request.POST.get('semester'))
-            section.max_students = int(request.POST.get('max_students'))
-            
-            section.full_clean()
-            section.save()
-            
-            log_activity(
-                user=request.user,
-                action='edit',
-                entity_type='section',
-                entity_name=section.name,
-                message=f'Edited section: {section.name}'
-            )
-            
-            return JsonResponse({'success': True})
-            
-        except ValidationError as e:
-            error_messages = []
-            if hasattr(e, 'error_dict'):
-                for field, errors in e.error_dict.items():
-                    for error in errors:
-                        error_messages.append(error.message)
-            else:
-                error_messages = [str(e)]
-            
-            return JsonResponse({
-                'success': False, 
-                'errors': error_messages
-            })
-            
-        except Exception as e:
-            return JsonResponse({
-                'success': False, 
-                'errors': [str(e)]
-            })
-    
-    return JsonResponse({
-        'id': section.id,
-        'name': section.name,
-        'curriculum': section.curriculum.id,
-        'year_level': section.year_level,
-        'semester': section.semester,
-        'max_students': section.max_students,
-    })
-
-@login_required(login_url='admin_login')
-def delete_section(request, section_id):
-    """Delete section"""
-    if request.method == 'POST':
-        section = get_object_or_404(Section, id=section_id)
-        section_name = section.name
-        
-        section.delete()
-        
-        log_activity(
-            user=request.user,
-            action='delete',
-            entity_type='section',
-            entity_name=section_name,
-            message=f'Deleted section: {section_name}'
-        )
-        
-        return JsonResponse({'success': True})
-    return JsonResponse({'success': False})
-
-@login_required(login_url='admin_login')
-def get_section_schedule(request, section_id):
-    """Get schedule data for a specific section"""
-    try:
-        section = get_object_or_404(Section, id=section_id)
-        
-        print(f"\n=== Getting schedule for section: {section.name} ===")
-        print(f"Curriculum: {section.curriculum.name}")
-        print(f"Year Level: {section.year_level}")
-        print(f"Semester: {section.semester}")
-        
-        # Get all schedules for this section
-        schedules = Schedule.objects.filter(section=section).select_related(
-            'course', 'room', 'faculty'
-        ).order_by('day', 'start_time')
-        
-        print(f"Found {schedules.count()} schedules")
-        
-        # Get ALL courses for this section's curriculum, year level, and semester
-        courses = Course.objects.filter(
-            curriculum=section.curriculum,
-            year_level=section.year_level,
-            semester=section.semester
-        ).order_by('course_code')
-        
-        print(f"Found {courses.count()} courses for this curriculum/year/semester:")
-        for course in courses:
-            print(f"  - {course.course_code}: {course.descriptive_title}")
-        
-        # Format schedule data
-        schedule_data = []
-        for schedule in schedules:
-            schedule_item = {
-                'day': schedule.day,
-                'start_time': schedule.start_time,
-                'end_time': schedule.end_time,
-                'duration': schedule.duration,
-                'course_code': schedule.course.course_code,
-                'course_color': schedule.course.color,
-                'room': schedule.room.name if schedule.room else 'TBA',
-                'section_name': section.name,
-                'faculty': f"{schedule.faculty.first_name} {schedule.faculty.last_name}" if schedule.faculty else 'TBA'
-            }
-            schedule_data.append(schedule_item)
-        
-        # Format course data
-        course_data = []
-        for course in courses:
-            course_item = {
-                'course_code': course.course_code,
-                'descriptive_title': course.descriptive_title,
-                'lecture_hours': course.lecture_hours,
-                'laboratory_hours': course.laboratory_hours,
-                'credit_units': course.credit_units,
-                'color': course.color
-            }
-            course_data.append(course_item)
-        
-        return JsonResponse({
-            'success': True,
-            'schedules': schedule_data,
-            'courses': course_data
-        })
-    except Exception as e:
-        import traceback
-        print(f"Error in get_section_schedule: {str(e)}")
-        print(traceback.format_exc())
-        return JsonResponse({
-            'success': False,
-            'error': str(e)
-        }, status=500)
+    # Shuffle to avoid predictable pattern
+    random.shuffle(password_chars)
+    return ''.join(password_chars)
 
 # ===== FACULTY VIEWS =====
 
 @login_required(login_url='admin_login')
+@user_passes_test(is_admin, login_url='admin_login')
 def faculty_view(request):
     """Faculty management page"""
-    if not (request.user.is_staff or request.user.is_superuser):
-        messages.error(request, 'You do not have permission to access this page.')
-        return redirect('admin_login')
-    
     # Get all faculty members
     faculties = Faculty.objects.all().order_by('last_name', 'first_name')
     
@@ -708,8 +307,9 @@ def faculty_view(request):
     return render(request, 'hello/faculty.html', context)
 
 @login_required(login_url='admin_login')
+@user_passes_test(is_admin, login_url='admin_login')
 def add_faculty(request):
-    """Add new faculty member"""
+    """Add new faculty member with proper email validation and sending"""
     if request.method == 'POST':
         try:
             # Get form data
@@ -717,11 +317,25 @@ def add_faculty(request):
             last_name = request.POST.get('last_name')
             email = request.POST.get('email')
             gender = request.POST.get('gender')
-            role = request.POST.get('role')  # 'admin' or 'staff'
+            role = request.POST.get('role')
             employment_status = request.POST.get('employment_status')
-            highest_degree = request.POST.get('highest_degree')
+            highest_degree = request.POST.get('highest_degree', '')
             prc_licensed = request.POST.get('prc_licensed') == 'on'
             specialization_ids = request.POST.getlist('specialization')
+            
+            # Validate email domain
+            if '@' not in email or '.' not in email.split('@')[1]:
+                return JsonResponse({
+                    'success': False,
+                    'errors': ['Please enter a valid email address with a proper domain (e.g., user@gmail.com)']
+                })
+            
+            # Check if email already exists
+            if Faculty.objects.filter(email=email).exists():
+                return JsonResponse({
+                    'success': False,
+                    'errors': ['This email is already registered.']
+                })
             
             # Generate random password
             password = generate_password()
@@ -735,6 +349,13 @@ def add_faculty(request):
             while User.objects.filter(username=username).exists():
                 username = f"{base_username}{counter}"
                 counter += 1
+            
+            # Check if email already used by another user
+            if User.objects.filter(email=email).exists():
+                return JsonResponse({
+                    'success': False,
+                    'errors': ['This email is already associated with another account.']
+                })
             
             user = User.objects.create_user(
                 username=username,
@@ -771,24 +392,42 @@ def add_faculty(request):
                 courses = Course.objects.filter(id__in=specialization_ids)
                 faculty.specialization.set(courses)
             
-            # Send email with credentials
+            # Send email with credentials using EmailMessage for better control
             try:
-                send_mail(
-                    'Your ASSIST Account Credentials',
-                    f'Hello {first_name},\n\n'
-                    f'Your account has been created:\n\n'
-                    f'Username: {username}\n'
-                    f'Password: {password}\n'
-                    f'Role: {role.capitalize()}\n\n'
-                    f'Please login and change your password.\n\n'
-                    f'Best regards,\n'
-                    f'ASSIST Team',
-                    settings.DEFAULT_FROM_EMAIL,
-                    [email],
-                    fail_silently=False,
+                subject = 'Your ASSIST Account Credentials'
+                message = f'''Hello {first_name},
+
+Your account has been created successfully for the ASSIST system.
+
+Login Credentials:
+------------------
+Username: {username}
+Password: {password}
+Role: {role.capitalize()}
+
+Please login to the system and change your password immediately for security purposes.
+
+If you did not request this account, please contact the administrator.
+
+Best regards,
+ASSIST Administration Team'''
+
+                email_message = EmailMessage(
+                    subject=subject,
+                    body=message,
+                    from_email=settings.DEFAULT_FROM_EMAIL,
+                    to=[email],
                 )
+                
+                email_message.send(fail_silently=False)
+                
+                email_sent = True
+                message_text = f'Faculty added successfully. Credentials have been sent to {email}'
+                
             except Exception as e:
-                print(f"Error sending email: {e}")
+                print(f"Error sending email: {str(e)}")
+                email_sent = False
+                message_text = f'Faculty added successfully, but email could not be sent. Please provide credentials manually:\nUsername: {username}\nPassword: {password}'
             
             # Log activity
             log_activity(
@@ -796,35 +435,59 @@ def add_faculty(request):
                 action='add',
                 entity_type='faculty',
                 entity_name=f"{first_name} {last_name}",
-                message=f'Added faculty: {first_name} {last_name} ({role})'
+                message=f'Added faculty: {first_name} {last_name} ({role}) - Email {"sent" if email_sent else "failed"}'
             )
             
             return JsonResponse({
                 'success': True,
-                'message': f'Faculty added successfully. Credentials sent to {email}'
+                'message': message_text,
+                'credentials': {
+                    'username': username,
+                    'password': password
+                } if not email_sent else None
             })
             
         except Exception as e:
+            import traceback
+            print(f"Error adding faculty: {str(e)}")
+            print(traceback.format_exc())
             return JsonResponse({
                 'success': False,
-                'errors': [str(e)]
+                'errors': [f'Error adding faculty: {str(e)}']
             })
     
     return JsonResponse({'success': False})
 
 @login_required(login_url='admin_login')
+@user_passes_test(is_admin, login_url='admin_login')
 def edit_faculty(request, faculty_id):
     """Edit existing faculty member"""
     faculty = get_object_or_404(Faculty, id=faculty_id)
     
     if request.method == 'POST':
         try:
+            email = request.POST.get('email')
+            
+            # Validate email domain
+            if '@' not in email or '.' not in email.split('@')[1]:
+                return JsonResponse({
+                    'success': False,
+                    'errors': ['Please enter a valid email address with a proper domain (e.g., user@gmail.com)']
+                })
+            
+            # Check if email is taken by another faculty
+            if Faculty.objects.filter(email=email).exclude(id=faculty_id).exists():
+                return JsonResponse({
+                    'success': False,
+                    'errors': ['This email is already registered to another faculty member.']
+                })
+            
             faculty.first_name = request.POST.get('first_name')
             faculty.last_name = request.POST.get('last_name')
-            faculty.email = request.POST.get('email')
+            faculty.email = email
             faculty.gender = request.POST.get('gender')
             faculty.employment_status = request.POST.get('employment_status')
-            faculty.highest_degree = request.POST.get('highest_degree')
+            faculty.highest_degree = request.POST.get('highest_degree', '')
             faculty.prc_licensed = request.POST.get('prc_licensed') == 'on'
             
             # Update specializations
@@ -888,6 +551,7 @@ def edit_faculty(request, faculty_id):
     })
 
 @login_required(login_url='admin_login')
+@user_passes_test(is_admin, login_url='admin_login')
 def delete_faculty(request, faculty_id):
     """Delete faculty member"""
     if request.method == 'POST':
@@ -1232,3 +896,56 @@ def delete_schedule(request, schedule_id):
         
         return JsonResponse({'success': True})
     return JsonResponse({'success': False})
+
+@login_required(login_url='admin_login')
+def staff_dashboard(request):
+    """
+    Staff dashboard - limited view for non-admin faculty
+    Shows their schedule and basic information
+    """
+    # Check if user has faculty profile
+    try:
+        faculty = Faculty.objects.get(user=request.user)
+    except Faculty.DoesNotExist:
+        messages.error(request, 'No faculty profile found for your account.')
+        logout(request)
+        return redirect('admin_login')
+    
+    # Get faculty's schedules
+    schedules = Schedule.objects.filter(faculty=faculty).select_related(
+        'course', 'section', 'room'
+    ).order_by('day', 'start_time')
+    
+    # Generate time slots
+    time_slots = []
+    time_slots.append("07:30")
+    for hour in range(8, 22):
+        for minute in ['00', '30']:
+            if hour == 21 and minute == '30':
+                break
+            time_slots.append(f"{hour:02d}:{minute}")
+    time_slots.append("21:30")
+    
+    # Days of the week
+    days = [
+        (0, 'Monday'),
+        (1, 'Tuesday'),
+        (2, 'Wednesday'),
+        (3, 'Thursday'),
+        (4, 'Friday'),
+        (5, 'Saturday')
+    ]
+    
+    # Get specializations
+    specializations = faculty.specialization.all()
+    
+    context = {
+        'user': request.user,
+        'faculty': faculty,
+        'schedules': schedules,
+        'time_slots': time_slots,
+        'days': days,
+        'specializations': specializations,
+    }
+    
+    return render(request, 'hello/staff_dashboard.html', context)
