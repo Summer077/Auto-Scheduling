@@ -72,7 +72,7 @@
     <!-- Main Content Area -->
     <main class="main-content">
         <div class="content-wrapper">
-            <!-- Left Side - Schedule Cards -->
+            <!-- Left Side - Section Cards -->
             <div class="left-panel">
                 <!-- Top Controls -->
                 <div class="top-controls">
@@ -80,7 +80,7 @@
                         <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
                             <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
                         </svg>
-                        <input type="text" id="searchInput" placeholder="Search schedules" onkeyup="filterSchedules()">
+                        <input type="text" id="searchInput" placeholder="Search sections" onkeyup="filterSections()">
                     </div>    
                     <button class="add-section-btn" onclick="openCreateScheduleModal()">
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
@@ -90,37 +90,37 @@
                     </button>
                 </div>
 
-                <!-- Schedule Cards -->
-                {% if schedules %}
+                <!-- Section Cards -->
+                {% if sections %}
                 <div class="sections-container">
-                    {% for schedule in schedules %}
+                    {% for section in sections %}
                     <div class="section-card" 
-                         data-section-id="{{ schedule.section.id }}" 
-                         data-section-name="{{ schedule.section.name|lower }}"
-                         data-course-code="{{ schedule.course.course_code|lower }}"
-                         onclick="loadScheduleView({{ schedule.section.id }}, '{{ schedule.section.name }}', '{{ schedule.section.curriculum.name }} ({{ schedule.section.curriculum.year }})')">
+                         data-section-id="{{ section.id }}" 
+                         data-section-name="{{ section.name|lower }}"
+                         data-curriculum="{{ section.curriculum.name|lower }}"
+                         onclick="loadScheduleView({{ section.id }}, '{{ section.name }}', '{{ section.curriculum.name }} ({{ section.curriculum.year }})')">
                         <div class="card-header">
                             <div class="card-header-left">
-                                <div class="card-title">{{ schedule.course.course_code }}</div>
-                                <div class="card-subtitle">{{ schedule.course.descriptive_title }}</div>
+                                <div class="card-title">{{ section.name }}</div>
+                                <div class="card-subtitle">{{ section.curriculum.name }} ({{ section.curriculum.year }})</div>
                             </div>
                             <div class="card-header-right">
                                 <div class="dropdown-menu-container">
-                                    <button class="triple-dot-btn" onclick="toggleScheduleMenu(event, {{ schedule.id }})">
+                                    <button class="triple-dot-btn" onclick="toggleSectionMenu(event, {{ section.id }})">
                                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
                                             <circle cx="12" cy="6" r="2"/>
                                             <circle cx="12" cy="12" r="2"/>
                                             <circle cx="12" cy="18" r="2"/>
                                         </svg>
                                     </button>
-                                    <div class="section-dropdown-menu" id="scheduleMenu{{ schedule.id }}">
-                                        <button class="dropdown-item" onclick="openEditScheduleModal({{ schedule.id }})">
+                                    <div class="section-dropdown-menu" id="sectionMenu{{ section.id }}">
+                                        <button class="dropdown-item" onclick="openEditSectionModal({{ section.id }})">
                                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
                                                 <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
                                             </svg>
                                             Edit
                                         </button>
-                                        <button class="dropdown-item delete-item" onclick="deleteSchedule({{ schedule.id }}, '{{ schedule.course.course_code }}')">
+                                        <button class="dropdown-item delete-item" onclick="deleteSection({{ section.id }}, '{{ section.name }}')">
                                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
                                                 <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
                                             </svg>
@@ -134,20 +134,38 @@
                         <div class="card-body">
                             <div class="info-row">
                                 <div class="info-group">
-                                    <div class="info-label">SECTION</div>
-                                    <div class="info-value">{{ schedule.section.name }}</div>
+                                    <div class="info-label">STATUS</div>
+                                    <div class="info-value status-value" 
+                                         id="status-{{ section.id }}"
+                                         onclick="toggleStatus(event, {{ section.id }})"
+                                         style="cursor: pointer; color: {% if section.status == 'complete' %}#28a745{% else %}#dc3545{% endif %};">
+                                        {{ section.get_status_display }}
+                                    </div>
                                 </div>
                                 <div class="info-group">
-                                    <div class="info-label">DAY</div>
-                                    <div class="info-value">{{ schedule.get_day_display }}</div>
+                                    <div class="info-label">YEAR LEVEL</div>
+                                    <div class="info-value">
+                                        {% if section.year_level == 1 %}1st Year
+                                        {% elif section.year_level == 2 %}2nd Year
+                                        {% elif section.year_level == 3 %}3rd Year
+                                        {% else %}4th Year{% endif %}
+                                    </div>
                                 </div>
                                 <div class="info-group">
-                                    <div class="info-label">TIME</div>
-                                    <div class="info-value">{{ schedule.start_time }} - {{ schedule.end_time }}</div>
+                                    <div class="info-label">SEMESTER</div>
+                                    <div class="info-value">
+                                        {% if section.semester == 1 %}1st{% else %}2nd{% endif %}
+                                    </div>
                                 </div>
                                 <div class="info-group">
-                                    <div class="info-label">ROOM</div>
-                                    <div class="info-value">{{ schedule.room.name|default:"TBA" }}</div>
+                                    <div class="info-label">CURRICULUM</div>
+                                    <div class="info-value">{{ section.curriculum.name }} ({{ section.curriculum.year }})</div>
+                                </div>
+                            </div>
+                            <div class="info-row" style="margin-top: 16px;">
+                                <div class="info-group">
+                                    <div class="info-label">TOTAL UNITS</div>
+                                    <div class="info-value">{{ section.calculated_total_units }}</div>
                                 </div>
                             </div>
                         </div>
@@ -159,13 +177,7 @@
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
                         <path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z"/>
                     </svg>
-                    <p>No schedules available. Create a schedule to get started.</p>
-                    <button class="add-section-btn" onclick="openCreateScheduleModal()">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                            <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
-                        </svg>
-                        Create Schedule
-                    </button>
+                    <p>No sections available. Create a section first.</p>
                 </div>
                 {% endif %}
             </div>
@@ -176,7 +188,7 @@
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
                         <path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z"/>
                     </svg>
-                    <p>Select a schedule to view details</p>
+                    <p>Select a section to view schedule</p>
                 </div>
 
                 <div class="schedule-view" id="scheduleView" style="display: none;">
@@ -340,17 +352,42 @@
             document.getElementById('dropdownMenu').classList.toggle('show');
         }
 
-        function toggleScheduleMenu(event, scheduleId) {
+        function toggleSectionMenu(event, sectionId) {
             event.stopPropagation();
             
             document.querySelectorAll('.section-dropdown-menu').forEach(menu => {
-                if (menu.id !== `scheduleMenu${scheduleId}`) {
+                if (menu.id !== `sectionMenu${sectionId}`) {
                     menu.classList.remove('show');
                 }
             });
             
-            const menu = document.getElementById(`scheduleMenu${scheduleId}`);
+            const menu = document.getElementById(`sectionMenu${sectionId}`);
             menu.classList.toggle('show');
+        }
+
+        function toggleStatus(event, sectionId) {
+            event.stopPropagation();
+            
+            fetch(`/admin/section/${sectionId}/toggle-status/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken')
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const statusElement = document.getElementById(`status-${sectionId}`);
+                    statusElement.textContent = data.status_display;
+                    statusElement.style.color = data.status === 'complete' ? '#28a745' : '#dc3545';
+                    showNotification('Status updated successfully!', 'success');
+                } else {
+                    showNotification('Error updating status', 'error');
+                }
+            })
+            .catch(error => {
+                showNotification('Error updating status', 'error');
+            });
         }
 
         window.onclick = function(event) {
@@ -369,15 +406,15 @@
             }
         }
 
-        function filterSchedules() {
+        function filterSections() {
             const searchTerm = document.getElementById('searchInput').value.toLowerCase();
             const cards = document.querySelectorAll('.section-card');
             
             cards.forEach(card => {
                 const sectionName = card.dataset.sectionName;
-                const courseCode = card.dataset.courseCode;
+                const curriculum = card.dataset.curriculum;
                 
-                if (sectionName.includes(searchTerm) || courseCode.includes(searchTerm)) {
+                if (sectionName.includes(searchTerm) || curriculum.includes(searchTerm)) {
                     card.style.display = 'block';
                 } else {
                     card.style.display = 'none';
@@ -421,14 +458,14 @@
             });
         }
 
-        function deleteSchedule(scheduleId, courseCode) {
+        function deleteSection(sectionId, sectionName) {
             event.stopPropagation();
             document.querySelectorAll('.section-dropdown-menu').forEach(menu => {
                 menu.classList.remove('show');
             });
             
-            if (confirm(`Are you sure you want to delete schedule for ${courseCode}?`)) {
-                fetch(`/admin/schedule/delete/${scheduleId}/`, {
+            if (confirm(`Are you sure you want to delete section ${sectionName}?`)) {
+                fetch(`/admin/section/delete/${sectionId}/`, {
                     method: 'POST',
                     headers: {
                         'X-CSRFToken': getCookie('csrftoken')
@@ -437,14 +474,14 @@
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
-                        showNotification('Schedule deleted successfully!', 'success');
+                        showNotification('Section deleted successfully!', 'success');
                         setTimeout(() => window.location.reload(), 1000);
                     } else {
-                        showNotification('Error deleting schedule', 'error');
+                        showNotification('Error deleting section', 'error');
                     }
                 })
                 .catch(error => {
-                    showNotification('Error deleting schedule', 'error');
+                    showNotification('Error deleting section', 'error');
                 });
             }
         }
@@ -484,16 +521,24 @@
             document.getElementById('sidebarCurriculum').textContent = 'Curriculum: ' + curriculum;
             
             fetch(`/admin/section/${sectionId}/schedule-data/`)
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success !== false) {
-                        renderSchedule(data.schedules || []);
-                        renderCoursesList(data.courses || []);
-                    }
-                })
-                .catch(error => {
-                    showNotification('Error loading schedule', 'error');
-                });
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Network response was not ok');
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        if (data.success !== false) {
+                            renderSchedule(data.schedules || []);
+                            renderCoursesList(data.courses || []);
+                        } else {
+                            showNotification('Error: ' + (data.error || 'Unknown error'), 'error');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error loading schedule:', error);
+                        showNotification('Error loading schedule: ' + error.message, 'error');
+                    });
         }
 
         function renderSchedule(schedules) {

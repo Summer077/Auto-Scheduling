@@ -122,11 +122,18 @@ class Faculty(models.Model):
 
 class Section(models.Model):
     """Model for class sections with naming convention CPE[year][semester]S[number]"""
+    
+    STATUS_CHOICES = [
+        ('complete', 'Complete Schedule'),
+        ('incomplete', 'No Schedule Yet'),
+    ]
+    
     name = models.CharField(max_length=50)
     year_level = models.IntegerField(choices=Course.YEAR_CHOICES)
     semester = models.IntegerField(choices=Course.SEMESTER_CHOICES)
     curriculum = models.ForeignKey(Curriculum, on_delete=models.CASCADE, related_name='sections')
     max_students = models.IntegerField(default=40)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='incomplete')
     created_at = models.DateTimeField(auto_now_add=True)
     
     class Meta:
@@ -165,6 +172,15 @@ class Section(models.Model):
     
     def __str__(self):
         return self.name
+    
+    @property
+    def total_units(self):
+        """Calculate total credit units from unique courses in schedules"""
+        unique_course_ids = self.schedules.values_list('course', flat=True).distinct()
+        total = Course.objects.filter(id__in=unique_course_ids).aggregate(
+            total=Sum('credit_units')
+        )['total'] or 0
+        return total
 
 class Room(models.Model):
     """Model for classrooms"""

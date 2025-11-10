@@ -1144,15 +1144,21 @@ def get_room_schedule(request, room_id):
     
 @login_required(login_url='admin_login')
 def schedule_view(request):
-    """Schedule management page"""
+    """Schedule management page - shows sections"""
     if not (request.user.is_staff or request.user.is_superuser):
         messages.error(request, 'You do not have permission to access this page.')
         return redirect('admin_login')
     
-    # Get all schedules with related data
-    schedules = Schedule.objects.select_related(
-        'course', 'section', 'faculty', 'room', 'section__curriculum'
-    ).all().order_by('section__name', 'day', 'start_time')
+    # Get all sections with their schedules
+    sections = Section.objects.select_related('curriculum').all()
+    
+    # Calculate total units for each section
+    for section in sections:
+        unique_course_ids = section.schedules.values_list('course', flat=True).distinct()
+        total = Course.objects.filter(id__in=unique_course_ids).aggregate(
+            total=Sum('credit_units')
+        )['total'] or 0
+        section.calculated_total_units = total
     
     # Get data needed for the create schedule modal
     all_courses = Course.objects.all().order_by('course_code')
@@ -1162,7 +1168,7 @@ def schedule_view(request):
     
     context = {
         'user': request.user,
-        'schedules': schedules,
+        'sections': sections,
         'all_courses': all_courses,
         'faculty_list': faculty_list,
         'section_list': section_list,
@@ -1170,6 +1176,37 @@ def schedule_view(request):
     }
     
     return render(request, 'hello/schedule.html', context)
+
+@login_required(login_url='admin_login')
+def toggle_section_status(request, section_id):
+    """Toggle section schedule status"""
+    if request.method == 'POST':
+        section = get_object_or_404(Section, id=section_id)
+        
+        # Toggle status
+        if section.status == 'complete':
+            section.status = 'incomplete'
+            status_text = 'No Schedule Yet'
+        else:
+            section.status = 'complete'
+            status_text = 'Complete Schedule'
+        
+        section.save()
+        
+        log_activity(
+            user=request.user,
+            action='edit',
+            entity_type='section',
+            entity_name=section.name,
+            message=f'Updated schedule status for {section.name} to: {status_text}'
+        )
+        
+        return JsonResponse({
+            'success': True,
+            'status': section.status,
+            'status_display': section.get_status_display()
+        })
+    return JsonResponse({'success': False})
 
 @login_required(login_url='admin_login')
 def delete_schedule(request, schedule_id):

@@ -13,6 +13,7 @@ urlpatterns = [
     path('admin/room/<int:room_id>/schedule-data/', views.get_room_schedule, name='get_room_schedule'),
     path('admin/schedule/', views.schedule_view, name='schedule_view'),
     path('admin/schedule/delete/<int:schedule_id>/', views.delete_schedule, name='delete_schedule'),
+    path('admin/section/<int:section_id>/toggle-status/', views.toggle_section_status, name='toggle_section_status'),
     
     # Section CRUD operations
     path('admin/section/add/', views.add_section, name='add_section'),
