@@ -1418,6 +1418,12 @@ input:checked + .toggle-slider:before {
     fill: #666666;
 }
 
+.time-picker-spacer {
+    pointer-events: none;
+    visibility: hidden;
+    user-select: none;
+}
+
 /* Notification Toast */
 .notification {
     position: fixed;
