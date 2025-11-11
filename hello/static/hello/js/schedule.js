@@ -328,53 +328,86 @@ let currentSectionId = null;
                 });
         }
 
+        function generateTimeSlots() {
+            const slots = []
+            let hour = 7
+            let minute = 30
+
+            // Generate times from 7:30 AM to 9:30 PM
+            while (true) {
+                const hh = hour.toString().padStart(2, '0')
+                const mm = minute.toString().padStart(2, '0')
+                slots.push(`${hh}:${mm}`)
+
+                // Break when reaching 21:30
+                if (hour === 21 && minute === 30) break
+
+                // Add 30 minutes
+                minute += 30
+                if (minute >= 60) {
+                    minute = 0
+                    hour++
+                }
+            }
+
+            return slots
+        }
+
+
         // Render schedule grid
         function renderScheduleGrid(schedules) {
-            const timeColumn = document.getElementById('timeColumn');
-            timeColumn.innerHTML = '';
-            
-            const timeSlots = ['07:30', '08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00', '20:00', '21:00', '21:30'];
-            
-            timeSlots.forEach((time, index) => {
-                const label = document.createElement('div');
-                label.className = 'time-label';
-                const [t, period] = convertTo12Hour(time);
-                label.textContent = `${t} ${period}`;
-                label.style.top = `${index * 60}px`;
-                timeColumn.appendChild(label);
-            });
-            
+            console.log('Rendering schedules:', schedules)
+
+            // Use YOUR time slot generator
+            const timeSlots = generateTimeSlots()
+            const timeColumn = document.getElementById('timeColumn')
+            timeColumn.innerHTML = ''
+
+            // Render YOUR time labels using calculateTopPosition
+            timeSlots.forEach(time => {
+                const label = document.createElement('div')
+                label.className = 'time-label'
+                label.textContent = time
+                label.style.top = `${calculateTopPosition(time)}px`
+                timeColumn.appendChild(label)
+            })
+
+            // Clear day columns
             document.querySelectorAll('.schedule-day-column').forEach(col => {
-                col.innerHTML = '';
-            });
-            
+                col.innerHTML = ''
+            })
+
+            // Render schedule blocks
             schedules.forEach(schedule => {
-                const dayColumn = document.querySelector(`.schedule-day-column[data-day="${schedule.day}"]`);
-                if (!dayColumn) return;
-                
-                const block = document.createElement('div');
-                block.className = 'schedule-block';
-                block.dataset.scheduleId = schedule.id;
-                
-                const topPos = calculateTopPosition(schedule.start_time);
-                const duration = schedule.duration || calculateDuration(schedule.start_time, schedule.end_time);
-                const height = (duration / 30) * 60;
-                
-                block.style.backgroundColor = hexToRGBA(schedule.course_color, 0.25);
-                block.style.borderLeftColor = schedule.course_color;
-                block.style.top = `${topPos}px`;
-                block.style.height = `${height}px`;
-                
+                const dayColumn = document.querySelector(`.schedule-day-column[data-day="${schedule.day}"]`)
+                if (!dayColumn) return
+
+                const block = document.createElement('div')
+                block.className = 'schedule-block'
+                block.dataset.scheduleId = schedule.id   // optional but kept
+
+                // Position + height
+                const topPos = calculateTopPosition(schedule.start_time)
+                const duration = schedule.duration || calculateDuration(schedule.start_time, schedule.end_time)
+                const height = (duration / 30) * 60
+
+                const hexColor = schedule.course_color
+
+                block.style.backgroundColor = hexToRGBA(hexColor, 0.25)
+                block.style.borderLeftColor = hexColor
+                block.style.top = `${topPos}px`
+                block.style.height = `${height}px`
+
+                // Your original content
                 block.innerHTML = `
                     <div class="schedule-course-code">${schedule.course_code}</div>
-                    <div class="schedule-details">${schedule.faculty}</div>
-                    <div class="schedule-details">${schedule.room}</div>
-                `;
-                
-                block.addEventListener('click', () => openEditScheduleModal(schedule.id));
-                
-                dayColumn.appendChild(block);
-            });
+                    <div class="schedule-details">${schedule.start_time} - ${schedule.end_time}</div>
+                    <div class="schedule-details">Room: ${schedule.room}</div>
+                    <div class="schedule-details">Section: ${schedule.section_name}</div>
+                `
+
+                dayColumn.appendChild(block)
+            })
         }
 
         function calculateTopPosition(timeStr) {
@@ -401,7 +434,7 @@ let currentSectionId = null;
             coursesList.innerHTML = '';
             
             if (!courses || courses.length === 0) {
-                coursesList.innerHTML = '<p style="color: #6C757D; font-size: 0.875rem;">No courses scheduled yet.</p>';
+                coursesList.innerHTML = '<div style="color: #6C757D; font-size: 0.875rem; text-align: center; padding: 20px;">No courses scheduled yet.</div>';
                 return;
             }
             
@@ -414,8 +447,9 @@ let currentSectionId = null;
                         <div class="course-code">${course.course_code}</div>
                         <div class="course-title">${course.descriptive_title}</div>
                         <div class="course-info">
-                            <span>Lec: ${course.lecture_hours}h | Lab: ${course.laboratory_hours}h</span>
-                            <span>Units: ${course.credit_units}</span>
+                            <span>Lecture: ${course.lecture_hours}h</span>
+                            <span>Laboratory: ${course.laboratory_hours}h</span>
+                            <span>Credit Unit: ${course.credit_units}</span>
                         </div>
                     </div>
                 `;
