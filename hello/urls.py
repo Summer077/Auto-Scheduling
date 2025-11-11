@@ -6,6 +6,8 @@ urlpatterns = [
     # Dashboards
     path('admin/dashboard/', views.admin_dashboard, name='admin_dashboard'),
     path('staff/dashboard/', views.staff_dashboard, name='staff_dashboard'),
+    path('staff/schedule/', views.staff_schedule, name='staff_schedule'),
+    path('staff/schedule/print/', views.staff_schedule_print, name='staff_schedule_print'),
     
     # Sections
     path('admin/section/', views.section_view, name='section_view'),  

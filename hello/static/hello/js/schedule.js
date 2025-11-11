@@ -141,9 +141,11 @@ let currentSectionId = null;
                 if (data.success) {
                     const message = `Successfully generated ${data.schedules_created} schedule entries!`;
                     
-                    if (data.conflicts && data.conflicts.length > 0) {
-                        showAlert(`${message} Some conflicts detected.`, 'warning');
-                        console.log('Conflicts:', data.conflicts);
+                    if (data.notes && data.notes.length > 0) {
+                        showAlert(`${message} Check notes below.`, 'info');
+                        console.log('Scheduling Notes:', data.notes);
+                        // Log notes to console
+                        data.notes.forEach(note => console.log('📌', note));
                     } else {
                         showAlert(message, 'success');
                     }
@@ -156,7 +158,7 @@ let currentSectionId = null;
                             // Load schedule view immediately and show confirmation modal
                             loadScheduleView(data.section_id, sectionName, curriculum);
                             // Show confirmation modal after schedule loads
-                            setTimeout(() => showScheduleConfirmation(data.section_id), 800);
+                            setTimeout(() => showScheduleConfirmation(data.section_id, data.notes), 800);
                         }
                     }
                 } else {
@@ -172,18 +174,32 @@ let currentSectionId = null;
         }
 
         // Show schedule confirmation modal
-        function showScheduleConfirmation(sectionId) {
+        function showScheduleConfirmation(sectionId, notes) {
             const confirmModal = document.createElement('div');
             confirmModal.className = 'modal';
             confirmModal.id = 'scheduleConfirmModal';
             confirmModal.style.display = 'block';
+            
+            let notesHtml = '';
+            if (notes && notes.length > 0) {
+                notesHtml = `
+                    <div style="background-color: #e7f3ff; border-left: 4px solid #2196F3; padding: 12px; margin-bottom: 15px; border-radius: 4px;">
+                        <strong style="color: #1976D2;">Scheduling Notes:</strong>
+                        <ul style="margin: 8px 0 0 20px; color: #495057; font-size: 0.9rem;">
+                            ${notes.map(note => `<li style="margin: 4px 0;">${note}</li>`).join('')}
+                        </ul>
+                    </div>
+                `;
+            }
+            
             confirmModal.innerHTML = `
-                <div class="modal-content" style="max-width: 500px;">
+                <div class="modal-content" style="max-width: 600px;">
                     <div class="modal-header">
                         <h2>Schedule Generated</h2>
                         <span class="close" onclick="closeScheduleConfirmation()">&times;</span>
                     </div>
                     <div style="padding: 30px;">
+                        ${notesHtml}
                         <p style="font-size: 1rem; color: #495057; margin-bottom: 20px; line-height: 1.6;">
                             The schedule has been generated successfully. Please review the schedule on the right panel.
                         </p>
@@ -439,7 +455,8 @@ let currentSectionId = null;
 
             // Render schedule blocks
             schedules.forEach(schedule => {
-                const dayColumn = document.querySelector(`.schedule-day-column[data-day="${schedule.day}"]`);
+                    // Allow flexible day formats from server (0-5, 1-6, or weekday names)
+                    const dayColumn = findDayColumn(schedule.day);
                 if (!dayColumn) return;
 
                 const block = document.createElement('div');
@@ -465,7 +482,15 @@ let currentSectionId = null;
                     <div class="schedule-details">${schedule.start_time} - ${schedule.end_time}</div>
                     <div class="schedule-details">Room: ${schedule.room}</div>
                     <div class="schedule-details">Section: ${schedule.section_name || ''}</div>
+                    <div class="schedule-details">Professor: ${schedule.faculty || 'TBA'}</div>
                 `;
+
+                // debugging: log each schedule rendered to the browser console
+                try {
+                    console.debug('renderScheduleGrid item', schedule.id, schedule.course_code, 'day', schedule.day, schedule.start_time + '-' + schedule.end_time, 'top', topPos, 'height', height);
+                } catch (e) {
+                    // ignore if console not available
+                }
 
                 // clicking a block should open the edit modal (delete/edit from there)
                 block.addEventListener('click', (e) => {
@@ -479,8 +504,46 @@ let currentSectionId = null;
 
         function calculateTopPosition(timeStr) {
             const [hours, minutes] = timeStr.split(':').map(Number);
-            const totalMinutes = (hours * 60 + minutes) - (7 * 60);
+            // Grid starts at 07:30 so subtract 7*60 + 30 = 450 minutes
+            const gridStart = 7 * 60 + 30;
+            const totalMinutes = (hours * 60 + minutes) - gridStart;
             return (totalMinutes / 30) * 60;
+        }
+
+        // Normalize/resolve different day formats coming from server
+        function findDayColumn(dayValue) {
+            // If already a column element was passed accidentally, return it
+            if (dayValue instanceof Element && dayValue.classList.contains('schedule-day-column')) return dayValue;
+
+            let idx = null;
+
+            // numeric-like values
+            if (typeof dayValue === 'number' || (/^\d+$/.test(String(dayValue)))) {
+                const n = parseInt(dayValue, 10);
+                // If server sends 0..5 (our template) use directly
+                if (n >= 0 && n <= 5) idx = n;
+                // If server uses 1..6 (Mon=1..Sat=6) convert to 0..5
+                else if (n >= 1 && n <= 6) idx = n - 1;
+                // If it's 7 or larger, map 7->6 (Sunday) but we don't have Sunday column -> return null
+                else idx = null;
+            } else if (typeof dayValue === 'string') {
+                const s = dayValue.trim().toLowerCase();
+                const nameMap = { monday: 0, tuesday: 1, wednesday: 2, thursday: 3, friday: 4, saturday: 5 };
+                if (nameMap.hasOwnProperty(s)) idx = nameMap[s];
+                else if (/^\d+$/.test(s)) {
+                    const n = parseInt(s, 10);
+                    if (n >= 0 && n <= 5) idx = n;
+                    else if (n >= 1 && n <= 6) idx = n - 1;
+                }
+            }
+
+            if (idx === null) {
+                // no matching column
+                console.warn('Unrecognized schedule.day value:', dayValue);
+                return null;
+            }
+
+            return document.querySelector(`.schedule-day-column[data-day="${idx}"]`);
         }
 
         function hexToRGBA(hex, alpha) {
@@ -856,6 +919,20 @@ let currentSectionId = null;
             if (!currentTimeField) return;
             const time24 = convertTo24Hour(selectedHour, selectedMinute, selectedPeriod);
             const display = `${selectedHour.toString().padStart(2, '0')}:${selectedMinute.toString().padStart(2, '0')} ${selectedPeriod}`;
+            // Enforce allowed window 07:30 - 21:30 on client side
+            try {
+                const [h, m] = time24.split(':').map(Number);
+                const minutes = h * 60 + m;
+                const minAllowed = 7 * 60 + 30;
+                const maxAllowed = 21 * 60 + 30;
+                if (minutes < minAllowed || minutes > maxAllowed) {
+                    showAlert('Allowed schedule window is 07:30 to 21:30. Please choose a time within this range.', 'error');
+                    return;
+                }
+            } catch (e) {
+                // If parsing fails, still allow model/server to validate
+            }
+
             document.getElementById(currentTimeField).value = time24;
             document.getElementById(`${currentTimeField}_display`).textContent = display;
             closeTimePicker();
@@ -930,7 +1007,38 @@ let currentSectionId = null;
         }
 
         function openEditSectionModal(sectionId) {
-            showAlert('Edit section functionality - to be implemented', 'info');
+            // Open the inline edit modal on the schedule page by fetching the
+            // section data and populating the modal fields.
+            fetch(`/admin/section/edit/${sectionId}/`)
+                .then(res => {
+                    if (!res.ok) throw new Error('Network response not ok');
+                    return res.json();
+                })
+                .then(data => {
+                    // If endpoint returned success=false, handle gracefully
+                    if (data.success === false) {
+                        showAlert('Unable to load section data for editing.', 'error');
+                        return;
+                    }
+
+                    // Populate modal fields (IDs match those used in schedule.html)
+                    document.getElementById('edit_section_id').value = data.id;
+                    document.getElementById('edit_name').value = data.name;
+                    // curriculum may be an id
+                    try {
+                        const curSel = document.getElementById('edit_curriculum');
+                        if (curSel) curSel.value = data.curriculum;
+                    } catch (e) {}
+                    document.getElementById('edit_year_level').value = data.year_level;
+                    document.getElementById('edit_semester').value = data.semester;
+                    document.getElementById('edit_max_students').value = data.max_students;
+
+                    openModal('editSectionModal');
+                })
+                .catch(err => {
+                    console.error('openEditSectionModal error', err);
+                    showAlert('Error loading section for edit', 'error');
+                });
         }
 
         function deleteSection(sectionId, sectionName) {
@@ -951,6 +1059,42 @@ let currentSectionId = null;
             .catch(err => {
                 console.error('deleteSection error', err);
                 showAlert('Error deleting section', 'error');
+            });
+        }
+
+        // Submit edit section form from schedule page
+        function submitEditSectionFromSchedule(event) {
+            event.preventDefault();
+            const form = document.getElementById('editSectionForm');
+            const formData = new FormData(form);
+            const sectionId = formData.get('section_id') || document.getElementById('edit_section_id').value;
+
+            // Validate name format: CPE[year][semester]S[number]
+            const sectionName = formData.get('name');
+            const pattern = /^([A-Z]+)(\d)(\d)S(\d+)$/;
+            const match = sectionName.match(pattern);
+            if (!match) {
+                showAlert('Section name must follow format: CPE[year][semester]S[number] Example: CPE11S1', 'error');
+                return;
+            }
+
+            fetchWithCSRF(`/admin/section/edit/${sectionId}/`, {
+                method: 'POST',
+                body: formData
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    showAlert('Section updated successfully!', 'success');
+                    setTimeout(() => window.location.reload(), 800);
+                } else {
+                    const err = data.errors ? data.errors.join('\n') : 'Error updating section';
+                    showAlert(err, 'error');
+                }
+            })
+            .catch(err => {
+                console.error('submitEditSectionFromSchedule error', err);
+                showAlert('Error updating section', 'error');
             });
         }
 

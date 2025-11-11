@@ -351,7 +351,11 @@
                     </div>
                     <div class="form-group">
                         <label>Highest Degree Earned</label>
-                        <input type="text" name="highest_degree" placeholder="e.g., PhD, Master's">
+                        <select name="highest_degree" required>
+                            <option value="">Select degree</option>
+                            <option value="Master's Degree">Master's Degree</option>
+                            <option value="Doctoral's Degree">Doctoral's Degree</option>
+                        </select>
                     </div>
                 </div>
                 <div class="modal-footer" style="display: flex; justify-content: flex-end; gap: 12px; padding-top: 20px; border-top: 1px solid #E0E0E0; margin-top: 10px;">

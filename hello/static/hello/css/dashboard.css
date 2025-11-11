@@ -747,7 +747,8 @@ body {
     background: #F8F9FA;
     border-right: 2px solid #CED4DA;
     position: relative;
-    height: 1740px;
+    height: 1860px;
+    overflow: visible;
 }
 
 .time-label {
@@ -769,7 +770,7 @@ body {
 .schedule-day-column {
     position: relative;
     border-right: 1px solid #DEE2E6;
-    height: 1740px;
+    height: 1860px;
     background: #FFFFFF;
 }
 

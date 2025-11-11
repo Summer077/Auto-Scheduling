@@ -112,9 +112,17 @@ class Faculty(models.Model):
     
     @property
     def total_units(self):
-        """Automatically calculate total credit units from assigned schedules."""
-        schedules = self.schedules.select_related('course')
-        total = sum(s.course.credit_units for s in schedules)
+        """Calculate total credit units from unique courses in schedules.
+
+        If a faculty member has multiple schedule entries for the same course
+        (for example, a 2-unit PE that meets two days), the course's credit
+        units are counted only once.
+        """
+        # Get distinct course IDs assigned to this faculty via schedules
+        unique_course_ids = self.schedules.values_list('course', flat=True).distinct()
+        total = Course.objects.filter(id__in=unique_course_ids).aggregate(
+            total=Sum('credit_units')
+        )['total'] or 0
         return total
     
     @property
@@ -234,7 +242,7 @@ class Schedule(models.Model):
         ordering = ['day', 'start_time']
     
     def clean(self):
-        """Validate course matches section's year/semester"""
+        """Validate course matches section's year/semester and check for time conflicts"""
         super().clean()
         
         if self.course.year_level != self.section.year_level:
@@ -253,13 +261,80 @@ class Schedule(models.Model):
             raise ValidationError(
                 f'{self.course.course_code} curriculum does not match {self.section.name} curriculum'
             )
+
+        # Enforce allowed schedule window: classes must fall within 07:30 - 21:30
+        try:
+            def _time_to_minutes(tstr):
+                h, m = map(int, tstr.split(':'))
+                return h * 60 + m
+
+            if self.start_time and self.end_time:
+                start_min = _time_to_minutes(self.start_time)
+                end_min = _time_to_minutes(self.end_time)
+                min_allowed = 7 * 60 + 30
+                max_allowed = 21 * 60 + 30
+                if start_min < min_allowed or end_min > max_allowed:
+                    raise ValidationError(
+                        f'Schedule times must be within 07:30 and 21:30. Received {self.start_time} - {self.end_time}'
+                    )
+        except Exception:
+            # If parsing fails, let other validations handle it or surface later
+            pass
+
+        # Check for faculty time conflicts (same faculty, same day, overlapping times)
+        if self.faculty:
+            faculty_conflicts = Schedule.objects.filter(
+                faculty=self.faculty,
+                day=self.day
+            ).exclude(pk=self.pk)
+
+            for conflict_schedule in faculty_conflicts:
+                if self._times_overlap(self.start_time, self.end_time, conflict_schedule.start_time, conflict_schedule.end_time):
+                    raise ValidationError(
+                        f'Faculty {self.faculty.first_name} {self.faculty.last_name} has a time conflict on '
+                        f'{dict(self.DAY_CHOICES)[self.day]} between {conflict_schedule.start_time} and {conflict_schedule.end_time}'
+                    )
+
+        # Check for room time conflicts (same room, same day, overlapping times)
+        if self.room:
+            room_conflicts = Schedule.objects.filter(
+                room=self.room,
+                day=self.day
+            ).exclude(pk=self.pk)
+
+            for conflict_schedule in room_conflicts:
+                if self._times_overlap(self.start_time, self.end_time, conflict_schedule.start_time, conflict_schedule.end_time):
+                    raise ValidationError(
+                        f'Room {self.room.name} has a time conflict on '
+                        f'{dict(self.DAY_CHOICES)[self.day]} between {conflict_schedule.start_time} and {conflict_schedule.end_time}'
+                    )
     
+    def _times_overlap(self, start1, end1, start2, end2):
+        """Check if two time ranges overlap.
+        Times are in HH:MM format (24-hour).
+        Overlap occurs if: start1 < end2 AND start2 < end1
+        """
+        def time_to_minutes(time_str):
+            h, m = map(int, time_str.split(':'))
+            return h * 60 + m
+
+        start1_min = time_to_minutes(start1)
+        end1_min = time_to_minutes(end1)
+        start2_min = time_to_minutes(start2)
+        end2_min = time_to_minutes(end2)
+
+        return start1_min < end2_min and start2_min < end1_min
+
     def save(self, *args, **kwargs):
         """Calculate duration and validate"""
         if self.start_time and self.end_time:
             start_hour, start_min = map(int, self.start_time.split(':'))
             end_hour, end_min = map(int, self.end_time.split(':'))
             self.duration = (end_hour * 60 + end_min) - (start_hour * 60 + start_min)
+        # NOTE: Removed hard limit enforcement for faculty unit load (previously 25 units).
+        # The system now allows assigning schedules that may exceed a fixed unit cap.
+        # If you later want to re-enable a configurable limit, implement it as a
+        # tunable setting and validate against that value here.
         
         self.full_clean()
         super().save(*args, **kwargs)

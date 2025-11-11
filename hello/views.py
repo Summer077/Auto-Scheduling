@@ -97,7 +97,26 @@ def add_schedule(request):
                 start_time=start_time,
                 end_time=end_time
             )
-            
+            # Quick server-side enforcement of allowed window (07:30 - 21:30)
+            try:
+                def _tmin(tstr):
+                    h, m = map(int, tstr.split(':'))
+                    return h * 60 + m
+
+                min_allowed = 7 * 60 + 30
+                max_allowed = 21 * 60 + 30
+                if start_time and end_time:
+                    smin = _tmin(start_time)
+                    emin = _tmin(end_time)
+                    if smin < min_allowed or emin > max_allowed:
+                        return JsonResponse({
+                            'success': False,
+                            'errors': [f'Schedule times must be within 07:30 and 21:30. Received {start_time} - {end_time}']
+                        })
+            except Exception:
+                # fall back to model validation for parsing errors
+                pass
+
             # Validate and save (duration will be calculated automatically in save method)
             schedule.full_clean()
             schedule.save()
@@ -223,8 +242,16 @@ def admin_dashboard(request):
     if yesterday_activities:
         recent_activities['Yesterday'] = yesterday_activities
     
-    # Get all courses (show all courses, not just scheduled ones)
-    scheduled_courses = Course.objects.all().order_by('course_code')
+    # Get courses - show only courses handled by logged-in faculty member
+    try:
+        faculty_profile = Faculty.objects.get(user=request.user)
+        # Get courses from schedules assigned to this faculty member
+        scheduled_courses = Course.objects.filter(
+            schedules__faculty=faculty_profile
+        ).distinct().order_by('course_code')
+    except Faculty.DoesNotExist:
+        # Pure admins with no faculty profile see all courses
+        scheduled_courses = Course.objects.all().order_by('course_code')
     
     # Generate time slots from 7:30 AM to 9:30 PM (30-minute intervals)
     time_slots = []
@@ -246,10 +273,18 @@ def admin_dashboard(request):
         (5, 'Saturday')
     ]
     
-    # Get all schedules
-    schedules = Schedule.objects.select_related(
-        'course', 'section', 'faculty', 'room'
-    ).all()
+    # Get schedules - filter by logged-in admin's faculty profile if they have one
+    try:
+        faculty_profile = Faculty.objects.get(user=request.user)
+        # If logged-in admin has a faculty profile, show only THEIR schedules
+        schedules = Schedule.objects.filter(faculty=faculty_profile).select_related(
+            'course', 'section', 'faculty', 'room'
+        )
+    except Faculty.DoesNotExist:
+        # If no faculty profile, show all schedules (for pure admin accounts)
+        schedules = Schedule.objects.select_related(
+            'course', 'section', 'faculty', 'room'
+        ).all()
     
     context = {
         'user': request.user,
@@ -568,6 +603,7 @@ def delete_faculty(request, faculty_id):
     if request.method == 'POST':
         faculty = get_object_or_404(Faculty, id=faculty_id)
         faculty_name = f"{faculty.first_name} {faculty.last_name}"
+        faculty_email = faculty.email
         
         # Remember linked user (if any) so we can clean up that specific account
         linked_user = getattr(faculty, 'user', None)
@@ -578,20 +614,20 @@ def delete_faculty(request, faculty_id):
         # Delete the Faculty record
         faculty.delete()
 
-        # If the Faculty had an associated Django User, delete that User only
-        if linked_user:
-            try:
-                linked_user.delete()
-            except Exception:
-                # Don't fail the whole operation if user deletion has an issue
-                pass
+        # Clean up all User accounts associated with this email
+        # This handles both the linked user and any orphaned users with the same email
+        try:
+            User.objects.filter(email=faculty_email).delete()
+        except Exception:
+            # Don't fail the whole operation if user deletion has an issue
+            pass
 
         log_activity(
             user=request.user,
             action='delete',
             entity_type='faculty',
             entity_name=faculty_name,
-            message=f'Deleted faculty: {faculty_name} and cleaned up associated user account(s)'
+            message=f'Deleted faculty: {faculty_name} and cleaned up associated user account(s) with email {faculty_email}'
         )
 
         return JsonResponse({'success': True})
@@ -863,6 +899,7 @@ def schedule_view(request):
         'faculty_list': faculty_list,
         'section_list': section_list,
         'room_list': room_list,
+        'curricula': Curriculum.objects.all().order_by('-year'),
     }
     
     return render(request, 'hello/schedule.html', context)
@@ -923,7 +960,7 @@ def delete_schedule(request, schedule_id):
 def staff_dashboard(request):
     """
     Staff dashboard - limited view for non-admin faculty
-    Shows their schedule and basic information
+    Shows ONLY their assigned schedule and basic information
     """
     # Check if user has faculty profile
     try:
@@ -933,7 +970,7 @@ def staff_dashboard(request):
         logout(request)
         return redirect('admin_login')
     
-    # Get faculty's schedules
+    # Get ONLY this faculty's schedules (strict filtering by faculty FK)
     schedules = Schedule.objects.filter(faculty=faculty).select_related(
         'course', 'section', 'room'
     ).order_by('day', 'start_time')
@@ -941,6 +978,11 @@ def staff_dashboard(request):
     # Format schedule data for JavaScript
     schedule_data = []
     for schedule in schedules:
+        # SAFETY CHECK: Ensure this schedule actually belongs to the logged-in faculty
+        if schedule.faculty_id != faculty.id:
+            # Skip schedules not assigned to this faculty (should never happen)
+            continue
+            
         schedule_data.append({
             'day': schedule.day,
             'start_time': schedule.start_time,
@@ -968,6 +1010,322 @@ def staff_dashboard(request):
     }
     
     return render(request, 'hello/staff_dashboard.html', context)
+
+
+@login_required(login_url='admin_login')
+def staff_schedule(request):
+    """
+    Staff schedule page - shows the logged-in faculty's schedule in full-page schedule view
+    """
+    try:
+        faculty = Faculty.objects.get(user=request.user)
+    except Faculty.DoesNotExist:
+        messages.error(request, 'No faculty profile found for your account.')
+        logout(request)
+        return redirect('admin_login')
+
+    schedules = Schedule.objects.filter(faculty=faculty).select_related(
+        'course', 'section', 'room'
+    ).order_by('day', 'start_time')
+
+    # Format schedule data for JavaScript
+    schedule_data = []
+    for schedule in schedules:
+        if schedule.faculty_id != faculty.id:
+            continue
+        schedule_data.append({
+            'day': schedule.day,
+            'start_time': schedule.start_time,
+            'end_time': schedule.end_time,
+            'duration': schedule.duration,
+            'course_code': schedule.course.course_code,
+            'course_title': schedule.course.descriptive_title,
+            'course_color': schedule.course.color,
+            'room': schedule.room.name if schedule.room else 'TBA',
+            'section_name': schedule.section.name,
+        })
+
+    specializations = faculty.specialization.all()
+
+    import json
+
+    context = {
+        'user': request.user,
+        'faculty': faculty,
+        'schedules': json.dumps(schedule_data),
+        'time_slots': [],
+        'days': [],
+        'specializations': specializations,
+    }
+
+    return render(request, 'hello/staff_schedule.html', context)
+
+
+@login_required(login_url='admin_login')
+def staff_schedule_print(request):
+    """
+    Print-friendly view for staff teaching assignment
+    """
+    try:
+        faculty = Faculty.objects.get(user=request.user)
+    except Faculty.DoesNotExist:
+        messages.error(request, 'No faculty profile found for your account.')
+        logout(request)
+        return redirect('admin_login')
+
+    schedules = Schedule.objects.filter(faculty=faculty).select_related(
+        'course', 'section', 'room'
+    ).order_by('day', 'start_time')
+
+    # Build schedule table data for print template with rowspan so we can render
+    # continuous vertical arrows from start_time -> end_time.
+    raw_schedules = []
+    for schedule in schedules:
+        if schedule.faculty_id != faculty.id:
+            continue
+        raw_schedules.append({
+            'day': schedule.day,
+            'start_time': schedule.start_time,
+            'end_time': schedule.end_time,
+            'course_code': schedule.course.course_code,
+            'room': schedule.room.name if schedule.room else 'TBA',
+            'section_name': schedule.section.name,
+        })
+
+    # Generate 30-minute time slots from 07:30 to 21:30 (skip 07:00)
+    time_slots = []
+    time_slots.append("07:30")
+    for hour in range(8, 22):
+        for minute in ['00', '30']:
+            if hour == 21 and minute == '30':
+                break
+            time_slots.append(f"{hour:02d}:{minute}")
+    time_slots.append("21:30")
+
+    days = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY']
+
+    # Compute simple table-based grid metrics (each 30-min slot = 60px row height
+    # matching the interactive layout style). We'll expose `grid_height` and `time_labels` to
+    # the template so the print view can render absolute-positioned, centered
+    # time labels matching staff_schedule.html (07:30 at 120px, 08:00 at 180px, etc).
+    # NOTE: There are 2 empty rows before the first time slot (07:30), so offset by 120px (2 * 60px)
+    try:
+        row_height = 60
+        # The 1 empty row at the top takes up 60px
+        # Keep time labels at their proper positions: 120px for 07:30, etc
+        header_offset = 2 * row_height  # Keep 120px for time label positioning
+        grid_height = len(time_slots) * row_height + header_offset
+        time_labels = []
+        for idx, t in enumerate(time_slots):
+            # Position at 120px + idx * 60px (centered on horizontal lines)
+            top_px = header_offset + idx * row_height
+            time_labels.append({'time': t, 'top': top_px})
+    except Exception:
+        header_offset = 120
+        grid_height = len(time_slots) * 60 + 120
+        time_labels = [{'time': t, 'top': 120 + i * 60} for i, t in enumerate(time_slots)]
+
+    # Helper to normalize time values to HH:MM strings
+    from datetime import time as _time
+    def _normalize_time(val):
+        if val is None:
+            return None
+        # If it's already a string, try to parse and reformat to HH:MM
+        if isinstance(val, str):
+            try:
+                parts = val.split(':')
+                h = int(parts[0])
+                m = int(parts[1]) if len(parts) > 1 else 0
+                return f"{h:02d}:{m:02d}"
+            except Exception:
+                return val
+        # If it's a time or datetime, format accordingly
+        try:
+            return val.strftime('%H:%M')
+        except Exception:
+            return str(val)
+
+    # Build a mapping for schedules keyed by (day, start_time) with rowspan, and a set
+    # of covered (day, time) slots to skip when rendering cells.
+    schedule_map = {}
+    covered = set()
+    for rs in raw_schedules:
+        day_idx = rs['day']
+        start = _normalize_time(rs['start_time'])
+        end = _normalize_time(rs['end_time'])
+        if not start or not end:
+            key = (day_idx, start)
+            schedule_map[key] = {
+                'rowspan': 1,
+                'course_code': rs['course_code'],
+                'room': rs['room'],
+                'section_name': rs['section_name'],
+            }
+            continue
+
+        # Compute start/end indexes by minutes to be robust to different time formats
+        def _to_minutes(tval):
+            if tval is None:
+                return None
+            if isinstance(tval, str):
+                try:
+                    parts = tval.split(':')
+                    h = int(parts[0])
+                    m = int(parts[1]) if len(parts) > 1 else 0
+                    return h * 60 + m
+                except Exception:
+                    # try removing seconds or whitespace
+                    try:
+                        hhmm = tval.strip().split('.')[0]
+                        h, m = map(int, hhmm.split(':')[:2])
+                        return h * 60 + m
+                    except Exception:
+                        return None
+            try:
+                return tval.hour * 60 + tval.minute
+            except Exception:
+                try:
+                    s = str(tval)
+                    h, m = map(int, s.split(':')[:2])
+                    return h * 60 + m
+                except Exception:
+                    return None
+
+        start_min = _to_minutes(start)
+        end_min = _to_minutes(end)
+
+        # Clamp end_min to the printable/schedulable maximum (21:30)
+        try:
+            last_slot_min = 21 * 60 + 30
+            if end_min is not None and end_min > last_slot_min:
+                end_min = last_slot_min
+        except Exception:
+            pass
+
+        if start_min is None or end_min is None:
+            key = (day_idx, start)
+            schedule_map[key] = {
+                'rowspan': 1,
+                'course_code': rs['course_code'],
+                'room': rs['room'],
+                'section_name': rs['section_name'],
+            }
+            continue
+
+        # Base is 07:30 (in minutes)
+        base_min = 7 * 60 + 30
+        start_index = (start_min - base_min) // 30
+        # Calculate number of 30-minute slots from the duration.
+        # A class that lasts 60 minutes should span 2 slots. Do NOT add
+        # an extra '+1' - that caused rowspan to cover extra rows and hide
+        # other courses. Use integer division and clamp to at least 1.
+        slots = (end_min - start_min) // 30
+        if slots < 1:
+            slots = 1
+        
+        # Clamp start_index into valid range
+        start_index = max(0, start_index)
+        # Ensure start_index is within time_slots bounds
+        if start_index >= len(time_slots):
+            start_index = len(time_slots) - 1
+
+        # Emit debug info to server log when running in DEBUG mode
+        try:
+            if settings.DEBUG:
+                print(f"[staff_schedule_print] course={rs.get('course_code')} day={day_idx} start={start} end={end} start_min={start_min} end_min={end_min} start_idx={start_index} slots={slots}")
+        except Exception:
+            pass
+        # Use time_slots[start_index] as the key to ensure it matches exactly what's in time_slots
+        key = (day_idx, time_slots[start_index])
+        schedule_map[key] = {
+            'rowspan': slots,
+            'course_code': rs['course_code'],
+            'room': rs['room'],
+            'section_name': rs['section_name'],
+        }
+        for j in range(1, slots):
+            # Protect index range
+            idx = start_index + j
+            if 0 <= idx < len(time_slots):
+                time_slot_key = time_slots[idx]
+                # Only mark as covered if this time slot doesn't have another course
+                if (day_idx, time_slot_key) not in schedule_map:
+                    covered.add((day_idx, time_slot_key))
+
+    # Construct table rows: each row contains time, an optional time_cell (for rowspan
+    # centering of the time label), and a list of 6 cell entries. Cell entries can be:
+    # None, 'skip', or schedule dict (rowspan cell that includes the end row).
+    table_rows = []
+
+    # Precompute time column rowspans: when a schedule cell starts at a timeslot and
+    # spans multiple slots, we may want to render the TIME column once with a rowspan
+    # equal to the largest starting-span at that timeslot so the time label sits
+    # vertically centered next to multi-row course blocks.
+    time_covered = set()
+    time_rowspan_map = {}
+    for idx, t in enumerate(time_slots):
+        if t in time_covered:
+            continue
+        # Compute the max rowspan among all schedules that start at this timeslot
+        max_slots = 1
+        for d in range(6):
+            key = (d, t)
+            if key in schedule_map:
+                try:
+                    r = int(schedule_map[key].get('rowspan', 1))
+                except Exception:
+                    r = 1
+                if r > max_slots:
+                    max_slots = r
+        # If the max_slots > 1, mark the subsequent (max_slots-1) timeslots as covered
+        if max_slots > 1:
+            for j in range(1, max_slots):
+                next_idx = idx + j
+                if 0 <= next_idx < len(time_slots):
+                    time_covered.add(time_slots[next_idx])
+        time_rowspan_map[t] = max_slots
+
+    for t in time_slots:
+        cells = []
+        for d in range(6):
+            if (d, t) in covered:
+                cells.append('skip')
+            elif (d, t) in schedule_map:
+                cells.append(schedule_map[(d, t)])
+            else:
+                cells.append(None)
+        # Attach a time_cell only if this timeslot is not covered by a previous
+        # time_cell rowspan. time_rowspan_map contains the intended rowspan (>=1).
+        time_cell = None
+        if t not in time_covered:
+            time_cell = {
+                'text': t,
+                'rowspan': time_rowspan_map.get(t, 1)
+            }
+        table_rows.append({'time': t, 'time_cell': time_cell, 'cells': cells})
+
+    # Compute totals based on unique courses assigned to this faculty.
+    unique_course_ids = faculty.schedules.values_list('course', flat=True).distinct()
+    totals = Course.objects.filter(id__in=unique_course_ids).aggregate(
+        total_lec=Sum('lecture_hours'),
+        total_lab=Sum('laboratory_hours'),
+        total_units=Sum('credit_units')
+    )
+
+    context = {
+        'user': request.user,
+        'faculty': faculty,
+        'table_rows': table_rows,
+        'grid_height': grid_height,
+        'time_labels': time_labels,
+        'time_slots': time_slots,
+        'days': days,
+        'total_lec': totals.get('total_lec') or 0,
+        'total_lab': totals.get('total_lab') or 0,
+        'total_units': totals.get('total_units') or 0,
+    }
+
+    return render(request, 'hello/staff_schedule_print.html', context)
 
 # ===== SECTION VIEWS =====
 
@@ -1220,19 +1578,31 @@ def get_section_schedule(request, section_id):
             schedule_data.append(schedule_item)
             
             # Track unique courses for sidebar
-            if schedule.course.id not in courses_map:
+            course_entry = courses_map.get(schedule.course.id)
+            if not course_entry:
+                # Use a set to collect faculty names, convert later for JSON
                 courses_map[schedule.course.id] = {
                     'course_code': schedule.course.course_code,
                     'descriptive_title': schedule.course.descriptive_title,
                     'color': schedule.course.color,
                     'lecture_hours': schedule.course.lecture_hours,
                     'laboratory_hours': schedule.course.laboratory_hours,
-                    'credit_units': schedule.course.credit_units
+                    'credit_units': schedule.course.credit_units,
+                    'faculty_names': set()
                 }
+
+            # Add faculty name to the course's faculty set (skip if None)
+            if schedule.faculty:
+                fname = f"{schedule.faculty.first_name} {schedule.faculty.last_name}"
+                courses_map[schedule.course.id]['faculty_names'].add(fname)
         
-        # Convert courses_map to list
-        courses_list = list(courses_map.values())
-        
+        # Convert courses_map to list and format faculty names for JSON
+        courses_list = []
+        for entry in courses_map.values():
+            faculty_names = entry.pop('faculty_names', set())
+            entry['faculty'] = ', '.join(sorted(faculty_names)) if faculty_names else 'TBA'
+            courses_list.append(entry)
+
         # Calculate total units
         total_units = sum(course['credit_units'] for course in courses_list)
         
@@ -1661,18 +2031,18 @@ def delete_curriculum(request, curriculum_id):
 
 @login_required
 def generate_schedule(request):
-    """Generate schedule automatically using AI/algorithm"""
+    """Generate schedule automatically based on intelligent rules"""
     if request.method == 'POST':
         try:
             section_id = request.POST.get('section')
             section = Section.objects.get(id=section_id)
             
-            # Get all courses for this section's year/semester/curriculum
+            # Get all courses for this section's year/semester/curriculum (with .distinct() to prevent duplicates)
             courses = Course.objects.filter(
                 curriculum=section.curriculum,
                 year_level=section.year_level,
                 semester=section.semester
-            )
+            ).distinct()
             
             if not courses.exists():
                 return JsonResponse({
@@ -1683,109 +2053,333 @@ def generate_schedule(request):
             # Clear existing schedules for this section
             Schedule.objects.filter(section=section).delete()
             
-            # Time slots: 7:30 AM to 9:30 PM
-            time_slots = [
+            # Available time slots (7:30 AM to 9:30 PM)
+            # NOTE: Friday institutional break 10:30-13:30 (1:30 PM) - NO CLASSES
+            time_slots_1hr = [
+                ('07:30', '08:30'), ('08:30', '09:30'), ('09:30', '10:30'),
+                ('10:30', '11:30'), ('11:30', '12:30'), ('13:00', '14:00'),
+                ('14:00', '15:00'), ('15:00', '16:00'), ('16:00', '17:00'),
+                ('17:00', '18:00'), ('18:00', '19:00'), ('19:00', '20:00'),
+                ('20:00', '21:00'), ('20:30', '21:30')
+            ]
+            
+            # Friday-safe 1hr slots (exclude 10:30-1:30 PM break)
+            time_slots_1hr_friday_safe = [
+                ('07:30', '08:30'), ('08:30', '09:30'), ('09:30', '10:30'),
+                ('13:30', '14:30'), ('14:00', '15:00'), ('15:00', '16:00'),
+                ('16:00', '17:00'), ('17:00', '18:00'), ('18:00', '19:00'),
+                ('19:00', '20:00'), ('20:00', '21:00'), ('20:30', '21:30')
+            ]
+            
+            time_slots_1_5hr = [
                 ('07:30', '09:00'), ('09:00', '10:30'), ('10:30', '12:00'),
                 ('13:00', '14:30'), ('14:30', '16:00'), ('16:00', '17:30'),
                 ('17:30', '19:00'), ('19:00', '20:30')
             ]
             
-            # Available days (0=Monday to 5=Saturday)
-            days = [0, 1, 2, 3, 4, 5]
+            # Friday-safe 1.5hr slots (exclude 10:30-1:30 PM break)
+            time_slots_1_5hr_friday_safe = [
+                ('07:30', '09:00'), ('09:00', '10:30'),
+                ('13:30', '15:00'), ('14:30', '16:00'), ('16:00', '17:30'),
+                ('17:30', '19:00'), ('19:00', '20:30')
+            ]
+            
+            time_slots_2hr = [
+                ('07:30', '09:30'), ('09:30', '11:30'), ('13:00', '15:00'),
+                ('15:00', '17:00'), ('17:00', '19:00'), ('19:00', '21:00')
+            ]
+            
+            # Friday-safe 2hr slots (exclude 10:30-1:30 PM break)
+            time_slots_2hr_friday_safe = [
+                ('07:30', '09:30'), ('09:30', '11:30'),
+                ('13:30', '15:30'), ('15:00', '17:00'), ('17:00', '19:00'), ('19:00', '21:00')
+            ]
+            
+            time_slots_3hr = [
+                ('07:30', '10:30'), ('10:30', '13:30'), ('13:00', '16:00'),
+                ('16:00', '19:00'), ('17:30', '20:30')
+            ]
+            
+            # Friday-safe 3hr slots (exclude 10:30-1:30 PM break)
+            time_slots_3hr_friday_safe = [
+                ('07:30', '10:30'),
+                ('13:30', '16:30'), ('16:00', '19:00'), ('17:30', '20:30')
+            ]
             
             # Get available faculty and rooms
             available_faculty = list(Faculty.objects.all())
             available_rooms = list(Room.objects.all())
+            lecture_rooms = [r for r in available_rooms if r.room_type == 'lecture']
+            lab_rooms = [r for r in available_rooms if r.room_type == 'laboratory']
             
+            # Initialize lists early to prevent reference errors
             generated_schedules = []
-            conflicts = []
+            scheduling_notes = []
             
-            # Simple scheduling algorithm
-            for course in courses:
-                # Calculate how many sessions needed based on hours
-                total_hours = course.lecture_hours + course.laboratory_hours
-                sessions_needed = max(1, total_hours // 2)  # Assuming 1.5-2 hour sessions
-                
-                scheduled_sessions = 0
-                attempts = 0
-                max_attempts = 50
-                
-                while scheduled_sessions < sessions_needed and attempts < max_attempts:
-                    attempts += 1
-                    
-                    # Random day and time slot
-                    day = random.choice(days)
-                    start_time, end_time = random.choice(time_slots)
-                    
-                    # Random faculty (prefer specialized)
-                    faculty = None
-                    specialized = [f for f in available_faculty if course in f.specialization.all()]
-                    if specialized:
-                        faculty = random.choice(specialized)
-                    elif available_faculty:
-                        faculty = random.choice(available_faculty)
-                    
-                    # Random room (prefer lab rooms for lab courses)
-                    room = None
-                    if available_rooms:
-                        if course.laboratory_hours > 0:
-                            lab_rooms = [r for r in available_rooms if r.room_type == 'laboratory']
-                            room = random.choice(lab_rooms) if lab_rooms else random.choice(available_rooms)
-                        else:
-                            lecture_rooms = [r for r in available_rooms if r.room_type == 'lecture']
-                            room = random.choice(lecture_rooms) if lecture_rooms else random.choice(available_rooms)
-                    
-                    # Check for conflicts
-                    conflict = False
-                    
-                    # Check section conflict (same section, overlapping time)
-                    section_conflicts = Schedule.objects.filter(
-                        section=section,
-                        day=day,
-                        start_time__lt=end_time,
-                        end_time__gt=start_time
+            # Check if rooms are properly configured
+            if not lecture_rooms or not lab_rooms:
+                scheduling_notes.append(
+                    '⚠️ WARNING: Room Management Issue! '
+                    'Not all room types are available. '
+                    f'Lecture rooms: {len(lecture_rooms)}, Lab rooms: {len(lab_rooms)}. '
+                    'Please ensure you have at least one lecture room and one laboratory room configured before generating schedules.'
+                )
+                if not lecture_rooms:
+                    scheduling_notes.append(
+                        '❌ ERROR: No lecture rooms found. Please create lecture rooms in Room Management first.'
                     )
-                    if section_conflicts.exists():
-                        conflict = True
-                    
-                    # Check faculty conflict
-                    if faculty:
-                        faculty_conflicts = Schedule.objects.filter(
-                            faculty=faculty,
-                            day=day,
-                            start_time__lt=end_time,
-                            end_time__gt=start_time
-                        )
-                        if faculty_conflicts.exists():
-                            conflict = True
-                    
-                    # Check room conflict
-                    if room:
-                        room_conflicts = Schedule.objects.filter(
-                            room=room,
-                            day=day,
-                            start_time__lt=end_time,
-                            end_time__gt=start_time
-                        )
-                        if room_conflicts.exists():
-                            conflict = True
-                    
-                    if not conflict:
-                        # Create schedule
-                        schedule = Schedule.objects.create(
-                            course=course,
-                            section=section,
-                            faculty=faculty,
-                            room=room,
-                            day=day,
-                            start_time=start_time,
-                            end_time=end_time
-                        )
-                        generated_schedules.append(schedule)
-                        scheduled_sessions += 1
+                if not lab_rooms:
+                    scheduling_notes.append(
+                        '❌ ERROR: No laboratory rooms found. Please create laboratory rooms in Room Management first.'
+                    )
                 
-                if scheduled_sessions < sessions_needed:
-                    conflicts.append(f"{course.course_code} - Only {scheduled_sessions}/{sessions_needed} sessions scheduled")
+                # Still try to continue but mark as incomplete
+                if not lecture_rooms or not lab_rooms:
+                    return JsonResponse({
+                        'success': False,
+                        'errors': scheduling_notes
+                    })
+            
+            scheduled_courses = set()  # Track which courses have been scheduled to prevent duplicates
+            
+            # Schedule each course
+            for course in courses:
+                # Skip if course has already been scheduled in this generation
+                if course.id in scheduled_courses:
+                    continue
+                
+                lecture_hours = course.lecture_hours
+                lab_hours = course.laboratory_hours
+                
+                # ========== LECTURE SCHEDULING ==========
+                if lecture_hours > 0:
+                    lecture_sessions = []
+                    
+                    if lecture_hours == 1:
+                        # 1 hour lecture: Schedule on Monday (online) at 10:30 AM (PRIORITIZED)
+                        lecture_sessions.append({
+                            'days': [0],  # Monday only
+                            'durations': [(1, '1 hour')],  # 1 hour each
+                            'time_slots': time_slots_1hr,
+                            'note': f'{course.course_code}: 1 lecture hour on Monday (online) - 10:30 AM preferred'
+                        })
+                    
+                    elif lecture_hours == 2:
+                        # 2 hours lecture: Tuesday/Thursday (1 hour each)
+                        lecture_sessions.append({
+                            'days': [1, 3],  # Tuesday, Thursday
+                            'durations': [(1, '1 hour')] * 2,  # 1 hour each
+                            'time_slots': time_slots_1hr,
+                            'note': f'{course.course_code}: 2 lecture hours (Tue/Thu, 1hr each)'
+                        })
+                    
+                    elif lecture_hours == 3:
+                        # 3 hours lecture: Two options (user can manually switch)
+                        # Option 1: Monday, Wednesday, Friday (1 hour each) - DEFAULT
+                        lecture_sessions.append({
+                            'days': [0, 2, 4],  # Monday, Wednesday, Friday
+                            'durations': [(1, '1 hour')] * 3,  # 1 hour each
+                            'time_slots': time_slots_1hr,
+                            'note': f'{course.course_code}: 3 lecture hours (Mon/Wed/Fri, 1hr each - Option 1)'
+                        })
+                        # Option 2: Tuesday, Thursday (1.5 hours each)
+                        scheduling_notes.append(
+                            f'MANUAL OPTION: {course.course_code} can also be scheduled as Tuesday/Thursday (1.5 hrs each)'
+                        )
+                    
+                    elif lecture_hours == 4:
+                        # 4 hours lecture: Monday/Wednesday/Friday (skip one) and Tuesday/Thursday
+                        # OR: Monday, Tuesday, Thursday, Friday (1 hour each)
+                        lecture_sessions.append({
+                            'days': [0, 1, 3, 4],  # Mon, Tue, Thu, Fri
+                            'durations': [(1, '1 hour')] * 4,  # 1 hour each
+                            'time_slots': time_slots_1hr,
+                            'note': f'{course.course_code}: 4 lecture hours (Mon/Tue/Thu/Fri, 1hr each)'
+                        })
+                    
+                    # Try to schedule each lecture session
+                    for session_config in lecture_sessions:
+                        days_to_try = session_config['days']
+                        durations = session_config['durations']
+                        time_slots = session_config['time_slots']
+                        
+                        for duration_tuple in durations:
+                            scheduled = False
+                            attempts = 0
+                            max_attempts = 100
+                            
+                            while not scheduled and attempts < max_attempts:
+                                attempts += 1
+                                day = random.choice(days_to_try)
+                                
+                                # Special handling for Monday 1-hour lectures (online): prioritize 10:30 AM
+                                if course.lecture_hours == 1 and day == 0 and duration_tuple[0] == 1:
+                                    # For Monday online classes, prioritize 10:30-11:30
+                                    if attempts <= 30:  # First 30 attempts: try 10:30 AM
+                                        start_time = '10:30'
+                                        end_time = '11:30'
+                                    else:  # After 30 attempts: try any slot
+                                        chosen_slots = time_slots_1hr_friday_safe if day == 4 else time_slots_1hr
+                                        start_time, end_time = random.choice(chosen_slots)
+                                # Select time slots based on duration and day (Friday has institutional break)
+                                elif duration_tuple[0] == 1:
+                                    # Use Friday-safe slots if it's Friday (day 4)
+                                    chosen_slots = time_slots_1hr_friday_safe if day == 4 else time_slots_1hr
+                                    start_time, end_time = random.choice(chosen_slots)
+                                # For 1.5 hour lectures
+                                elif duration_tuple[0] == 1.5:
+                                    # Use Friday-safe slots if it's Friday (day 4)
+                                    chosen_slots = time_slots_1_5hr_friday_safe if day == 4 else time_slots_1_5hr
+                                    start_time, end_time = random.choice(chosen_slots)
+                                # For 2 hour lectures
+                                elif duration_tuple[0] == 2:
+                                    # Use Friday-safe slots if it's Friday (day 4)
+                                    chosen_slots = time_slots_2hr_friday_safe if day == 4 else time_slots_2hr
+                                    start_time, end_time = random.choice(chosen_slots)
+                                # For 3 hour lectures
+                                elif duration_tuple[0] == 3:
+                                    # Use Friday-safe slots if it's Friday (day 4)
+                                    chosen_slots = time_slots_3hr_friday_safe if day == 4 else time_slots_3hr
+                                    start_time, end_time = random.choice(chosen_slots)
+                                else:
+                                    chosen_slots = time_slots_1hr_friday_safe if day == 4 else time_slots_1hr
+                                    start_time, end_time = random.choice(chosen_slots)
+                                
+                                # Select faculty (prefer specialist)
+                                faculty = None
+                                specialized = [f for f in available_faculty if course in f.specialization.all()]
+                                if specialized:
+                                    faculty = random.choice(specialized)
+                                elif available_faculty:
+                                    faculty = random.choice(available_faculty)
+                                
+                                # Select lecture room (MANDATORY - should always have rooms due to check above)
+                                room = random.choice(lecture_rooms)  # lecture_rooms guaranteed to exist
+                                
+                                # Check for conflicts
+                                has_conflict = False
+                                
+                                # Section conflict
+                                if Schedule.objects.filter(
+                                    section=section, day=day,
+                                    start_time__lt=end_time,
+                                    end_time__gt=start_time
+                                ).exists():
+                                    has_conflict = True
+                                
+                                # Faculty conflict
+                                if not has_conflict and faculty:
+                                    if Schedule.objects.filter(
+                                        faculty=faculty, day=day,
+                                        start_time__lt=end_time,
+                                        end_time__gt=start_time
+                                    ).exists():
+                                        has_conflict = True
+                                
+                                # Room conflict
+                                if not has_conflict and room:
+                                    if Schedule.objects.filter(
+                                        room=room, day=day,
+                                        start_time__lt=end_time,
+                                        end_time__gt=start_time
+                                    ).exists():
+                                        has_conflict = True
+                                
+                                if not has_conflict:
+                                    schedule = Schedule.objects.create(
+                                        course=course,
+                                        section=section,
+                                        faculty=faculty,
+                                        room=room,
+                                        day=day,
+                                        start_time=start_time,
+                                        end_time=end_time
+                                    )
+                                    generated_schedules.append(schedule)
+                                    scheduled = True
+                
+                # ========== LABORATORY SCHEDULING ==========
+                if lab_hours > 0:
+                    # Laboratory: Fixed 3 hours (admin can manually split)
+                    # Cannot be on Monday
+                    lab_days = [1, 2, 3, 4, 5]  # Tuesday to Saturday (prefer Tue-Fri)
+                    lab_days_preferred = [1, 2, 3, 4]  # Preferred: Tue-Fri (students don't like Sat)
+                    
+                    scheduled_lab = False
+                    attempts = 0
+                    max_attempts = 100
+                    
+                    while not scheduled_lab and attempts < max_attempts:
+                        attempts += 1
+                        
+                        # Try preferred days first, then fallback to all days
+                        day = random.choice(lab_days_preferred) if attempts <= 50 else random.choice(lab_days)
+                        
+                        # Use 3-hour time slot (Friday-safe if day is Friday)
+                        chosen_slots = time_slots_3hr_friday_safe if day == 4 else time_slots_3hr
+                        start_time, end_time = random.choice(chosen_slots)
+                        
+                        # Select faculty
+                        faculty = None
+                        specialized = [f for f in available_faculty if course in f.specialization.all()]
+                        if specialized:
+                            faculty = random.choice(specialized)
+                        elif available_faculty:
+                            faculty = random.choice(available_faculty)
+                        
+                        # Select lab room (MANDATORY - should always have rooms due to check above)
+                        room = random.choice(lab_rooms)  # lab_rooms guaranteed to exist
+                        
+                        # Check for conflicts
+                        has_conflict = False
+                        
+                        if Schedule.objects.filter(
+                            section=section, day=day,
+                            start_time__lt=end_time,
+                            end_time__gt=start_time
+                        ).exists():
+                            has_conflict = True
+                        
+                        if not has_conflict and faculty:
+                            if Schedule.objects.filter(
+                                faculty=faculty, day=day,
+                                start_time__lt=end_time,
+                                end_time__gt=start_time
+                            ).exists():
+                                has_conflict = True
+                        
+                        if not has_conflict and room:
+                            if Schedule.objects.filter(
+                                room=room, day=day,
+                                start_time__lt=end_time,
+                                end_time__gt=start_time
+                            ).exists():
+                                has_conflict = True
+                        
+                        if not has_conflict:
+                            schedule = Schedule.objects.create(
+                                course=course,
+                                section=section,
+                                faculty=faculty,
+                                room=room,
+                                day=day,
+                                start_time=start_time,
+                                end_time=end_time
+                            )
+                            generated_schedules.append(schedule)
+                            scheduled_lab = True
+                            scheduling_notes.append(
+                                f'{course.course_code} lab: 3 hours scheduled. Admin can manually split if needed.'
+                            )
+                    
+                    if not scheduled_lab:
+                        scheduling_notes.append(
+                            f'WARNING: Could not auto-schedule {course.course_code} lab (3 hours). Please schedule manually.'
+                        )
+                
+                # Mark course as successfully scheduled to prevent duplicates
+                if len([s for s in generated_schedules if s.course.id == course.id]) > 0:
+                    scheduled_courses.add(course.id)
             
             # Update section status
             section.status = 'complete' if len(generated_schedules) > 0 else 'incomplete'
@@ -1804,7 +2398,7 @@ def generate_schedule(request):
                 'success': True,
                 'message': f'Successfully generated {len(generated_schedules)} schedule entries',
                 'schedules_created': len(generated_schedules),
-                'conflicts': conflicts,
+                'notes': scheduling_notes,
                 'section_id': section.id
             })
             
@@ -1851,7 +2445,25 @@ def edit_schedule(request, schedule_id):
             schedule.day = int(day)
             schedule.start_time = start_time
             schedule.end_time = end_time
-            
+            # Quick server-side enforcement of allowed window (07:30 - 21:30)
+            try:
+                def _tmin(tstr):
+                    h, m = map(int, tstr.split(':'))
+                    return h * 60 + m
+
+                min_allowed = 7 * 60 + 30
+                max_allowed = 21 * 60 + 30
+                if start_time and end_time:
+                    smin = _tmin(start_time)
+                    emin = _tmin(end_time)
+                    if smin < min_allowed or emin > max_allowed:
+                        return JsonResponse({
+                            'success': False,
+                            'errors': [f'Schedule times must be within 07:30 and 21:30. Received {start_time} - {end_time}']
+                        })
+            except Exception:
+                pass
+
             schedule.full_clean()
             schedule.save()
             
