@@ -1215,6 +1215,7 @@ def get_section_schedule(request, section_id):
                 'course_color': schedule.course.color,
                 'faculty': f"{schedule.faculty.first_name} {schedule.faculty.last_name}" if schedule.faculty else 'TBA',
                 'room': schedule.room.name if schedule.room else 'TBA',
+                'section_name': schedule.section.name,
             }
             schedule_data.append(schedule_item)
             
