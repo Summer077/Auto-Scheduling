@@ -2,503 +2,12 @@ console.log('schedule.js loaded successfully');
 
 let currentSectionId = null;
 let currentTimeField = null;
-let currentEditScheduleId = null;
 let selectedHour = 7;
 let selectedMinute = 30;
 let selectedPeriod = 'AM';
 
 // ===============================
-// TAB SWITCHING
-// ===============================
-function switchTab(tabName) {
-    // Remove active class from all tabs
-    document.querySelectorAll('.tab-btn').forEach(btn => {
-        btn.classList.remove('active');
-    });
-    document.querySelectorAll('.tab-content').forEach(content => {
-        content.classList.remove('active');
-    });
-    
-    // Add active class to selected tab
-    if (tabName === 'generate') {
-        document.querySelector('.tab-btn:first-child').classList.add('active');
-        document.getElementById('generateTab').classList.add('active');
-    } else {
-        document.querySelector('.tab-btn:last-child').classList.add('active');
-        document.getElementById('manualTab').classList.add('active');
-    }
-}
-
-// ===============================
-// MODAL MANAGEMENT
-// ===============================
-function openScheduleModal() {
-    switchTab('manual'); // Default to manual tab
-    openModal('scheduleModal');
-}
-
-function openModal(modalId) {
-    const el = document.getElementById(modalId);
-    if (el) el.style.display = 'block';
-}
-
-function closeModal(modalId) {
-    const el = document.getElementById(modalId);
-    if (el) el.style.display = 'none';
-}
-
-// ===============================
-// ALERT SYSTEM
-// ===============================
-function showAlert(message, type = 'info') {
-    const container = document.querySelector('.alert-container') || createAlertContainer();
-    
-    const alert = document.createElement('div');
-    alert.className = `alert ${type}`;
-    
-    let icon = '';
-    switch(type) {
-        case 'success':
-            icon = '<svg stroke="currentColor" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"></path></svg>';
-            break;
-        case 'warning':
-            icon = '<svg stroke="currentColor" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"></path></svg>';
-            break;
-        case 'error':
-            icon = '<svg stroke="currentColor" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"></path></svg>';
-            break;
-        default: // info
-            icon = '<svg stroke="currentColor" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M13 16h-1v-4h1m0-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"></path></svg>';
-    }
-    
-    alert.innerHTML = `
-        ${icon}
-        <p class="alert-text">${message}</p>
-    `;
-    
-    container.appendChild(alert);
-    
-    // Auto-remove after 5 seconds
-    setTimeout(() => {
-        alert.style.animation = 'fadeOut 0.3s ease';
-        setTimeout(() => alert.remove(), 300);
-    }, 5000);
-    
-    // Click to dismiss
-    alert.addEventListener('click', () => {
-        alert.style.animation = 'fadeOut 0.3s ease';
-        setTimeout(() => alert.remove(), 300);
-    });
-}
-
-function createAlertContainer() {
-    const container = document.createElement('div');
-    container.className = 'alert-container';
-    document.body.appendChild(container);
-    return container;
-}
-
-// ===============================
-// LOADING OVERLAY
-// ===============================
-function showLoading() {
-    const overlay = document.getElementById('loadingOverlay');
-    if (overlay) {
-        overlay.classList.add('show');
-    }
-}
-
-function hideLoading() {
-    const overlay = document.getElementById('loadingOverlay');
-    if (overlay) {
-        overlay.classList.remove('show');
-    }
-}
-
-// ===============================
-// GENERATE SCHEDULE
-// ===============================
-function updateGenerateFilters() {
-    const select = document.getElementById('generate_section_select');
-    const selectedOption = select.options[select.selectedIndex];
-    
-    if (selectedOption.value) {
-        document.getElementById('generate_curriculum_display').value = selectedOption.dataset.curriculum;
-        
-        const yearLevel = selectedOption.dataset.year;
-        const yearText = yearLevel == 1 ? '1st Year' : yearLevel == 2 ? '2nd Year' : yearLevel == 3 ? '3rd Year' : '4th Year';
-        document.getElementById('generate_year_display').value = yearText;
-        
-        const semester = selectedOption.dataset.semester;
-        const semText = semester == 1 ? '1st Semester' : '2nd Semester';
-        document.getElementById('generate_semester_display').value = semText;
-    } else {
-        document.getElementById('generate_curriculum_display').value = '';
-        document.getElementById('generate_year_display').value = '';
-        document.getElementById('generate_semester_display').value = '';
-    }
-}
-
-function submitGenerateSchedule(event) {
-    event.preventDefault();
-    const form = event.target;
-    const formData = new FormData(form);
-    const sectionId = formData.get('section');
-    
-    if (!sectionId) {
-        showAlert('Please select a section', 'error');
-        return;
-    }
-    
-    // Show loading
-    showLoading();
-    closeModal('scheduleModal');
-    
-    fetchWithCSRF('/admin/schedule/generate/', {
-        method: 'POST',
-        body: formData
-    })
-    .then(res => res.json())
-    .then(data => {
-        hideLoading();
-        
-        if (data.success) {
-            let message = `Successfully generated ${data.schedules_created} schedule entries!`;
-            
-            if (data.conflicts && data.conflicts.length > 0) {
-                showAlert(`${message} Some conflicts detected.`, 'warning');
-                console.log('Conflicts:', data.conflicts);
-            } else {
-                showAlert(message, 'success');
-            }
-            
-            // Reload the schedule view
-            if (data.section_id) {
-                const sectionCard = document.querySelector(`[data-section-id="${data.section_id}"]`);
-                if (sectionCard) {
-                    const sectionName = sectionCard.querySelector('.card-title').textContent;
-                    const curriculum = sectionCard.querySelector('.card-subtitle').textContent;
-                    setTimeout(() => loadScheduleView(data.section_id, sectionName, curriculum), 500);
-                }
-            }
-        } else {
-            const err = data.errors ? data.errors.join(', ') : (data.error || 'Unknown error');
-            showAlert('Error generating schedule: ' + err, 'error');
-        }
-    })
-    .catch(err => {
-        hideLoading();
-        console.error('submitGenerateSchedule error', err);
-        showAlert('Error generating schedule', 'error');
-    });
-}
-
-// ===============================
-// MANUAL SCHEDULE CREATION
-// ===============================
-function submitCreateSchedule(event) {
-    event.preventDefault();
-    const form = event.target;
-    const formData = new FormData(form);
-
-    fetchWithCSRF('/admin/schedule/add/', {
-        method: 'POST',
-        body: formData
-    })
-    .then(res => res.json())
-    .then(data => {
-        if (data.success) {
-            showAlert('Schedule created successfully!', 'success');
-            closeModal('scheduleModal');
-            if (currentSectionId) {
-                setTimeout(() => {
-                    const sectionName = document.getElementById('scheduleSectionName').textContent;
-                    const curriculum = document.getElementById('scheduleCurriculum').textContent;
-                    loadScheduleView(currentSectionId, sectionName, curriculum);
-                }, 500);
-            } else {
-                setTimeout(() => window.location.reload(), 800);
-            }
-        } else {
-            const err = data.errors ? data.errors.join(', ') : (data.error || 'Unknown error');
-            showAlert('Error creating schedule: ' + err, 'error');
-        }
-    })
-    .catch(err => {
-        console.error('submitCreateSchedule error', err);
-        showAlert('Error creating schedule', 'error');
-    });
-}
-
-// ===============================
-// EDIT SCHEDULE
-// ===============================
-function openEditScheduleModal(scheduleId) {
-    currentEditScheduleId = scheduleId;
-    
-    // Fetch schedule data
-    fetch(`/admin/schedule/edit/${scheduleId}/`)
-        .then(res => res.json())
-        .then(data => {
-            document.getElementById('edit_schedule_id').value = data.id;
-            document.getElementById('edit_course_select').value = data.course;
-            document.getElementById('edit_faculty_select').value = data.faculty;
-            document.getElementById('edit_room_select').value = data.room;
-            document.getElementById('edit_day_select').value = data.day;
-            
-            // Set times
-            document.getElementById('edit_start_time').value = data.start_time;
-            document.getElementById('edit_end_time').value = data.end_time;
-            
-            const [startTime, startPeriod] = convertTo12Hour(data.start_time);
-            document.getElementById('edit_start_time_display').textContent = `${startTime} ${startPeriod}`;
-            
-            const [endTime, endPeriod] = convertTo12Hour(data.end_time);
-            document.getElementById('edit_end_time_display').textContent = `${endTime} ${endPeriod}`;
-            
-            openModal('editScheduleModal');
-        })
-        .catch(err => {
-            console.error('Error fetching schedule data:', err);
-            showAlert('Error loading schedule data', 'error');
-        });
-}
-
-function submitEditSchedule(event) {
-    event.preventDefault();
-    const form = event.target;
-    const formData = new FormData(form);
-    const scheduleId = document.getElementById('edit_schedule_id').value;
-    
-    fetchWithCSRF(`/admin/schedule/edit/${scheduleId}/`, {
-        method: 'POST',
-        body: formData
-    })
-    .then(res => res.json())
-    .then(data => {
-        if (data.success) {
-            showAlert('Schedule updated successfully!', 'success');
-            closeModal('editScheduleModal');
-            if (currentSectionId) {
-                setTimeout(() => {
-                    const sectionName = document.getElementById('scheduleSectionName').textContent;
-                    const curriculum = document.getElementById('scheduleCurriculum').textContent;
-                    loadScheduleView(currentSectionId, sectionName, curriculum);
-                }, 500);
-            }
-        } else {
-            const err = data.errors ? data.errors.join(', ') : (data.error || 'Unknown error');
-            showAlert('Error updating schedule: ' + err, 'error');
-        }
-    })
-    .catch(err => {
-        console.error('submitEditSchedule error', err);
-        showAlert('Error updating schedule', 'error');
-    });
-}
-
-function deleteScheduleFromEdit() {
-    const scheduleId = document.getElementById('edit_schedule_id').value;
-    
-    if (!confirm('Are you sure you want to delete this schedule?')) {
-        return;
-    }
-    
-    fetchWithCSRF(`/admin/schedule/delete/${scheduleId}/`, {
-        method: 'POST'
-    })
-    .then(res => res.json())
-    .then(data => {
-        if (data.success) {
-            showAlert('Schedule deleted successfully!', 'success');
-            closeModal('editScheduleModal');
-            if (currentSectionId) {
-                setTimeout(() => {
-                    const sectionName = document.getElementById('scheduleSectionName').textContent;
-                    const curriculum = document.getElementById('scheduleCurriculum').textContent;
-                    loadScheduleView(currentSectionId, sectionName, curriculum);
-                }, 500);
-            }
-        } else {
-            showAlert('Error deleting schedule', 'error');
-        }
-    })
-    .catch(err => {
-        console.error('deleteScheduleFromEdit error', err);
-        showAlert('Error deleting schedule', 'error');
-    });
-}
-
-// ===============================
-// SCHEDULE BLOCK CLICK HANDLER
-// ===============================
-function handleScheduleBlockClick(scheduleId) {
-    openEditScheduleModal(scheduleId);
-}
-
-// ===============================
-// LOAD SCHEDULE VIEW
-// ===============================
-function loadScheduleView(sectionId, sectionName, curriculum) {
-    currentSectionId = sectionId;
-    
-    // Update header
-    document.getElementById('scheduleSectionName').textContent = sectionName;
-    document.getElementById('scheduleCurriculum').textContent = curriculum;
-    document.getElementById('sidebarCurriculum').textContent = curriculum;
-    
-    // Show schedule view, hide empty state
-    document.getElementById('scheduleEmptyState').style.display = 'none';
-    document.getElementById('scheduleView').style.display = 'flex';
-    
-    // Fetch schedule data
-    fetch(`/admin/section/${sectionId}/schedule-data/`)
-        .then(res => res.json())
-        .then(data => {
-            if (data.success) {
-                renderScheduleGrid(data.schedules, sectionName);
-                renderCoursesSidebar(data.courses);
-            } else {
-                showAlert('Error loading schedule data', 'error');
-            }
-        })
-        .catch(err => {
-            console.error('Error loading schedule:', err);
-            showAlert('Error loading schedule', 'error');
-        });
-}
-
-// ===============================
-// RENDER SCHEDULE GRID
-// ===============================
-function renderScheduleGrid(schedules, sectionName = '') {
-    // Clear existing schedule blocks
-    document.querySelectorAll('.schedule-block').forEach(block => block.remove());
-    
-    // Render time labels
-    renderTimeLabels();
-    
-    // Render each schedule
-    schedules.forEach(schedule => {
-        const dayColumn = document.querySelector(`.schedule-day-column[data-day="${schedule.day}"]`);
-        if (!dayColumn) return;
-        
-        const block = document.createElement('div');
-        block.className = 'schedule-block';
-        block.dataset.scheduleId = schedule.id;
-        block.style.borderLeftColor = schedule.course_color;
-        block.style.background = `${schedule.course_color}15`;
-        
-        // Calculate position and height (matching section.html logic)
-        const top = calculateTopPosition(schedule.start_time);
-        const duration = calculateDuration(schedule.start_time, schedule.end_time);
-        const height = (duration / 30) * 60; // 60px per 30 minutes
-        
-        block.style.top = `${top}px`;
-        block.style.height = `${height}px`;
-        
-        // Use section_name from API or fallback to passed sectionName
-        const displaySectionName = schedule.section_name || sectionName;
-        
-        block.innerHTML = `
-            <div class="schedule-course-code">${schedule.course_code}</div>
-            <div class="schedule-details">${schedule.start_time} - ${schedule.end_time}</div>
-            <div class="schedule-details">Room: ${schedule.room}</div>
-            <div class="schedule-details">Section: ${displaySectionName}</div>
-        `;
-        
-        // Add click handler
-        block.addEventListener('click', () => handleScheduleBlockClick(schedule.id));
-        
-        dayColumn.appendChild(block);
-    });
-}
-
-function renderTimeLabels() {
-    const timeColumn = document.getElementById('timeColumn');
-    timeColumn.innerHTML = '';
-    
-    // Generate time labels from 7:30 AM to 9:30 PM (matching section.html format)
-    const times = generateTimeSlots();
-    
-    times.forEach((time) => {
-        const label = document.createElement('div');
-        label.className = 'time-label';
-        label.textContent = time;  // Use 24-hour format without AM/PM
-        label.style.top = `${calculateTopPosition(time)}px`;
-        timeColumn.appendChild(label);
-    });
-}
-
-function generateTimeSlots() {
-    const slots = [];
-    // Start at 7:30 AM
-    slots.push('07:30');
-    // 8:00 to 21:00
-    for (let hour = 8; hour <= 21; hour++) {
-        slots.push(`${hour.toString().padStart(2, '0')}:00`);
-        if (hour < 21) {
-            slots.push(`${hour.toString().padStart(2, '0')}:30`);
-        }
-    }
-    // End at 9:30 PM
-    slots.push('21:30');
-    return slots;
-}
-
-function timeToMinutes(time) {
-    const [hours, minutes] = time.split(':').map(Number);
-    return hours * 60 + minutes;
-}
-
-// Calculate top position from time string (60px per 30 minutes, offset from 7:00 AM)
-function calculateTopPosition(timeStr) {
-    const [hours, minutes] = timeStr.split(':').map(Number);
-    const totalMinutes = (hours * 60 + minutes) - (7 * 60); // Offset from 7:00 AM
-    return (totalMinutes / 30) * 60; // 60px per 30 minutes
-}
-
-// Calculate duration in minutes between two times
-function calculateDuration(startTime, endTime) {
-    const startMinutes = timeToMinutes(startTime);
-    const endMinutes = timeToMinutes(endTime);
-    return endMinutes - startMinutes;
-}
-
-// ===============================
-// RENDER COURSES SIDEBAR
-// ===============================
-function renderCoursesSidebar(courses) {
-    const coursesList = document.getElementById('coursesList');
-    coursesList.innerHTML = '';
-    
-    if (courses.length === 0) {
-        coursesList.innerHTML = '<p style="color: #6C757D; font-size: 0.875rem;">No courses scheduled yet.</p>';
-        return;
-    }
-    
-    courses.forEach(course => {
-        const courseItem = document.createElement('div');
-        courseItem.className = 'course-item';
-        courseItem.style.borderLeftColor = course.color;
-        
-        courseItem.innerHTML = `
-            <div class="course-details">
-                <div class="course-code">${course.course_code}</div>
-                <div class="course-title">${course.descriptive_title}</div>
-                <div class="course-info">
-                    <span>Lec: ${course.lecture_hours}h | Lab: ${course.laboratory_hours}h</span>
-                    <span>Units: ${course.credit_units}</span>
-                </div>
-            </div>
-        `;
-        
-        coursesList.appendChild(courseItem);
-    });
-}
-
-// ===============================
-// TIME PICKER (Keep existing code)
+// TIME PICKER
 // ===============================
 function openTimePicker(fieldId) {
     currentTimeField = fieldId;
@@ -525,6 +34,9 @@ function closeTimePicker() {
     currentTimeField = null;
 }
 
+// ===============================
+// POPULATE TIME PICKER
+// ===============================
 function populateTimePicker() {
     const hoursList = document.getElementById('hoursList');
     const minutesList = document.getElementById('minutesList');
@@ -534,7 +46,7 @@ function populateTimePicker() {
     minutesList.innerHTML = '';
     periodList.innerHTML = '';
 
-    // HOURS
+    // HOURS - Create array with repeats for infinite scroll
     const hourValues = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
     const repeatedHours = [];
     for (let i = 0; i < 20; i++) {
@@ -550,7 +62,7 @@ function populateTimePicker() {
         hoursList.appendChild(item);
     });
 
-    // MINUTES
+    // MINUTES - Create array with repeats for infinite scroll
     const minuteValues = [];
     for (let m = 0; m < 60; m += 5) minuteValues.push(m);
     const repeatedMinutes = [];
@@ -567,7 +79,7 @@ function populateTimePicker() {
         minutesList.appendChild(item);
     });
 
-    // PERIOD
+    // PERIOD - Add spacers for centering
     for (let i = 0; i < 4; i++) {
         const spacer = document.createElement('div');
         spacer.className = 'time-picker-item time-picker-spacer';
@@ -618,7 +130,6 @@ function centerPeriod(period) {
         const containerHeight = periodList.clientHeight;
         const itemTop = targetItem.offsetTop;
         const itemHeight = targetItem.offsetHeight;
-        
         periodList.scrollTop = itemTop - (containerHeight / 2) + (itemHeight / 2);
         updateSelectionVisual('period', period);
     }
@@ -675,6 +186,7 @@ function selectTimeItem(type, value) {
 function setupScrollListeners() {
     const hoursList = document.getElementById('hoursList');
     const minutesList = document.getElementById('minutesList');
+    const periodList = document.getElementById('periodList');
 
     if (!hoursList.dataset.added) {
         hoursList.addEventListener('scroll', () => handleInfiniteScroll(hoursList, 'hour'));
@@ -683,6 +195,10 @@ function setupScrollListeners() {
     if (!minutesList.dataset.added) {
         minutesList.addEventListener('scroll', () => handleInfiniteScroll(minutesList, 'minute'));
         minutesList.dataset.added = true;
+    }
+    if (!periodList.dataset.added) {
+        periodList.addEventListener('scroll', () => handlePeriodScroll(periodList));
+        periodList.dataset.added = true;
     }
 }
 
@@ -706,7 +222,6 @@ function handleInfiniteScroll(container, type) {
             delete container.dataset.isAdjusting;
         }, 100);
     }
-    
     else if (scrollTop > maxScroll - buffer) {
         container.dataset.isAdjusting = 'true';
         const offset = scrollTop - maxScroll;
@@ -717,6 +232,11 @@ function handleInfiniteScroll(container, type) {
     }
 
     updateSelectedFromScroll(container, type);
+
+    clearTimeout(container.snapTimeout);
+    container.snapTimeout = setTimeout(() => {
+        snapSelectedToCenter(container, type);
+    }, 150);
 }
 
 function updateSelectedFromScroll(container, type) {
@@ -743,6 +263,96 @@ function updateSelectedFromScroll(container, type) {
             if (type === 'minute') selectedMinute = value;
             updateSelectionVisual(type, value);
         }
+    }
+}
+
+function snapSelectedToCenter(container, type) {
+    if (container.dataset.isAdjusting === 'true') return;
+    
+    const items = Array.from(container.querySelectorAll('.time-picker-item'));
+    const center = container.getBoundingClientRect().top + container.clientHeight / 2;
+    
+    let closest = null;
+    let minDist = Infinity;
+
+    items.forEach(item => {
+        const rect = item.getBoundingClientRect();
+        const mid = rect.top + rect.height / 2;
+        const dist = Math.abs(center - mid);
+        if (dist < minDist) {
+            minDist = dist;
+            closest = item;
+        }
+    });
+
+    if (closest) {
+        closest.scrollIntoView({
+            behavior: 'smooth',
+            block: 'center'
+        });
+
+        const value = parseInt(closest.dataset.value);
+        if (!isNaN(value)) {
+            if (type === 'hour') selectedHour = value;
+            if (type === 'minute') selectedMinute = value;
+            updateSelectionVisual(type, value);
+        }
+    }
+}
+
+function handlePeriodScroll(container) {
+    const items = Array.from(container.querySelectorAll('.time-picker-item:not(.time-picker-spacer)'));
+    const center = container.getBoundingClientRect().top + container.clientHeight / 2;
+    
+    let closest = null;
+    let minDist = Infinity;
+
+    items.forEach(item => {
+        const rect = item.getBoundingClientRect();
+        const mid = rect.top + rect.height / 2;
+        const dist = Math.abs(center - mid);
+        if (dist < minDist) {
+            minDist = dist;
+            closest = item;
+        }
+    });
+
+    if (closest) {
+        selectedPeriod = closest.dataset.value;
+        updateSelectionVisual('period', selectedPeriod);
+    }
+
+    clearTimeout(container.snapTimeout);
+    container.snapTimeout = setTimeout(() => {
+        snapPeriodToCenter(container);
+    }, 150);
+}
+
+function snapPeriodToCenter(container) {
+    const items = Array.from(container.querySelectorAll('.time-picker-item:not(.time-picker-spacer)'));
+    const center = container.getBoundingClientRect().top + container.clientHeight / 2;
+    
+    let closest = null;
+    let minDist = Infinity;
+
+    items.forEach(item => {
+        const rect = item.getBoundingClientRect();
+        const mid = rect.top + rect.height / 2;
+        const dist = Math.abs(center - mid);
+        if (dist < minDist) {
+            minDist = dist;
+            closest = item;
+        }
+    });
+
+    if (closest) {
+        closest.scrollIntoView({
+            behavior: 'smooth',
+            block: 'center'
+        });
+
+        selectedPeriod = closest.dataset.value;
+        updateSelectionVisual('period', selectedPeriod);
     }
 }
 
@@ -833,220 +443,287 @@ function fetchWithCSRF(url, options = {}) {
     return fetch(url, options);
 }
 
+function openModal(modalId) {
+    const el = document.getElementById(modalId);
+    if (el) el.style.display = 'block';
+}
+
+function closeModal(modalId) {
+    const el = document.getElementById(modalId);
+    if (el) el.style.display = 'none';
+}
+
+function openCreateScheduleModal() {
+    openModal('createScheduleModal');
+}
+
+function showNotification(message, type='info') {
+    const notification = document.createElement('div');
+    notification.className = `notification ${type} show`;
+    notification.textContent = message;
+    document.body.appendChild(notification);
+    setTimeout(() => {
+        notification.classList.remove('show');
+        setTimeout(() => notification.remove(), 300);
+    }, 3000);
+}
+
+function submitCreateSchedule(event) {
+    event.preventDefault();
+    const form = event.target;
+    const formData = new FormData(form);
+
+    fetchWithCSRF('/admin/schedule/add/', {
+        method: 'POST',
+        body: formData
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            showNotification('Schedule created successfully!', 'success');
+            closeModal('createScheduleModal');
+            if (currentSectionId) {
+                setTimeout(() => loadScheduleView(currentSectionId, document.getElementById('scheduleSectionName').textContent, document.getElementById('scheduleCurriculum').textContent), 500);
+            } else {
+                setTimeout(() => window.location.reload(), 800);
+            }
+        } else {
+            const err = data.errors ? data.errors.join(', ') : (data.error || 'Unknown error');
+            showNotification('Error creating schedule: ' + err, 'error');
+        }
+    })
+    .catch(err => {
+        console.error('submitCreateSchedule error', err);
+        showNotification('Error creating schedule', 'error');
+    });
+}
+
 // ===============================
-// SEARCH AND FILTER
+// SCHEDULE VIEW FUNCTIONS
 // ===============================
+function loadScheduleView(sectionId, sectionName, curriculumInfo) {
+    currentSectionId = sectionId;
+    
+    document.getElementById('scheduleEmptyState').style.display = 'none';
+    document.getElementById('scheduleView').style.display = 'block';
+    
+    document.getElementById('scheduleSectionName').textContent = sectionName;
+    document.getElementById('scheduleCurriculum').textContent = curriculumInfo;
+    document.getElementById('sidebarCurriculum').textContent = 'Curriculum: ' + curriculumInfo;
+
+    document.querySelectorAll('.section-card').forEach(card => card.classList.remove('selected'));
+    const cardEl = document.querySelector(`.section-card[data-section-id="${sectionId}"]`);
+    if (cardEl) cardEl.classList.add('selected');
+    
+    fetch(`/admin/section/${sectionId}/schedule-data/`)
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                renderSchedule(data.schedules);
+                renderCoursesList(data.courses);
+            } else {
+                console.error('Error loading schedule:', data.error);
+                showNotification('Error loading schedule data', 'error');
+            }
+        })
+        .catch(err => {
+            console.error('Error loading schedule view:', err);
+            showNotification('Error loading schedule', 'error');
+        });
+}
+
+function renderSchedule(schedules) {
+            console.log('Rendering schedules:', schedules);
+            
+            // Generate time slots and labels
+            const timeSlots = generateTimeSlots();
+            const timeColumn = document.getElementById('timeColumn');
+            timeColumn.innerHTML = '';
+            
+            // Add time labels at proper positions
+            timeSlots.forEach(time => {
+                const label = document.createElement('div');
+                label.className = 'time-label';
+                label.textContent = time;
+                label.style.top = `${calculateTopPosition(time)}px`;
+                timeColumn.appendChild(label);
+            });
+            
+            // Clear all day columns
+            document.querySelectorAll('.schedule-day-column').forEach(col => {
+                col.innerHTML = '';
+            });
+            
+            // Render schedule blocks
+            schedules.forEach(schedule => {
+                const dayColumn = document.querySelector(`.schedule-day-column[data-day="${schedule.day}"]`);
+                if (!dayColumn) return;
+                
+                const block = document.createElement('div');
+                block.className = 'schedule-block';
+                
+                // Calculate position and height
+                const topPos = calculateTopPosition(schedule.start_time);
+                const duration = schedule.duration || calculateDuration(schedule.start_time, schedule.end_time);
+                const height = (duration / 30) * 60; // 60px per 30 minutes
+                
+                // Apply styles
+                const hexColor = schedule.course_color;
+                block.style.backgroundColor = hexToRGBA(hexColor, 0.25);
+                block.style.borderLeftColor = hexColor;
+                block.style.top = `${topPos}px`;
+                block.style.height = `${height}px`;
+                
+                // Add content
+                block.innerHTML = `
+                    <div class="schedule-course-code">${schedule.course_code}</div>
+                    <div class="schedule-details">${schedule.start_time} - ${schedule.end_time}</div>
+                    <div class="schedule-details">Room: ${schedule.room}</div>
+                    <div class="schedule-details">Section: ${schedule.section_name}</div>
+                `;
+                
+                dayColumn.appendChild(block);
+            });
+        }
+        
+        // Calculate top position based on time (7:00 AM = 0px)
+        function calculateTopPosition(timeStr) {
+            const [hours, minutes] = timeStr.split(':').map(Number);
+            const totalMinutes = (hours * 60 + minutes) - (7 * 60); // Offset from 7:00 AM
+            return (totalMinutes / 30) * 60; // 60px per 30 minutes
+        }
+        
+        // Helper function to convert hex to rgba
+        function hexToRGBA(hex, alpha) {
+            const r = parseInt(hex.slice(1, 3), 16);
+            const g = parseInt(hex.slice(3, 5), 16);
+            const b = parseInt(hex.slice(5, 7), 16);
+            return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+        }
+
+        function renderCoursesList(courses) {
+            console.log('Rendering courses:', courses);
+            
+            const coursesList = document.getElementById('coursesList');
+            coursesList.innerHTML = '';
+            
+            if (!courses || courses.length === 0) {
+                coursesList.innerHTML = '<div class="card-empty-message">No courses available</div>';
+                return;
+            }
+            
+            courses.forEach(course => {
+                const courseItem = document.createElement('div');
+                courseItem.className = 'course-item';
+                courseItem.style.borderLeftColor = course.color;
+                courseItem.innerHTML = `
+                    <div class="course-details">
+                        <div class="course-code">${course.course_code}</div>
+                        <div class="course-title">${course.descriptive_title}</div>
+                        <div class="course-info">
+                            <span>Lecture: ${course.lecture_hours}h</span>
+                            <span>Laboratory: ${course.laboratory_hours}h</span>
+                            <span>Credit Unit: ${course.credit_units}</span>
+                        </div>
+                    </div>
+                `;
+                coursesList.appendChild(courseItem);
+            });
+        }
+
+        function generateTimeSlots() {
+            const slots = [];
+            // Start at 7:30 AM
+            slots.push('07:30');
+            // 8:00 to 9:00 PM (21:00)
+            for (let hour = 8; hour <= 21; hour++) {
+                slots.push(`${hour.toString().padStart(2, '0')}:00`);
+                if (hour < 21) {
+                    slots.push(`${hour.toString().padStart(2, '0')}:30`);
+                }
+            }
+            // End at 9:30 PM
+            slots.push('21:30');
+            return slots;
+        }
+
+        function calculateDuration(startTime, endTime) {
+            const [startHour, startMin] = startTime.split(':').map(Number);
+            const [endHour, endMin] = endTime.split(':').map(Number);
+            const duration = (endHour * 60 + endMin) - (startHour * 60 + startMin);
+            return duration;
+        }
+
+        function exportSchedule() {
+            if (currentSectionId) {
+                window.location.href = `/admin/section/${currentSectionId}/export-pdf/`;
+            }
+        }
+
+        function printSchedule() {
+            if (currentSectionId) {
+                window.print();
+            }
+        }
+        
 function filterSections() {
     const searchInput = document.getElementById('searchInput').value.toLowerCase();
     const sectionCards = document.querySelectorAll('.section-card');
     
     sectionCards.forEach(card => {
-        const sectionName = card.dataset.sectionName;
-        const curriculum = card.dataset.curriculum;
+        const name = card.dataset.sectionName || '';
+        const curriculum = card.dataset.curriculum || '';
         
-        if (sectionName.includes(searchInput) || curriculum.includes(searchInput)) {
-            card.style.display = 'flex';
+        if (name.includes(searchInput) || curriculum.includes(searchInput)) {
+            card.style.display = 'block';
         } else {
             card.style.display = 'none';
         }
     });
 }
 
-// ===============================
-// SECTION MENU TOGGLE
-// ===============================
 function toggleSectionMenu(event, sectionId) {
     event.stopPropagation();
-    
-    // Close all other menus
-    document.querySelectorAll('.section-dropdown-menu').forEach(menu => {
-        if (menu.id !== `sectionMenu${sectionId}`) {
-            menu.classList.remove('show');
-        }
-    });
-    
-    // Toggle current menu
     const menu = document.getElementById(`sectionMenu${sectionId}`);
-    menu.classList.toggle('show');
+    if (menu) {
+        menu.classList.toggle('show');
+    }
 }
 
-// Close menus when clicking outside
-document.addEventListener('click', (event) => {
-    if (!event.target.closest('.dropdown-menu-container')) {
-        document.querySelectorAll('.section-dropdown-menu').forEach(menu => {
-            menu.classList.remove('show');
+function openEditSectionModal(sectionId) {
+    console.log('Edit section:', sectionId);
+}
+
+function deleteSection(sectionId, sectionName) {
+    if (confirm(`Are you sure you want to delete ${sectionName}?`)) {
+        fetchWithCSRF(`/admin/section/delete/${sectionId}/`, {
+            method: 'POST'
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                showNotification('Section deleted successfully!', 'success');
+                setTimeout(() => window.location.reload(), 1000);
+            } else {
+                showNotification('Error deleting section', 'error');
+            }
         });
     }
-});
-
-// ===============================
-// DROPDOWN TOGGLE (Admin)
-// ===============================
-function toggleDropdown() {
-    const dropdown = document.getElementById('dropdownMenu');
-    dropdown.classList.toggle('show');
 }
 
-// Close dropdown when clicking outside
-document.addEventListener('click', (event) => {
-    if (!event.target.closest('.admin-section')) {
-        const dropdown = document.getElementById('dropdownMenu');
-        if (dropdown) {
-            dropdown.classList.remove('show');
-        }
-    }
-});
-
-// ===============================
-// STATUS TOGGLE
-// ===============================
 function toggleStatus(event, sectionId) {
     event.stopPropagation();
-    
-    if (!confirm('Are you sure you want to toggle the status of this section?')) {
-        return;
-    }
-    
     fetchWithCSRF(`/admin/section/${sectionId}/toggle-status/`, {
         method: 'POST'
     })
     .then(res => res.json())
     .then(data => {
         if (data.success) {
-            const statusElement = document.getElementById(`status-${sectionId}`);
-            statusElement.textContent = data.status_display;
-            showAlert('Status updated successfully!', 'success');
-        } else {
-            showAlert('Error updating status', 'error');
+            const statusEl = document.getElementById(`status-${sectionId}`);
+            if (statusEl) {
+                statusEl.textContent = data.status_display;
+                statusEl.style.color = data.status === 'complete' ? '#28a745' : '#dc3545';
+            }
         }
-    })
-    .catch(err => {
-        console.error('toggleStatus error', err);
-        showAlert('Error updating status', 'error');
     });
 }
-
-// ===============================
-// SECTION CRUD OPERATIONS
-// ===============================
-function openEditSectionModal(sectionId) {
-    // This function would need to be implemented similar to edit schedule
-    // For now, show a placeholder
-    showAlert('Edit section functionality - to be implemented', 'info');
-}
-
-function deleteSection(sectionId, sectionName) {
-    if (!confirm(`Are you sure you want to delete section ${sectionName}? This action cannot be undone.`)) {
-        return;
-    }
-    
-    fetchWithCSRF(`/admin/section/delete/${sectionId}/`, {
-        method: 'POST'
-    })
-    .then(res => res.json())
-    .then(data => {
-        if (data.success) {
-            showAlert(`Section ${sectionName} deleted successfully!`, 'success');
-            setTimeout(() => window.location.reload(), 1000);
-        } else {
-            const err = data.errors ? data.errors.join(', ') : 'Unknown error';
-            showAlert(`Error deleting section: ${err}`, 'error');
-        }
-    })
-    .catch(err => {
-        console.error('deleteSection error', err);
-        showAlert('Error deleting section', 'error');
-    });
-}
-
-// ===============================
-// EXPORT AND PRINT FUNCTIONS
-// ===============================
-function exportSchedule() {
-    if (!currentSectionId) {
-        showAlert('Please select a section first', 'warning');
-        return;
-    }
-    
-    showAlert('Export to PDF functionality - to be implemented', 'info');
-    // TODO: Implement PDF export functionality
-}
-
-function printSchedule() {
-    if (!currentSectionId) {
-        showAlert('Please select a section first', 'warning');
-        return;
-    }
-    
-    const scheduleView = document.getElementById('scheduleView');
-    const printWindow = window.open('', '_blank');
-    
-    printWindow.document.write(`
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <title>Schedule - ${document.getElementById('scheduleSectionName').textContent}</title>
-            <style>
-                body {
-                    font-family: 'Lexend', Arial, sans-serif;
-                    padding: 20px;
-                }
-                h1 {
-                    text-align: center;
-                    margin-bottom: 10px;
-                }
-                .subtitle {
-                    text-align: center;
-                    color: #666;
-                    margin-bottom: 30px;
-                }
-                .schedule-grid-wrapper {
-                    border: 1px solid #CED4DA;
-                    border-radius: 8px;
-                    overflow: hidden;
-                }
-                /* Copy relevant CSS for schedule grid */
-                @media print {
-                    .no-print {
-                        display: none;
-                    }
-                }
-            </style>
-        </head>
-        <body>
-            <h1>${document.getElementById('scheduleSectionName').textContent}</h1>
-            <div class="subtitle">${document.getElementById('scheduleCurriculum').textContent}</div>
-            ${scheduleView.innerHTML}
-        </body>
-        </html>
-    `);
-    
-    printWindow.document.close();
-    setTimeout(() => {
-        printWindow.print();
-    }, 500);
-}
-
-// ===============================
-// INITIALIZATION
-// ===============================
-document.addEventListener('DOMContentLoaded', () => {
-    console.log('Schedule page initialized');
-    
-    // Create alert container if it doesn't exist
-    if (!document.querySelector('.alert-container')) {
-        createAlertContainer();
-    }
-    
-    // Add loading overlay if it doesn't exist
-    if (!document.getElementById('loadingOverlay')) {
-        const overlay = document.createElement('div');
-        overlay.id = 'loadingOverlay';
-        overlay.className = 'loading-overlay';
-        overlay.innerHTML = `
-            <div class="loader"></div>
-            <p class="loading-text">Generating Schedule...</p>
-        `;
-        document.body.appendChild(overlay);
-    }
-});
