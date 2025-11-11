@@ -490,16 +490,18 @@
 
         // Dropdown toggle for account-section
         function toggleDropdown(event) {
-            if (event && event.stopPropagation) event.stopPropagation();
-            const trigger = event ? (event.currentTarget || event.target.closest('.account-section') || event.target.closest('.admin-section')) : null;
-            const dropdown = (trigger && (trigger.querySelector('.account-dropdown-menu') || trigger.querySelector('.dropdown-menu'))) || document.querySelector('.account-dropdown-menu') || document.querySelector('.dropdown-menu');
+            if (event) event.preventDefault();
+            if (event) event.stopPropagation();
+            const dropdown = event.currentTarget?.querySelector('.dropdown-menu') || document.querySelector('.account-dropdown-menu');
             if (dropdown) dropdown.classList.toggle('show');
         }
 
         // Hide dropdown when clicking outside
         document.addEventListener('click', function(event) {
-            if (!event.target.closest('.account-section') && !event.target.closest('.admin-section') && !event.target.closest('.dropdown-menu')) {
-                document.querySelectorAll('.account-dropdown-menu, .dropdown-menu').forEach(menu => menu.classList.remove('show'));
+            // Close account dropdown
+            if (!event.target.closest('.account-section') && !event.target.closest('.admin-section')) {
+                const accountDropdown = document.querySelector('.account-dropdown-menu');
+                if (accountDropdown) accountDropdown.classList.remove('show');
             }
         });
     </script>

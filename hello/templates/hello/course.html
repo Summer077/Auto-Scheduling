@@ -131,12 +131,12 @@
                         <a href="?curriculum={{ curriculum.id }}" class="curriculum-option">
                             <span>{{ curriculum.name }} ({{ curriculum.year }})</span>
                             <div class="curriculum-actions">
-                                <button class="action-btn-small edit-btn-small" onclick="event.preventDefault(); event.stopPropagation(); openEditCurriculumModal({{ curriculum.id }}, '{{ curriculum.name }}', {{ curriculum.year }})">
+                                <button class="action-butn-small edit-butn-small" onclick="event.preventDefault(); event.stopPropagation(); openEditCurriculumModal({{ curriculum.id }}, '{{ curriculum.name }}', {{ curriculum.year }})">
                                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
                                         <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
                                     </svg>
                                 </button>
-                                <button class="action-btn-small delete-btn-small" onclick="event.preventDefault(); event.stopPropagation(); deleteCurriculum({{ curriculum.id }}, '{{ curriculum.name }}')">
+                                <button class="action-butn-small delete-butn-small" onclick="event.preventDefault(); event.stopPropagation(); deleteCurriculum({{ curriculum.id }}, '{{ curriculum.name }}')">
                                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
                                         <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
                                     </svg>
@@ -178,12 +178,12 @@
                             <td>{{ course.lecture_hours }}</td>
                             <td>{{ course.credit_units }}</td>
                             <td>
-                                <button class="action-btn edit-btn" onclick="openEditCourseModal({{ course.id }})">
+                                <button class="action-butn edit-butn" onclick="openEditCourseModal({{ course.id }})">
                                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
                                         <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
                                     </svg>
                                 </button>
-                                <button class="action-btn delete-btn" onclick="deleteCourse({{ course.id }}, '{{ course.course_code }}')">
+                                <button class="action-butn delete-butn" onclick="deleteCourse({{ course.id }}, '{{ course.course_code }}')">
                                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
                                         <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
                                     </svg>

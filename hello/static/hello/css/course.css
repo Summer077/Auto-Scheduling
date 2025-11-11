@@ -346,7 +346,7 @@ body {
     flex-shrink: 0;
 }
 
-.action-btn-small {
+.action-butn-small {
     background: none;
     border: none;
     cursor: pointer;
@@ -357,18 +357,18 @@ body {
     transition: all 0.3s;
 }
 
-.action-btn-small svg {
+.action-butn-small svg {
     width: 14px;
     height: 14px;
     fill: #ADB5BD;
     transition: fill 0.3s;
 }
 
-.edit-btn-small:hover svg {
+.edit-butn-small:hover svg {
     fill: #0d6efd;
 }
 
-.delete-btn-small:hover svg {
+.delete-butn-small:hover svg {
     fill: #dc3545;
 }
 
@@ -432,7 +432,7 @@ body {
 }
 
 /* Action Buttons in Table */
-.action-btn {
+.action-butn {
     background: none;
     border: none;
     cursor: pointer;
@@ -445,26 +445,26 @@ body {
     margin-right: 4px;
 }
 
-.edit-btn:hover {
+.edit-butn:hover {
     background: none; 
 }
 
-.delete-btn:hover {
+.delete-butn:hover {
     background: none; 
 }
 
-.action-btn svg {
+.action-butn svg {
     width: 20px;
     height: 20px;
     fill: #ADB5BD;
     transition: fill 0.3s; 
 }
 
-.edit-btn:hover svg {
+.edit-butn:hover svg {
     fill: #0d6efd;
 }
 
-.delete-btn:hover svg {
+.delete-butn:hover svg {
     fill: #dc3545;
 }
 

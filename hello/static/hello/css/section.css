@@ -135,6 +135,8 @@ body {
     margin: 4px 12px;
     border-radius: 12px;
     background: transparent;
+    position: relative;
+    z-index: 2001; /* ensure button sits above potential overlays */
 }
 
 .nav-item svg {
@@ -654,6 +656,9 @@ body {
         0 6px 12px rgba(0, 0, 0, 0.12),
         0 2px 4px rgba(0, 0, 0, 0.08),
         inset 0 1px 0 rgba(255, 255, 255, 0.8);
+    position: relative;
+    z-index: 2001; /* ensure button sits above potential overlays */
+    pointer-events: auto;
 }
 
 .add-section-btn:hover {
@@ -675,6 +680,7 @@ body {
     background: #FFFFFF;
     border-radius: 12px;
     padding: 24px;
+    position: relative;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     border: 2px solid #ADB5BD;
     transition: border-color 0.2s ease, transform 0.2s ease;
@@ -875,7 +881,7 @@ body {
 .modal {
     display: none;
     position: fixed;
-    z-index: 2000;
+    z-index: 3000;
     left: 0;
     top: 0;
     width: 100%;
@@ -1093,6 +1099,7 @@ body {
 /* Dropdown Menu Container */
 .dropdown-menu-container {
     position: relative;
+    z-index: 2002; /* ensure dropdown container sits above overlays */
 }
 
 /* Section Dropdown Menu */
@@ -1108,9 +1115,15 @@ body {
     visibility: hidden;
     transform: translateY(-10px);
     transition: all 0.3s;
-    z-index: 100;
+    z-index: 2003; /* bring dropdown above overlays */
     border: 1px solid #E9ECEF;
     display: none;
+}
+
+.triple-dot-btn {
+    position: relative;
+    z-index: 2002; /* ensure button receives pointer events */
+    pointer-events: auto;
 }
 
 .section-dropdown-menu.show {

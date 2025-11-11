@@ -504,8 +504,8 @@ let currentSectionId = null;
 
         function calculateTopPosition(timeStr) {
             const [hours, minutes] = timeStr.split(':').map(Number);
-            // Grid starts at 07:30 so subtract 7*60 + 30 = 450 minutes
-            const gridStart = 7 * 60 + 30;
+                // Grid starts at 07:00 so subtract 7*60 = 420 minutes
+                const gridStart = 7 * 60;
             const totalMinutes = (hours * 60 + minutes) - gridStart;
             return (totalMinutes / 30) * 60;
         }
