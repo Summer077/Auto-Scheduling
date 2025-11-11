@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Schedule Render</title>
+    <style>
+        .schedule-block {
+            position: absolute;
+            left: 0;
+            width: 100%;
+            border-left: 4px solid #000;
+            padding: 8px;
+            background-color: rgba(165, 155, 254, 0.25);
+            font-size: 12px;
+        }
+        .schedule-day-column {
+            position: relative;
+            height: 900px;
+            border: 1px solid #ccc;
+            min-width: 150px;
+        }
+        .schedule-grid {
+            display: grid;
+            grid-template-columns: 80px repeat(6, 1fr);
+            gap: 1px;
+        }
+        .schedule-header-row {
+            display: contents;
+        }
+        .schedule-header-cell {
+            padding: 10px;
+            border: 1px solid #ddd;
+            background: #f5f5f5;
+            font-weight: bold;
+        }
+        .schedule-time-column {
+            position: relative;
+            height: 900px;
+        }
+        .time-label {
+            position: absolute;
+            width: 100%;
+            border-bottom: 1px solid #ddd;
+            font-size: 11px;
+            padding-right: 5px;
+            text-align: right;
+        }
+    </style>
+</head>
+<body>
+    <div class="schedule-grid">
+        <div class="schedule-header-row">
+            <div class="schedule-header-cell"></div>
+            <div class="schedule-header-cell">MONDAY</div>
+            <div class="schedule-header-cell">TUESDAY</div>
+            <div class="schedule-header-cell">WEDNESDAY</div>
+            <div class="schedule-header-cell">THURSDAY</div>
+            <div class="schedule-header-cell">FRIDAY</div>
+            <div class="schedule-header-cell">SATURDAY</div>
+        </div>
+        
+        <div class="schedule-time-column">
+            <div class="time-label" style="top: 60px;">07:30</div>
+            <div class="time-label" style="top: 120px;">08:00</div>
+            <div class="time-label" style="top: 180px;">08:30</div>
+        </div>
+        
+        <div class="schedule-day-column" data-day="0"></div>
+        <div class="schedule-day-column" data-day="1"></div>
+        <div class="schedule-day-column" data-day="2"></div>
+        <div class="schedule-day-column" data-day="3"></div>
+        <div class="schedule-day-column" data-day="4"></div>
+        <div class="schedule-day-column" data-day="5"></div>
+    </div>
+
+    <script>
+        // Test data - first schedule from Stephen Nash
+        const scheduleData = [
+            {
+                "day": 0,
+                "start_time": "08:30",
+                "end_time": "09:30",
+                "duration": 60,
+                "course_code": "MATH 025",
+                "course_title": "Discrete Mathematics",
+                "course_color": "#A29BFE",
+                "room": "A - 316",
+                "section_name": "CPE11S2"
+            }
+        ];
+
+        function calculateTopPosition(timeStr) {
+            const [hours, minutes] = timeStr.split(':').map(Number);
+            const totalMinutes = (hours * 60 + minutes) - (7 * 60);  // 7:00 AM = 0px
+            console.log(`Time: ${timeStr}, hours: ${hours}, minutes: ${minutes}, totalMinutes: ${totalMinutes}, topPos: ${(totalMinutes / 30) * 60}px`);
+            return (totalMinutes / 30) * 60;
+        }
+
+        function calculateDuration(startTime, endTime) {
+            const [startHours, startMinutes] = startTime.split(':').map(Number);
+            const [endHours, endMinutes] = endTime.split(':').map(Number);
+            const startTotalMin = startHours * 60 + startMinutes;
+            const endTotalMin = endHours * 60 + endMinutes;
+            const durationMin = endTotalMin - startTotalMin;
+            return (durationMin / 30) * 60;
+        }
+
+        function hexToRGBA(hex, alpha) {
+            const r = parseInt(hex.slice(1, 3), 16);
+            const g = parseInt(hex.slice(3, 5), 16);
+            const b = parseInt(hex.slice(5, 7), 16);
+            return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+        }
+
+        function renderStaffSchedule(schedules) {
+            const dayColumns = document.querySelectorAll('.schedule-day-column');
+            
+            schedules.forEach(schedule => {
+                const dayColumn = dayColumns[schedule.day];
+                if (!dayColumn) return;
+                
+                const topPos = calculateTopPosition(schedule.start_time);
+                const durationMin = calculateDuration(schedule.start_time, schedule.end_time);
+                const hexColor = schedule.course_color || '#FFA726';
+                
+                const scheduleBlock = document.createElement('div');
+                scheduleBlock.className = 'schedule-block';
+                scheduleBlock.style.top = `${topPos}px`;
+                scheduleBlock.style.height = `${durationMin}px`;
+                scheduleBlock.style.backgroundColor = hexToRGBA(hexColor, 0.25);
+                scheduleBlock.style.borderLeftColor = hexColor;
+                
+                scheduleBlock.innerHTML = `
+                    <strong>${schedule.course_code}</strong><br>
+                    ${schedule.start_time} - ${schedule.end_time}<br>
+                    ${schedule.room || 'TBA'}<br>
+                    ${schedule.section_name}
+                `;
+                dayColumn.appendChild(scheduleBlock);
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Schedule data:', scheduleData);
+            console.log('Schedule length:', scheduleData.length);
+            if (scheduleData && scheduleData.length > 0) {
+                console.log('Rendering schedule...');
+                renderStaffSchedule(scheduleData);
+            } else {
+                console.log('No schedule data available');
+            }
+        });
+    </script>
+</body>
+</html>

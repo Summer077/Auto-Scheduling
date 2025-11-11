@@ -130,9 +130,10 @@
         </div>
     </main>
 
+    {% include 'hello/account_settings.html' %}
+
     <script src="{% static 'hello/js/schedule.js' %}"></script>
     <script>
-    {% include 'hello/account_settings.html' %}
         // Initialize staff schedule with data from view
         document.addEventListener('DOMContentLoaded', function() {
             const scheduleData = {{ schedules|safe }};
@@ -228,9 +229,9 @@
 
         // Dropdown toggle
         function toggleDropdown(event) {
-            if (event) event.preventDefault();
-            if (event) event.stopPropagation();
-            const dropdown = event.currentTarget?.querySelector('.dropdown-menu') || document.querySelector('.account-dropdown-menu');
+            if (event && event.stopPropagation) event.stopPropagation();
+            const trigger = event ? (event.currentTarget || event.target.closest('.account-section') || event.target.closest('.admin-section')) : null;
+            const dropdown = (trigger && (trigger.querySelector('.account-dropdown-menu') || trigger.querySelector('.dropdown-menu'))) || document.querySelector('.account-dropdown-menu') || document.querySelector('.dropdown-menu');
             if (dropdown) dropdown.classList.toggle('show');
         }
 
@@ -246,10 +247,8 @@
 
         // Close dropdowns when clicking outside
         document.addEventListener('click', (event) => {
-            // Close account dropdown
-            if (!event.target.closest('.account-section') && !event.target.closest('.admin-section')) {
-                const accountDropdown = document.querySelector('.account-dropdown-menu');
-                if (accountDropdown) accountDropdown.classList.remove('show');
+            if (!event.target.closest('.admin-section') && !event.target.closest('.account-section') && !event.target.closest('.dropdown-menu')) {
+                document.querySelectorAll('.account-dropdown-menu, .dropdown-menu').forEach(m => m.classList.remove('show'));
             }
         });
     </script>
