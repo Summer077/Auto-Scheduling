@@ -10,103 +10,25 @@
     <title>Academic Scheduling System - Staff Dashboard</title>
     <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@300;400;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{% static 'hello/css/staff_dashboard.css' %}?v=2.0">
+    <link rel="stylesheet" href="{% static 'hello/css/account_settings.css' %}">
 </head>
 <body>
 <!-- Top Navigation Bar -->
     <nav class="top-nav">
         <div class="page-title">DASHBOARD</div>
-        <div class="account-section" onclick="toggleDropdown()">
+    <div class="account-section" onclick="toggleDropdown(event)">
             <div class="account-avatar" {% if faculty.profile_picture %}style="background-image: url('{{ faculty.profile_picture.url }}'); background-size: cover; background-position: center;"{% endif %}></div>
             <span class="account-name">{{ user.first_name|default:user.username|title }}</span>
             <svg class="dropdown-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
                 <path d="M7 10l5 5 5-5z"/>
             </svg>
-            <div class="dropdown-menu" id="dropdownMenu">
+            <div class="dropdown-menu account-dropdown-menu">
                 <a href="#" onclick="openAccountSettings(event)">Account Settings</a>
                 <a href="{% url 'admin_logout' %}">Logout</a>
             </div>
         </div>
     </nav>
-    <!-- Account Settings Popup -->
-<div id="accountSettingsModal" class="account-settings-modal" style="display:none;">
-    <div class="account-settings-content">
-        <h2>Account Settings</h2>
-        <div class="profile-section">
-            <div class="profile-header">
-                <div class="profile-pic" id="previewProfilePic" {% if faculty.profile_picture %}style="background-image: url('{{ faculty.profile_picture.url }}');"{% endif %}></div>
-                <div class="profile-info">
-                    <span>Profile Picture</span>
-                    <span class="profile-note">PNG, JPEG under 15MB</span>
-                </div>
-                <div class="profile-actions">
-                    <button class="upload-btn" id="uploadBtn">Upload new picture</button>
-                    <input type="file" id="profilePicInput" accept="image/png,image/jpeg" style="display:none;">
-                    <button class="delete-btn" id="deleteBtn">Delete</button>
-                </div>
-            </div>
-        </div>
-        
-        <form class="account-form" id="accountForm" enctype="multipart/form-data">
-            {% csrf_token %}
-            <div class="form-row">
-                <div class="form-group">
-                    <label>First Name</label>
-                    <input type="text" id="firstName" name="firstName" value="{{ faculty.first_name }}">
-                </div>
-                <div class="form-group">
-                    <label>Last Name</label>
-                    <input type="text" id="lastName" name="lastName" value="{{ faculty.last_name }}">
-                </div>
-            </div>
-            <div class="form-row">
-                <div class="form-group">
-                    <label>Gender</label>
-                    <select id="gender" name="gender">
-                        <option value="">Select Gender</option>
-                        <option value="M" {% if faculty.gender == 'M' %}selected{% endif %}>Male</option>
-                        <option value="F" {% if faculty.gender == 'F' %}selected{% endif %}>Female</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>Email</label>
-                    <input type="email" id="email" name="email" value="{{ faculty.email }}">
-                </div>
-            </div>
-            <div class="form-row">
-                <div class="form-group">
-                    <label>Current password</label>
-                    <div class="password-input-wrapper">
-                        <input type="password" id="currentPassword" name="currentPassword" class="password-input">
-                        <button type="button" class="toggle-password">
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20">
-                                <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/>
-                            </svg>
-                        </button>
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label>New password</label>
-                    <div class="password-input-wrapper">
-                        <input type="password" id="newPassword" name="newPassword" class="password-input">
-                        <button type="button" class="toggle-password">
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20">
-                                <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/>
-                            </svg>
-                        </button>
-                    </div>
-                    <small style="color: #6b7280; font-size: 12px; margin-top: 4px; display: block;">
-                        Must be: at least 8 characters, 1 uppercase letter (A-Z), 1 special character (!@#$%^&*)
-                    </small>
-                </div>
-            </div>
-        </form>
-        
-        <div class="form-actions">
-            <button class="cancel-btn" id="cancelBtn">Cancel</button>
-            <button class="save-btn" id="saveBtn">Save</button>
-        </div>
-    </div>
-</div>
+    {% include 'hello/account_settings.html' %}
     
         <!-- Sidebar Navigation -->
     <aside class="sidebar">
@@ -567,17 +489,17 @@
         });
 
         // Dropdown toggle for account-section
-        function toggleDropdown() {
-            const menu = document.getElementById('dropdownMenu');
-            menu.classList.toggle('show');
+        function toggleDropdown(event) {
+            if (event && event.stopPropagation) event.stopPropagation();
+            const trigger = event ? (event.currentTarget || event.target.closest('.account-section') || event.target.closest('.admin-section')) : null;
+            const dropdown = (trigger && (trigger.querySelector('.account-dropdown-menu') || trigger.querySelector('.dropdown-menu'))) || document.querySelector('.account-dropdown-menu') || document.querySelector('.dropdown-menu');
+            if (dropdown) dropdown.classList.toggle('show');
         }
 
         // Hide dropdown when clicking outside
         document.addEventListener('click', function(event) {
-            const accountSection = document.querySelector('.account-section');
-            const dropdownMenu = document.getElementById('dropdownMenu');
-            if (!accountSection.contains(event.target)) {
-                dropdownMenu.classList.remove('show');
+            if (!event.target.closest('.account-section') && !event.target.closest('.admin-section') && !event.target.closest('.dropdown-menu')) {
+                document.querySelectorAll('.account-dropdown-menu, .dropdown-menu').forEach(menu => menu.classList.remove('show'));
             }
         });
     </script>

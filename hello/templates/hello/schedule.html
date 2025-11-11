@@ -7,22 +7,25 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Schedule Management - ASSIST</title>
     <link rel="stylesheet" href="{% static 'hello/css/schedule.css' %}">
+    <link rel="stylesheet" href="{% static 'hello/css/account_settings.css' %}">
 </head>
 <body>
     <!-- Top Navigation Bar -->
     <nav class="top-nav">
         <div class="page-title">Schedule</div>
-        <div class="admin-section" onclick="toggleDropdown()">
-            <div class="admin-avatar"></div>
-            <span class="admin-name">ADMIN</span>
+    <div class="account-section" onclick="toggleDropdown(event)">
+            <div class="account-avatar"></div>
+            <span class="account-name">ADMIN</span>
             <svg class="dropdown-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
                 <path d="M7 10l5 5 5-5z"/>
             </svg>
-            <div class="dropdown-menu" id="dropdownMenu">
+            <div class="dropdown-menu account-dropdown-menu">
+                <a href="#" onclick="openAccountSettings(event)">Account Settings</a>
                 <a href="{% url 'admin_logout' %}">Logout</a>
             </div>
         </div>
     </nav>
+    {% include 'hello/account_settings.html' %}
 
     <!-- Sidebar Navigation -->
     <aside class="sidebar">

@@ -7,21 +7,25 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Course Management - ASSIST</title>
     <link rel="stylesheet" href="{% static 'hello/css/course.css' %}">
+    <link rel="stylesheet" href="{% static 'hello/css/account_settings.css' %}">
 </head>
 <body>
     <!-- Top Navigation Bar -->
     <nav class="top-nav">
         <div class="page-title">COURSE MANAGEMENT</div>
-        <div class="admin-section" onclick="toggleDropdown()">
-            <span class="admin-name">ADMIN</span>
+    <div class="account-section" onclick="toggleDropdown(event)">
+            <div class="account-avatar"></div>
+            <span class="account-name">ADMIN</span>
             <svg class="dropdown-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
                 <path d="M7 10l5 5 5-5z"/>
             </svg>
-            <div class="dropdown-menu" id="dropdownMenu">
+            <div class="dropdown-menu account-dropdown-menu">
+                <a href="#" onclick="openAccountSettings(event)">Account Settings</a>
                 <a href="{% url 'admin_logout' %}">Logout</a>
             </div>
         </div>
     </nav>
+    {% include 'hello/account_settings.html' %}
 
     <!-- Sidebar (same as before) -->
     <aside class="sidebar">
@@ -346,8 +350,11 @@
     </div>
     <script>
         // Dropdown toggles
-        function toggleDropdown() {
-            document.getElementById('dropdownMenu').classList.toggle('show');
+        function toggleDropdown(event) {
+            if (event && event.stopPropagation) event.stopPropagation();
+            const trigger = event ? (event.currentTarget || event.target.closest('.account-section') || event.target.closest('.admin-section')) : null;
+            const dropdown = (trigger && (trigger.querySelector('.account-dropdown-menu') || trigger.querySelector('.dropdown-menu'))) || document.querySelector('.account-dropdown-menu') || document.querySelector('.dropdown-menu');
+            if (dropdown) dropdown.classList.toggle('show');
         }
 
         function toggleCurriculumFilter() {
@@ -400,8 +407,8 @@
 
         // Close dropdowns when clicking outside
         window.onclick = function(event) {
-            if (!event.target.closest('.admin-section')) {
-                document.getElementById('dropdownMenu').classList.remove('show');
+            if (!event.target.closest('.admin-section') && !event.target.closest('.account-section') && !event.target.closest('.dropdown-menu')) {
+                document.querySelectorAll('.account-dropdown-menu, .dropdown-menu').forEach(m => m.classList.remove('show'));
             }
             if (!event.target.closest('.filter-dropdown')) {
                 document.querySelectorAll('.filter-dropdown').forEach(d => d.classList.remove('active'));

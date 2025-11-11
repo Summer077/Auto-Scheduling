@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Login</title>
     <link rel="stylesheet" href="{% static 'hello/css/style.css' %}">
+        <link rel="stylesheet" href="{% static 'hello/css/account_settings.css' %}">
 </head>
 <body>
     <div class="login-container">
@@ -65,5 +66,7 @@
             }
         }
     </script>
-</body>
+        </body>
+        {% include 'hello/account_settings.html' %}
+        </html>
 </html>

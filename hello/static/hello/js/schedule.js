@@ -978,9 +978,11 @@ let currentSectionId = null;
             if (menu) menu.classList.toggle('show');
         }
 
-        function toggleDropdown() {
-            const dropdown = document.getElementById('dropdownMenu');
-            dropdown.classList.toggle('show');
+        function toggleDropdown(event) {
+            if (event && event.stopPropagation) event.stopPropagation();
+            const trigger = event ? (event.currentTarget || event.target.closest('.account-section') || event.target.closest('.admin-section')) : null;
+            const dropdown = (trigger && (trigger.querySelector('.account-dropdown-menu') || trigger.querySelector('.dropdown-menu'))) || document.querySelector('.account-dropdown-menu') || document.querySelector('.dropdown-menu');
+            if (dropdown) dropdown.classList.toggle('show');
         }
 
         function toggleStatus(event, sectionId) {
@@ -1116,9 +1118,8 @@ let currentSectionId = null;
 
         // Close dropdowns when clicking outside
         document.addEventListener('click', (event) => {
-            if (!event.target.closest('.admin-section')) {
-                const dropdown = document.getElementById('dropdownMenu');
-                if (dropdown) dropdown.classList.remove('show');
+            if (!event.target.closest('.admin-section') && !event.target.closest('.account-section') && !event.target.closest('.dropdown-menu')) {
+                document.querySelectorAll('.account-dropdown-menu, .dropdown-menu').forEach(m => m.classList.remove('show'));
             }
             if (!event.target.closest('.dropdown-menu-container')) {
                 document.querySelectorAll('.section-dropdown-menu').forEach(menu => {

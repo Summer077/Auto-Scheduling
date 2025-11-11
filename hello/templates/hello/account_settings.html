@@ -1,0 +1,207 @@
+{% load static %}
+<!-- Account Settings Partial -->
+<div id="accountSettingsModal" class="account-settings-modal" style="display:none;">
+    <div class="account-settings-content">
+        <h2>Account Settings</h2>
+        <div class="profile-section">
+            <div class="profile-header">
+                <div class="profile-pic" id="previewProfilePic" {% if faculty.profile_picture %}style="background-image: url('{{ faculty.profile_picture.url }}');"{% endif %}></div>
+                <div class="profile-info">
+                    <span>Profile Picture</span>
+                    <span class="profile-note">PNG, JPEG under 15MB</span>
+                </div>
+                <div class="profile-actions">
+                    <button class="upload-btn" id="uploadBtn">Upload new picture</button>
+                    <input type="file" id="profilePicInput" accept="image/png,image/jpeg" style="display:none;">
+                    <button class="delete-btn" id="deleteBtn">Delete</button>
+                </div>
+            </div>
+        </div>
+        <form class="account-form" id="accountForm" enctype="multipart/form-data">
+            {% csrf_token %}
+            <div class="form-row">
+                <div class="form-group">
+                    <label>First Name</label>
+                    <input type="text" id="firstName" name="firstName" value="{{ faculty.first_name }}">
+                </div>
+                <div class="form-group">
+                    <label>Last Name</label>
+                    <input type="text" id="lastName" name="lastName" value="{{ faculty.last_name }}">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Gender</label>
+                    <select id="gender" name="gender">
+                        <option value="">Select Gender</option>
+                        <option value="M" {% if faculty.gender == 'M' %}selected{% endif %}>Male</option>
+                        <option value="F" {% if faculty.gender == 'F' %}selected{% endif %}>Female</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" id="email" name="email" value="{{ faculty.email }}">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Current password</label>
+                    <div class="password-input-wrapper">
+                        <input type="password" id="currentPassword" name="currentPassword" class="password-input">
+                        <button type="button" class="toggle-password">
+                            <!-- eye icon -->
+                        </button>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>New password</label>
+                    <div class="password-input-wrapper">
+                        <input type="password" id="newPassword" name="newPassword" class="password-input">
+                        <button type="button" class="toggle-password">
+                            <!-- eye icon -->
+                        </button>
+                    </div>
+                    <small style="color: #6b7280; font-size: 12px; margin-top: 4px; display: block;">
+                        Must be: at least 8 characters, 1 uppercase letter (A-Z), 1 special character (!@#$%^&*)
+                    </small>
+                </div>
+            </div>
+        </form>
+        <div class="form-actions">
+            <button class="cancel-btn" id="cancelBtn">Cancel</button>
+            <button class="save-btn" id="saveBtn">Save</button>
+        </div>
+    </div>
+</div>
+
+<script>
+// Basic account settings JS - safe to include on pages
+function openAccountSettings(event) {
+    if (event) event.preventDefault();
+    const modal = document.getElementById('accountSettingsModal');
+    if (modal) modal.style.display = 'flex';
+}
+
+function closeAccountSettings() {
+    const modal = document.getElementById('accountSettingsModal');
+    if (modal) modal.style.display = 'none';
+}
+
+function toggleDropdown(event) {
+    // Determine the element that was clicked (support .account-section and .admin-section)
+    try {
+        const trigger = event ? (event.currentTarget || event.target.closest('.account-section') || event.target.closest('.admin-section')) : document.querySelector('.account-section');
+        // Prefer the dropdown inside the clicked trigger; fall back to global id if needed
+    const dropdownMenu = (trigger && (trigger.querySelector('.account-dropdown-menu') || trigger.querySelector('.dropdown-menu'))) || document.querySelector('.account-dropdown-menu') || document.querySelector('.dropdown-menu');
+        console.log('toggleDropdown trigger:', trigger, 'dropdown:', dropdownMenu);
+        if (dropdownMenu) {
+            dropdownMenu.classList.toggle('show');
+        }
+    } catch (err) {
+        console.error('toggleDropdown error', err);
+    }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Close dropdown when clicking outside
+    document.addEventListener('click', function(event) {
+        // If the click is not inside any account/admin section or its dropdown, close all dropdowns
+        const clickedInside = event.target.closest('.account-section') || event.target.closest('.admin-section') || event.target.closest('.dropdown-menu') || event.target.closest('.account-settings-modal');
+        if (!clickedInside) {
+            document.querySelectorAll('.dropdown-menu').forEach(menu => menu.classList.remove('show'));
+        }
+    });
+    const saveBtn = document.getElementById('saveBtn');
+    const cancelBtn = document.getElementById('cancelBtn');
+    const uploadBtn = document.getElementById('uploadBtn');
+    const profilePicInput = document.getElementById('profilePicInput');
+    const deleteBtn = document.getElementById('deleteBtn');
+
+    if (uploadBtn && profilePicInput) {
+        uploadBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            profilePicInput.click();
+        });
+    }
+
+    if (deleteBtn) {
+        deleteBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            if (confirm('Are you sure you want to delete your profile picture?')) {
+                const previewPic = document.getElementById('previewProfilePic');
+                if (previewPic) previewPic.style.backgroundImage = '';
+                if (profilePicInput) profilePicInput.value = '';
+            }
+        }, true);
+    }
+
+    if (saveBtn) {
+        saveBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+
+            const form = document.querySelector('.account-form');
+            const firstName = document.getElementById('firstName') ? document.getElementById('firstName').value.trim() : '';
+            const lastName = document.getElementById('lastName') ? document.getElementById('lastName').value.trim() : '';
+            const email = document.getElementById('email') ? document.getElementById('email').value.trim() : '';
+            const gender = document.getElementById('gender') ? document.getElementById('gender').value : '';
+            const currentPassword = document.getElementById('currentPassword') ? document.getElementById('currentPassword').value : '';
+            const newPassword = document.getElementById('newPassword') ? document.getElementById('newPassword').value : '';
+
+            // Simple validation
+            if (!firstName || !lastName || !email) {
+                alert('Please fill in all required fields');
+                return;
+            }
+
+            if (newPassword && !currentPassword) {
+                alert('Please enter your current password to set a new password');
+                return;
+            }
+
+            if (newPassword) {
+                const passwordErrors = [];
+                if (newPassword.length < 8) passwordErrors.push('at least 8 characters long');
+                if (!/[A-Z]/.test(newPassword)) passwordErrors.push('at least one uppercase letter (A-Z)');
+                if (!/[!@#$%^&*]/.test(newPassword)) passwordErrors.push('at least one special character (!@#$%^&*)');
+                if (passwordErrors.length > 0) { alert('New password must have: ' + passwordErrors.join(', ')); return; }
+            }
+
+            const formData = new FormData();
+            formData.append('firstName', firstName);
+            formData.append('lastName', lastName);
+            formData.append('email', email);
+            formData.append('gender', gender);
+            formData.append('currentPassword', currentPassword);
+            formData.append('newPassword', newPassword);
+            if (profilePicInput && profilePicInput.files.length > 0) formData.append('profilePicture', profilePicInput.files[0]);
+
+            const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]');
+            const token = csrfToken ? csrfToken.value : '';
+
+            fetch('/staff/account/save/', {
+                method: 'POST',
+                headers: { 'X-CSRFToken': token },
+                body: formData
+            })
+            .then(response => response.json().then(data => ({status: response.status, data})))
+            .then(result => {
+                const { status, data } = result;
+                if (status >= 400) {
+                    alert('Error saving account settings:\n' + (data.errors ? data.errors.join('\n') : data.error || 'Unknown error'));
+                    return;
+                }
+                if (data.success) {
+                    alert(data.message || 'Account settings saved successfully!');
+                    closeAccountSettings();
+                }
+            })
+            .catch(err => { console.error('Account settings save failed', err); alert('Error saving account settings'); });
+        });
+    }
+
+    if (cancelBtn) {
+        cancelBtn.addEventListener('click', function(e) { e.preventDefault(); closeAccountSettings(); });
+    }
+});
+</script>

@@ -6,18 +6,19 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Schedule - ASSIST</title>
     <link rel="stylesheet" href="{% static 'hello/css/section.css' %}">
+    <link rel="stylesheet" href="{% static 'hello/css/account_settings.css' %}">
 </head>
 <body>
     <!-- Top Navigation Bar -->
     <nav class="top-nav">
         <div class="page-title">SCHEDULE</div>
-        <div class="admin-section" onclick="toggleDropdown()">
+    <div class="admin-section" onclick="toggleDropdown(event)">
             <div class="admin-avatar"></div>
             <span class="admin-name">{{ faculty.first_name|default:"FACULTY" }}</span>
             <svg class="dropdown-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
                 <path d="M7 10l5 5 5-5z"/>
             </svg>
-            <div class="dropdown-menu" id="dropdownMenu">
+            <div class="dropdown-menu account-dropdown-menu">
                 <a href="{% url 'admin_logout' %}">Logout</a>
             </div>
         </div>
@@ -131,6 +132,7 @@
 
     <script src="{% static 'hello/js/schedule.js' %}"></script>
     <script>
+    {% include 'hello/account_settings.html' %}
         // Initialize staff schedule with data from view
         document.addEventListener('DOMContentLoaded', function() {
             const scheduleData = {{ schedules|safe }};
@@ -225,9 +227,11 @@
         }
 
         // Dropdown toggle
-        function toggleDropdown() {
-            const menu = document.getElementById('dropdownMenu');
-            if (menu) menu.classList.toggle('show');
+        function toggleDropdown(event) {
+            if (event && event.stopPropagation) event.stopPropagation();
+            const trigger = event ? (event.currentTarget || event.target.closest('.account-section') || event.target.closest('.admin-section')) : null;
+            const dropdown = (trigger && (trigger.querySelector('.account-dropdown-menu') || trigger.querySelector('.dropdown-menu'))) || document.querySelector('.account-dropdown-menu') || document.querySelector('.dropdown-menu');
+            if (dropdown) dropdown.classList.toggle('show');
         }
 
         // Print schedule
@@ -242,9 +246,8 @@
 
         // Close dropdowns when clicking outside
         document.addEventListener('click', (event) => {
-            if (!event.target.closest('.admin-section')) {
-                const dropdown = document.getElementById('dropdownMenu');
-                if (dropdown) dropdown.classList.remove('show');
+            if (!event.target.closest('.admin-section') && !event.target.closest('.account-section') && !event.target.closest('.dropdown-menu')) {
+                document.querySelectorAll('.account-dropdown-menu, .dropdown-menu').forEach(m => m.classList.remove('show'));
             }
         });
     </script>
