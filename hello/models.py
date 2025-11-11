@@ -97,6 +97,7 @@ class Faculty(models.Model):
     email = models.EmailField(unique=True)
     gender = models.CharField(max_length=1, choices=GENDER_CHOICES, default='M')
     employment_status = models.CharField(max_length=20, choices=EMPLOYMENT_STATUS_CHOICES, default='full_time')
+    profile_picture = models.ImageField(upload_to='profile_pictures/', null=True, blank=True, verbose_name='Profile Picture')
     highest_degree = models.CharField(max_length=100, blank=True)
     prc_licensed = models.BooleanField(default=False, verbose_name='PRC Licensed (Qualified)')
     specialization = models.ManyToManyField(Course, blank=True, related_name='specialized_faculty')

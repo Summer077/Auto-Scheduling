@@ -1,5 +1,18 @@
 from django import forms
-from .models import Course, Curriculum
+from .models import Course, Curriculum, Faculty
+
+class FacultyProfileForm(forms.ModelForm):
+    """Form for faculty to update their profile information"""
+    class Meta:
+        model = Faculty
+        fields = ['first_name', 'last_name', 'email', 'gender', 'profile_picture']
+        widgets = {
+            'first_name': forms.TextInput(attrs={'class': 'form-control'}),
+            'last_name': forms.TextInput(attrs={'class': 'form-control'}),
+            'email': forms.EmailInput(attrs={'class': 'form-control'}),
+            'gender': forms.Select(attrs={'class': 'form-control'}),
+            'profile_picture': forms.FileInput(attrs={'class': 'form-control', 'accept': 'image/png,image/jpeg'}),
+        }
 
 class CourseForm(forms.ModelForm):
     class Meta:

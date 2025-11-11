@@ -4,83 +4,109 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="cache-control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="pragma" content="no-cache">
+    <meta http-equiv="expires" content="0">
     <title>Academic Scheduling System - Staff Dashboard</title>
     <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@300;400;600;700;800;900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="{% static 'hello/css/staff_dashboard.css' %}">
+    <link rel="stylesheet" href="{% static 'hello/css/staff_dashboard.css' %}?v=2.0">
 </head>
 <body>
 <!-- Top Navigation Bar -->
     <nav class="top-nav">
         <div class="page-title">DASHBOARD</div>
         <div class="account-section" onclick="toggleDropdown()">
-            <div class="account-avatar"></div>
+            <div class="account-avatar" {% if faculty.profile_picture %}style="background-image: url('{{ faculty.profile_picture.url }}'); background-size: cover; background-position: center;"{% endif %}></div>
             <span class="account-name">{{ user.first_name|default:user.username|title }}</span>
             <svg class="dropdown-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
                 <path d="M7 10l5 5 5-5z"/>
             </svg>
             <div class="dropdown-menu" id="dropdownMenu">
-                <a href="#">Account Settings</a>
+                <a href="#" onclick="openAccountSettings(event)">Account Settings</a>
                 <a href="{% url 'admin_logout' %}">Logout</a>
             </div>
         </div>
     </nav>
     <!-- Account Settings Popup -->
-    <div id="accountSettingsModal" class="account-settings-modal" style="display:none;">
-        <div class="account-settings-content">
-            <h2>Account Settings</h2>
-            <div class="profile-section">
-                <div class="profile-pic"></div>
+<div id="accountSettingsModal" class="account-settings-modal" style="display:none;">
+    <div class="account-settings-content">
+        <h2>Account Settings</h2>
+        <div class="profile-section">
+            <div class="profile-header">
+                <div class="profile-pic" id="previewProfilePic" {% if faculty.profile_picture %}style="background-image: url('{{ faculty.profile_picture.url }}');"{% endif %}></div>
                 <div class="profile-info">
                     <span>Profile Picture</span>
                     <span class="profile-note">PNG, JPEG under 15MB</span>
                 </div>
                 <div class="profile-actions">
-                    <button type="button" class="upload-btn">Upload new picture</button>
-                    <button type="button" class="delete-btn">Delete</button>
+                    <button class="upload-btn" id="uploadBtn">Upload new picture</button>
+                    <input type="file" id="profilePicInput" accept="image/png,image/jpeg" style="display:none;">
+                    <button class="delete-btn" id="deleteBtn">Delete</button>
                 </div>
             </div>
-            <form class="account-form">
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>First Name</label>
-                        <input type="text" value="{{ faculty.first_name }}">
-                    </div>
-                    <div class="form-group">
-                        <label>Last Name</label>
-                        <input type="text" value="{{ faculty.last_name }}">
+        </div>
+        
+        <form class="account-form" id="accountForm" enctype="multipart/form-data">
+            {% csrf_token %}
+            <div class="form-row">
+                <div class="form-group">
+                    <label>First Name</label>
+                    <input type="text" id="firstName" name="firstName" value="{{ faculty.first_name }}">
+                </div>
+                <div class="form-group">
+                    <label>Last Name</label>
+                    <input type="text" id="lastName" name="lastName" value="{{ faculty.last_name }}">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Gender</label>
+                    <select id="gender" name="gender">
+                        <option value="">Select Gender</option>
+                        <option value="M" {% if faculty.gender == 'M' %}selected{% endif %}>Male</option>
+                        <option value="F" {% if faculty.gender == 'F' %}selected{% endif %}>Female</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" id="email" name="email" value="{{ faculty.email }}">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Current password</label>
+                    <div class="password-input-wrapper">
+                        <input type="password" id="currentPassword" name="currentPassword" class="password-input">
+                        <button type="button" class="toggle-password">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20">
+                                <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/>
+                            </svg>
+                        </button>
                     </div>
                 </div>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>Gender</label>
-                        <select>
-                            <option value="">Select Gender</option>
-                            <option value="M" {% if faculty.gender == 'M' %}selected{% endif %}>Male</option>
-                            <option value="F" {% if faculty.gender == 'F' %}selected{% endif %}>Female</option>
-                        </select>
+                <div class="form-group">
+                    <label>New password</label>
+                    <div class="password-input-wrapper">
+                        <input type="password" id="newPassword" name="newPassword" class="password-input">
+                        <button type="button" class="toggle-password">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20">
+                                <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/>
+                            </svg>
+                        </button>
                     </div>
-                    <div class="form-group">
-                        <label>Email</label>
-                        <input type="email" value="{{ faculty.email }}">
-                    </div>
+                    <small style="color: #6b7280; font-size: 12px; margin-top: 4px; display: block;">
+                        Must be: at least 8 characters, 1 uppercase letter (A-Z), 1 special character (!@#$%^&*)
+                    </small>
                 </div>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>Current password</label>
-                        <input type="password">
-                    </div>
-                    <div class="form-group">
-                        <label>New password</label>
-                        <input type="password">
-                    </div>
-                </div>
-                <div class="form-actions">
-                    <button type="button" class="cancel-btn">Cancel</button>
-                    <button type="submit" class="save-btn">Save</button>
-                </div>
-            </form>
+            </div>
+        </form>
+        
+        <div class="form-actions">
+            <button class="cancel-btn" id="cancelBtn">Cancel</button>
+            <button class="save-btn" id="saveBtn">Save</button>
         </div>
     </div>
+</div>
     
         <!-- Sidebar Navigation -->
     <aside class="sidebar">
@@ -265,20 +291,272 @@
     </div>
 
     <script>
-        // Show Account Settings popup
-        document.querySelector('.dropdown-menu a').addEventListener('click', function(e) {
-            if (this.textContent.includes('Account Settings')) {
-                e.preventDefault();
-                document.getElementById('accountSettingsModal').style.display = 'flex';
+        // Function to open account settings modal
+        function openAccountSettings(event) {
+            event.preventDefault();
+            const modal = document.getElementById('accountSettingsModal');
+            if (modal) {
+                modal.style.display = 'flex';
             }
-        });
-
-        // Hide popup on Cancel
-        document.querySelector('.cancel-btn').addEventListener('click', function() {
-            document.getElementById('accountSettingsModal').style.display = 'none';
-        });
-        // Simple script for navigation
+        }
+        
+        // Initialize on DOM ready
         document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM Content Loaded - initializing...');
+            
+            // Get all elements we need
+            const modal = document.getElementById('accountSettingsModal');
+            const saveBtn = document.getElementById('saveBtn');
+            const cancelBtn = document.getElementById('cancelBtn');
+            const deleteBtn = document.getElementById('deleteBtn');
+            // File upload button handler
+            const uploadBtn = document.getElementById('uploadBtn');
+            if (uploadBtn) {
+                uploadBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    document.getElementById('profilePicInput').click();
+                    console.log('Upload button clicked');
+                }, true);
+            }
+            
+            const fileInput = document.getElementById('profilePicInput');
+            
+            console.log('saveBtn:', saveBtn);
+            console.log('cancelBtn:', cancelBtn);
+            
+            // Delete button handler
+            if (deleteBtn) {
+                deleteBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (confirm('Are you sure you want to delete your profile picture?')) {
+                        // Clear the preview
+                        const previewPic = document.getElementById('previewProfilePic');
+                        if (previewPic) {
+                            previewPic.style.backgroundImage = '';
+                        }
+                        // Clear the file input
+                        if (fileInput) {
+                            fileInput.value = '';
+                        }
+                    }
+                }, true);
+            }
+            
+            // Save button click handler
+            if (saveBtn) {
+                saveBtn.addEventListener('click', function(e) {
+                    console.log('Save button clicked!');
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    const form = document.querySelector('.account-form');
+                    const textInputs = form.querySelectorAll('input[type="text"]');
+                    const genderSelect = form.querySelector('select');
+                    
+                    // Read password fields by their ID to avoid selector timing issues
+                    const currentPasswordEl = document.getElementById('currentPassword');
+                    const newPasswordEl = document.getElementById('newPassword');
+                    
+                    const firstName = textInputs[0] ? textInputs[0].value.trim() : '';
+                    const lastName = textInputs[1] ? textInputs[1].value.trim() : '';
+                    const email = form.querySelector('input[type="email"]') ? form.querySelector('input[type="email"]').value.trim() : '';
+                    const gender = genderSelect ? genderSelect.value : '';
+                    const currentPassword = currentPasswordEl ? currentPasswordEl.value : '';
+                    const newPassword = newPasswordEl ? newPasswordEl.value : '';
+                    const profilePicInput = document.getElementById('profilePicInput');
+
+                    console.log('DEBUG: Found password elements:', !!currentPasswordEl, !!newPasswordEl);
+                    console.log('DEBUG: currentPasswordEl:', currentPasswordEl);
+                    console.log('DEBUG: newPasswordEl:', newPasswordEl);
+                    console.log('Form data:', {firstName, lastName, email, gender, currentPassword: currentPassword ? '***' : '', newPassword: newPassword ? '***' : ''});
+                    
+                    if (!firstName || !lastName || !email) {
+                        alert('Please fill in all required fields');
+                        return;
+                    }
+                    
+                    // Check if trying to change password but current password is missing
+                    if (newPassword && !currentPassword) {
+                        alert('Please enter your current password to set a new password');
+                        return;
+                    }
+                    
+                    // Validate new password strength (only if a new password is provided)
+                    if (newPassword) {
+                        const passwordErrors = [];
+                        
+                        console.log('Validating password:', newPassword);
+                        console.log('Length:', newPassword.length);
+                        console.log('Has uppercase:', /[A-Z]/.test(newPassword));
+                        console.log('Has special char:', /[!@#$%^&*]/.test(newPassword));
+
+                        if (newPassword.length < 8) {
+                            passwordErrors.push('at least 8 characters long');
+                        }
+
+                        if (!/[A-Z]/.test(newPassword)) {
+                            passwordErrors.push('at least one uppercase letter (A-Z)');
+                        }
+
+                        if (!/[!@#$%^&*]/.test(newPassword)) {
+                            passwordErrors.push('at least one special character (!@#$%^&*)');
+                        }
+                        
+                        if (passwordErrors.length > 0) {
+                            console.log('Password validation failed:', passwordErrors);
+                            alert('New password must have: ' + passwordErrors.join(', '));
+                            return;
+                        }
+                        console.log('Password validation passed');
+                    }
+                    
+                    // Build FormData for sending data and file
+                    const formData = new FormData();
+                    formData.append('firstName', firstName);
+                    formData.append('lastName', lastName);
+                    formData.append('email', email);
+                    formData.append('gender', gender);
+                    if (currentPassword) formData.append('currentPassword', currentPassword);
+                    if (newPassword) formData.append('newPassword', newPassword);
+                    if (profilePicInput.files.length > 0) {
+                        formData.append('profilePicture', profilePicInput.files[0]);
+                    }
+                    
+                    // Get CSRF token from the page
+                    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]');
+                    const token = csrfToken ? csrfToken.value : '';
+                    
+                    // Send data to backend
+                    fetch('/staff/account/save/', {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRFToken': token
+                        },
+                        body: formData
+                    })
+                    .then(response => {
+                        console.log('Response status:', response.status);
+                        return response.json().then(data => ({
+                            status: response.status,
+                            data: data
+                        }));
+                    })
+                    .then(result => {
+                        const { status, data } = result;
+                        console.log('Response from server:', data);
+                        
+                        if (status >= 400) {
+                            // Server returned an error (4xx or 5xx)
+                            const errorMessage = data.errors ? data.errors.join('\n') : data.error || 'An error occurred';
+                            alert('Error saving account settings:\n' + errorMessage);
+                            return;
+                        }
+                        
+                        if (data.success) {
+                            // Update account avatar if profile picture was uploaded
+                            const profilePic = document.querySelector('.profile-pic');
+                            const profilePicBackgroundImage = profilePic.style.backgroundImage;
+                            
+                            if (profilePicBackgroundImage && profilePicBackgroundImage !== 'none') {
+                                // Update the account avatar in the top nav
+                                const accountAvatar = document.querySelector('.account-avatar');
+                                accountAvatar.style.backgroundImage = profilePicBackgroundImage;
+                                accountAvatar.style.backgroundSize = 'cover';
+                                accountAvatar.style.backgroundPosition = 'center';
+                                console.log('Account avatar updated');
+                            }
+                            
+                            alert('Account settings saved successfully!');
+                            modal.style.display = 'none';
+                            // Reload page to ensure profile picture persists on re-login
+                            window.location.reload();
+                        } else {
+                            const errorMessage = data.errors ? data.errors.join('\n') : data.error || 'An error occurred';
+                            alert('Error saving account settings:\n' + errorMessage);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('Error communicating with server: ' + error.message);
+                    });
+                }, true);
+            }
+            
+            // Cancel button click handler
+            if (cancelBtn) {
+                cancelBtn.addEventListener('click', function(e) {
+                    console.log('Cancel button clicked!');
+                    e.preventDefault();
+                    e.stopPropagation();
+                    modal.style.display = 'none';
+                }, true);
+            }
+            
+            // Password visibility toggle
+            const toggleButtons = document.querySelectorAll('.toggle-password');
+            toggleButtons.forEach(button => {
+                button.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const wrapper = this.parentElement;
+                    const input = wrapper.querySelector('input');
+                    
+                    if (input.type === 'password') {
+                        input.type = 'text';
+                        this.classList.add('visible');
+                    } else {
+                        input.type = 'password';
+                        this.classList.remove('visible');
+                    }
+                }, true);
+            });
+            
+            // File upload handler
+            if (fileInput) {
+                fileInput.addEventListener('change', function(e) {
+                    console.log('File selected:', e.target.files[0]);
+                    if (this.files && this.files[0]) {
+                        const file = this.files[0];
+                        
+                        // Validate file type
+                        if (!file.type.match('image/(png|jpeg)')) {
+                            alert('Please select a PNG or JPEG image');
+                            this.value = ''; // Clear the input
+                            return;
+                        }
+                        
+                        // Validate file size
+                        if (file.size > 15 * 1024 * 1024) {
+                            alert('File size must be under 15MB');
+                            this.value = ''; // Clear the input
+                            return;
+                        }
+                        
+                        // Read file and display preview
+                        const reader = new FileReader();
+                        reader.onload = function(e) {
+                            const imageUrl = e.target.result;
+                            
+                            // Update profile picture in modal
+                            const profilePic = document.querySelector('.profile-pic');
+                            profilePic.style.backgroundImage = 'url(' + imageUrl + ')';
+                            profilePic.style.backgroundSize = 'cover';
+                            profilePic.style.backgroundPosition = 'center';
+                            
+                            console.log('Preview image set:', imageUrl.substring(0, 50) + '...');
+                        };
+                        reader.onerror = function(error) {
+                            console.error('Error reading file:', error);
+                            alert('Error reading file: ' + error.message);
+                        };
+                        reader.readAsDataURL(file);
+                    }
+                });
+            }
+            
+            // Navigation items
             const navItems = document.querySelectorAll('.nav-item');
             navItems.forEach(item => {
                 item.addEventListener('click', function() {

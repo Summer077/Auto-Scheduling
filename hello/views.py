@@ -1,5 +1,5 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth import authenticate, login, logout, update_session_auth_hash
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.http import JsonResponse
@@ -2496,3 +2496,192 @@ def edit_schedule(request, schedule_id):
         'start_time': schedule.start_time,
         'end_time': schedule.end_time
     })
+
+
+@login_required(login_url='admin_login')
+def save_account_settings(request):
+    """Handle account settings update for logged-in faculty member"""
+    print(f"DEBUG: save_account_settings called with method {request.method}")
+    if request.method != 'POST':
+        return JsonResponse({
+            'success': False,
+            'error': 'Only POST requests are allowed'
+        }, status=400)
+    
+    print(f"DEBUG: Starting save_account_settings for user {request.user.username}")
+    try:
+        # Get the faculty profile for the logged-in user
+        faculty = Faculty.objects.get(user=request.user)
+    except Faculty.DoesNotExist:
+        return JsonResponse({
+            'success': False,
+            'error': 'Faculty profile not found'
+        }, status=404)
+    
+    # Get form data
+    first_name = request.POST.get('firstName', '').strip()
+    last_name = request.POST.get('lastName', '').strip()
+    email = request.POST.get('email', '').strip()
+    gender = request.POST.get('gender', '').strip()
+    current_password = request.POST.get('currentPassword', '')
+    new_password = request.POST.get('newPassword', '')
+    profile_picture = request.FILES.get('profilePicture', None)
+    
+    print(f"DEBUG: Form data received - new_password='{new_password}', current_password='{current_password}'")
+    print(f"DEBUG: new_password type: {type(new_password)}, value: '{new_password}', len: {len(new_password) if new_password else 0}")
+    
+    # Validate required fields
+    errors = []
+    
+    if not first_name:
+        errors.append('First name is required')
+    if not last_name:
+        errors.append('Last name is required')
+    if not email:
+        errors.append('Email is required')
+    if gender not in ['M', 'F', '']:
+        errors.append('Invalid gender selection')
+    
+    # Validate email format and uniqueness
+    if email:
+        # Check if email is unique (excluding current faculty's email)
+        if Faculty.objects.filter(email=email).exclude(id=faculty.id).exists():
+            errors.append('This email is already in use')
+        # Basic email validation
+        if '@' not in email:
+            errors.append('Invalid email format')
+    
+    # Check if password change is attempted
+    # Rule: if current_password is provided, new_password must also be provided
+    if current_password and not new_password:
+        errors.append('New password is required when providing current password')
+    
+    print(f"DEBUG: new_password='{new_password}', current_password='{current_password}'")
+    
+    if new_password is not None and new_password != '':
+        # Normalize password (trim whitespace)
+        new_password = new_password.strip()
+        print(f"DEBUG: After strip, new_password='{new_password}', len={len(new_password)}")
+        
+        # First: verify current password is correct BEFORE validating new password strength
+        if not current_password:
+            errors.append('Current password is required to set a new password')
+        elif not request.user.check_password(current_password):
+            errors.append('Current password is incorrect')
+            print(f"DEBUG: Current password check failed for user {request.user.username}")
+        else:
+            print(f"DEBUG: Current password verified for user {request.user.username}")
+        
+        # Only validate new password strength if current password is correct
+        if not errors:  # No errors from current password check
+            print(f"DEBUG: Validating new password strength...")
+            password_errors = []
+
+            # Check minimum length (at least 8 characters)
+            if len(new_password) < 8:
+                password_errors.append('at least 8 characters long')
+                print(f"DEBUG: Length check failed: {len(new_password)} < 8")
+
+            # Check for at least one uppercase letter
+            if not any(c.isupper() for c in new_password):
+                password_errors.append('at least one uppercase letter (A-Z)')
+                print(f"DEBUG: Uppercase check failed")
+
+            # Check for at least one allowed special character (use the same set as UI)
+            allowed_specials = set('!@#$%^&*')
+            if not any(c in allowed_specials for c in new_password):
+                password_errors.append('at least one special character (!@#$%^&*)')
+                print(f"DEBUG: Special char check failed")
+
+            if password_errors:
+                errors.append('New password must have: ' + ', '.join(password_errors))
+                print(f"DEBUG: Password errors added: {errors}")
+    
+    # Return errors if any
+    if errors:
+        print(f"DEBUG: Returning error response with status 400: {errors}")
+        return JsonResponse({
+            'success': False,
+            'errors': errors
+        }, status=400)
+    
+    try:
+        # Update faculty profile
+        if first_name:
+            faculty.first_name = first_name
+        if last_name:
+            faculty.last_name = last_name
+        if email:
+            faculty.email = email
+        if gender:
+            faculty.gender = gender
+        
+        faculty.save()
+        
+        # Update user profile
+        request.user.first_name = first_name
+        request.user.last_name = last_name
+        request.user.email = email
+        
+        # Update password if provided
+        if new_password:
+            print(f"DEBUG: Setting password for {request.user.username} to new value: '{new_password}'")
+            print(f"DEBUG: Before set_password - user.password hash: {request.user.password}")
+            request.user.set_password(new_password)
+            print(f"DEBUG: After set_password - user.password hash: {request.user.password}")
+        else:
+            print(f"DEBUG: No password change (new_password is empty)")
+        
+        print(f"DEBUG: About to save user {request.user.username}")
+        request.user.save()
+        # If password was changed, update the session auth hash so the user isn't logged out
+        if new_password:
+            try:
+                update_session_auth_hash(request, request.user)
+                print(f"DEBUG: Session auth hash updated for user {request.user.username}")
+            except Exception as e:
+                print(f"DEBUG: Failed to update session auth hash: {e}")
+        print(f"DEBUG: User {request.user.username} saved successfully")
+        
+        # Verify it was actually saved by re-fetching from database
+        refreshed_user = User.objects.get(pk=request.user.pk)
+        print(f"DEBUG: Refreshed user from DB - password hash: {refreshed_user.password}")
+        print(f"DEBUG: Can refresh user authenticate with new password? {refreshed_user.check_password(new_password)}")
+        
+        # Handle profile picture upload
+        if profile_picture:
+            # Validate file type
+            allowed_types = ['image/jpeg', 'image/png']
+            if profile_picture.content_type not in allowed_types:
+                return JsonResponse({
+                    'success': False,
+                    'errors': ['Only PNG and JPEG images are allowed']
+                }, status=400)
+            
+            # Validate file size (15MB)
+            if profile_picture.size > 15 * 1024 * 1024:
+                return JsonResponse({
+                    'success': False,
+                    'errors': ['File size must be under 15MB']
+                }, status=400)
+            
+            # Delete old profile picture if it exists
+            if faculty.profile_picture:
+                faculty.profile_picture.delete()
+            
+            # Save new profile picture
+            faculty.profile_picture = profile_picture
+            faculty.save()
+        
+        messages.success(request, 'Account settings saved successfully!')
+        
+        return JsonResponse({
+            'success': True,
+            'message': 'Account settings saved successfully'
+        })
+        
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'errors': [f'Error saving account settings: {str(e)}']
+        }, status=500)

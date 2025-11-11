@@ -8,6 +8,7 @@ urlpatterns = [
     path('staff/dashboard/', views.staff_dashboard, name='staff_dashboard'),
     path('staff/schedule/', views.staff_schedule, name='staff_schedule'),
     path('staff/schedule/print/', views.staff_schedule_print, name='staff_schedule_print'),
+    path('staff/account/save/', views.save_account_settings, name='save_account_settings'),
     
     # Sections
     path('admin/section/', views.section_view, name='section_view'),  
