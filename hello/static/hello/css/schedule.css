@@ -882,16 +882,12 @@ body {
 
 .modal-content {
     background-color: #FFFFFF;
-    margin: 2% auto;
+    margin: 5% auto;
     padding: 0;
     border-radius: 12px;
     width: 90%;
-    max-width: 700px;
+    max-width: 600px;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
-    max-height: 90vh;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
 }
 
 .modal-header {
@@ -900,7 +896,6 @@ body {
     align-items: center;
     padding: 24px 30px;
     border-bottom: 1px solid #E0E0E0;
-    flex-shrink: 0; /* Add this line */
 }
 
 .modal-header h2 {
@@ -1689,9 +1684,8 @@ input:checked + .toggle-slider:before {
     display: flex;
     gap: 0;
     border-bottom: 2px solid #E9ECEF;
-    margin-bottom: 0; /* Change from 24px to 0 */
+    margin-bottom: 24px;
     padding: 0 30px;
-    flex-shrink: 0; /* Add this line */
 }
 
 .tab-btn {
@@ -1731,19 +1725,10 @@ input:checked + .toggle-slider:before {
     display: none;
     padding: 30px;
     animation: fadeIn 0.3s ease;
-    overflow-y: auto;
-    flex: 1;
-    min-height: 500px; /* Add this line */
 }
 
 .tab-content.active {
     display: block;
-}
-
-/* Remove extra padding from forms inside tabs */
-.tab-content form {
-    margin: 0;
-    padding: 0;
 }
 
 @keyframes fadeIn {
@@ -2047,4 +2032,36 @@ input:checked + .toggle-slider:before {
         width: 100%;
         justify-content: center;
     }
+}
+
+/* Schedule Confirmation Modal */
+#scheduleConfirmModal .modal-content {
+    animation: slideInUp 0.3s ease;
+}
+
+@keyframes slideInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+#scheduleConfirmModal p {
+    margin: 0;
+}
+
+/* Hover effect for editable schedule blocks */
+.schedule-block:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+    z-index: 25 !important;
+    border-width: 2px;
+}
+
+.schedule-block:active {
+    transform: translateY(0);
 }

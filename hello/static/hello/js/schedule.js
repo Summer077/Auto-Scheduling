@@ -153,7 +153,10 @@ let currentSectionId = null;
                         if (card) {
                             const sectionName = card.querySelector('.card-title').textContent;
                             const curriculum = card.querySelector('.card-subtitle').textContent;
-                            setTimeout(() => loadScheduleView(data.section_id, sectionName, curriculum), 500);
+                            // Load schedule view immediately and show confirmation modal
+                            loadScheduleView(data.section_id, sectionName, curriculum);
+                            // Show confirmation modal after schedule loads
+                            setTimeout(() => showScheduleConfirmation(data.section_id), 800);
                         }
                     }
                 } else {
@@ -165,6 +168,89 @@ let currentSectionId = null;
                 hideLoading();
                 console.error('Generate error:', err);
                 showAlert('Error generating schedule', 'error');
+            });
+        }
+
+        // Show schedule confirmation modal
+        function showScheduleConfirmation(sectionId) {
+            const confirmModal = document.createElement('div');
+            confirmModal.className = 'modal';
+            confirmModal.id = 'scheduleConfirmModal';
+            confirmModal.style.display = 'block';
+            confirmModal.innerHTML = `
+                <div class="modal-content" style="max-width: 500px;">
+                    <div class="modal-header">
+                        <h2>Schedule Generated</h2>
+                        <span class="close" onclick="closeScheduleConfirmation()">&times;</span>
+                    </div>
+                    <div style="padding: 30px;">
+                        <p style="font-size: 1rem; color: #495057; margin-bottom: 20px; line-height: 1.6;">
+                            The schedule has been generated successfully. Please review the schedule on the right panel.
+                        </p>
+                        <p style="font-size: 0.95rem; color: #6C757D; margin-bottom: 0; line-height: 1.5;">
+                            You can click on any schedule block to edit the details, or finalize the schedule if everything looks good.
+                        </p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn-secondary" onclick="regenerateSchedule(${sectionId})">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18">
+                                <path fill="currentColor" d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/>
+                            </svg>
+                            Regenerate
+                        </button>
+                        <button type="button" class="btn-primary" onclick="finalizeSchedule(${sectionId})">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18">
+                                <path fill="currentColor" d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"/>
+                            </svg>
+                            Finalize Schedule
+                        </button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(confirmModal);
+        }
+
+        function closeScheduleConfirmation() {
+            const modal = document.getElementById('scheduleConfirmModal');
+            if (modal) {
+                modal.remove();
+            }
+        }
+
+        function regenerateSchedule(sectionId) {
+            closeScheduleConfirmation();
+            const section = document.querySelector(`[data-section-id="${sectionId}"]`);
+            if (section) {
+                const selectElement = document.getElementById('generate_section_select');
+                selectElement.value = sectionId;
+                updateGenerateFilters();
+                switchTab('generate');
+                openModal('scheduleModal');
+            }
+        }
+
+        function finalizeSchedule(sectionId) {
+            fetchWithCSRF(`/admin/section/${sectionId}/toggle-status/`, {
+                method: 'POST'
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    showAlert('Schedule finalized successfully!', 'success');
+                    closeScheduleConfirmation();
+                    // Update the status display on the card
+                    const statusElement = document.getElementById(`status-${sectionId}`);
+                    if (statusElement) {
+                        statusElement.textContent = data.status_display;
+                        statusElement.style.color = data.status === 'complete' ? '#28a745' : '#dc3545';
+                    }
+                } else {
+                    showAlert('Error finalizing schedule', 'error');
+                }
+            })
+            .catch(err => {
+                console.error('Error finalizing schedule:', err);
+                showAlert('Error finalizing schedule', 'error');
             });
         }
 
@@ -180,13 +266,7 @@ let currentSectionId = null;
             .then(res => res.json())
             .then(data => {
                 if (data.success) {
-                    // Check for warnings
-                    if (data.warnings && data.warnings.length > 0) {
-                        showAlert('Schedule created with conflicts: ' + data.warnings.join(', '), 'warning');
-                    } else {
-                        showAlert('Schedule created successfully!', 'success');
-                    }
-                    
+                    showAlert('Schedule created successfully!', 'success');
                     closeModal('scheduleModal');
                     if (currentSectionId) {
                         setTimeout(() => {
@@ -207,6 +287,7 @@ let currentSectionId = null;
                 showAlert('Error creating schedule', 'error');
             });
         }
+
         // Edit schedule functions
         function openEditScheduleModal(scheduleId) {
             currentEditScheduleId = scheduleId;
@@ -310,7 +391,8 @@ let currentSectionId = null;
             document.getElementById('sidebarCurriculum').textContent = curriculum;
             
             document.getElementById('scheduleEmptyState').style.display = 'none';
-            document.getElementById('scheduleView').style.display = 'flex';
+            // Use block to match Section page rendering
+            document.getElementById('scheduleView').style.display = 'block';
             
             document.querySelectorAll('.section-card').forEach(card => card.classList.remove('selected'));
             const cardEl = document.querySelector(`.section-card[data-section-id="${sectionId}"]`);
@@ -333,87 +415,66 @@ let currentSectionId = null;
                 });
         }
 
-        function generateTimeSlots() {
-            const slots = []
-            let hour = 7
-            let minute = 30
-
-            // Generate times from 7:30 AM to 9:30 PM
-            while (true) {
-                const hh = hour.toString().padStart(2, '0')
-                const mm = minute.toString().padStart(2, '0')
-                slots.push(`${hh}:${mm}`)
-
-                // Break when reaching 21:30
-                if (hour === 21 && minute === 30) break
-
-                // Add 30 minutes
-                minute += 30
-                if (minute >= 60) {
-                    minute = 0
-                    hour++
-                }
-            }
-
-            return slots
-        }
-
-
         // Render schedule grid
         function renderScheduleGrid(schedules) {
-            console.log('Rendering schedules:', schedules)
+            const timeColumn = document.getElementById('timeColumn');
+            timeColumn.innerHTML = '';
 
-            // Use YOUR time slot generator
-            const timeSlots = generateTimeSlots()
-            const timeColumn = document.getElementById('timeColumn')
-            timeColumn.innerHTML = ''
+            // Use the same time slot generation as Section page
+            const timeSlots = generateTimeSlots();
 
-            // Render YOUR time labels using calculateTopPosition
+            // Add time labels at proper positions
             timeSlots.forEach(time => {
-                const label = document.createElement('div')
-                label.className = 'time-label'
-                label.textContent = time
-                label.style.top = `${calculateTopPosition(time)}px`
-                timeColumn.appendChild(label)
-            })
+                const label = document.createElement('div');
+                label.className = 'time-label';
+                label.textContent = time;
+                label.style.top = `${calculateTopPosition(time)}px`;
+                timeColumn.appendChild(label);
+            });
 
-            // Clear day columns
+            // Clear all day columns
             document.querySelectorAll('.schedule-day-column').forEach(col => {
-                col.innerHTML = ''
-            })
+                col.innerHTML = '';
+            });
 
             // Render schedule blocks
             schedules.forEach(schedule => {
-                const dayColumn = document.querySelector(`.schedule-day-column[data-day="${schedule.day}"]`)
-                if (!dayColumn) return
+                const dayColumn = document.querySelector(`.schedule-day-column[data-day="${schedule.day}"]`);
+                if (!dayColumn) return;
 
-                const block = document.createElement('div')
-                block.className = 'schedule-block'
-                block.dataset.scheduleId = schedule.id   // optional but kept
+                const block = document.createElement('div');
+                block.className = 'schedule-block';
+                // attach schedule id so handlers can reference it
+                block.dataset.scheduleId = schedule.id;
 
-                // Position + height
-                const topPos = calculateTopPosition(schedule.start_time)
-                const duration = schedule.duration || calculateDuration(schedule.start_time, schedule.end_time)
-                const height = (duration / 30) * 60
+                // Calculate position and height
+                const topPos = calculateTopPosition(schedule.start_time);
+                const duration = schedule.duration || calculateDuration(schedule.start_time, schedule.end_time);
+                const height = (duration / 30) * 60; // 60px per 30 minutes
 
-                const hexColor = schedule.course_color
+                // Apply styles
+                const hexColor = schedule.course_color;
+                block.style.backgroundColor = hexToRGBA(hexColor, 0.25);
+                block.style.borderLeftColor = hexColor;
+                block.style.top = `${topPos}px`;
+                block.style.height = `${height}px`;
 
-                block.style.backgroundColor = hexToRGBA(hexColor, 0.25)
-                block.style.borderLeftColor = hexColor
-                block.style.top = `${topPos}px`
-                block.style.height = `${height}px`
-
-                // Your original content
+                // Add content (match Section page)
                 block.innerHTML = `
                     <div class="schedule-course-code">${schedule.course_code}</div>
                     <div class="schedule-details">${schedule.start_time} - ${schedule.end_time}</div>
                     <div class="schedule-details">Room: ${schedule.room}</div>
-                    <div class="schedule-details">Section: ${schedule.section_name}</div>
-                    <div class="schedule-details">Faculty: ${schedule.faculty || 'TBA'}</div>
-                `
+                    <div class="schedule-details">Section: ${schedule.section_name || ''}</div>
+                `;
 
-                dayColumn.appendChild(block)
-            })
+                // clicking a block should open the edit modal (delete/edit from there)
+                block.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    openEditScheduleModal(schedule.id);
+                });
+
+                dayColumn.appendChild(block);
+            });
         }
 
         function calculateTopPosition(timeStr) {
@@ -440,7 +501,7 @@ let currentSectionId = null;
             coursesList.innerHTML = '';
             
             if (!courses || courses.length === 0) {
-                coursesList.innerHTML = '<div style="color: #6C757D; font-size: 0.875rem; text-align: center; padding: 20px;">No courses scheduled yet.</div>';
+                coursesList.innerHTML = '<div class="card-empty-message">No courses available</div>';
                 return;
             }
             
@@ -461,6 +522,22 @@ let currentSectionId = null;
                 `;
                 coursesList.appendChild(courseItem);
             });
+        }
+
+        function generateTimeSlots() {
+            const slots = [];
+            // Start at 7:30 AM
+            slots.push('07:30');
+            // 8:00 to 9:00 PM (21:00)
+            for (let hour = 8; hour <= 21; hour++) {
+                slots.push(`${hour.toString().padStart(2, '0')}:00`);
+                if (hour < 21) {
+                    slots.push(`${hour.toString().padStart(2, '0')}:30`);
+                }
+            }
+            // End at 9:30 PM
+            slots.push('21:30');
+            return slots;
         }
 
         // Time picker functions
@@ -608,23 +685,83 @@ let currentSectionId = null;
         function setupScrollListeners() {
             const hoursList = document.getElementById('hoursList');
             const minutesList = document.getElementById('minutesList');
+            const periodList = document.getElementById('periodList');
+
             if (!hoursList.dataset.added) {
-                hoursList.addEventListener('scroll', () => handleInfiniteScroll(hoursList, 'hour'));
+                hoursList.addEventListener('scroll', () => {
+                    handleInfiniteScroll(hoursList, 'hour');
+                    scheduleCenterAfterScroll(hoursList);
+                });
                 hoursList.dataset.added = true;
             }
+
             if (!minutesList.dataset.added) {
-                minutesList.addEventListener('scroll', () => handleInfiniteScroll(minutesList, 'minute'));
+                minutesList.addEventListener('scroll', () => {
+                    handleInfiniteScroll(minutesList, 'minute');
+                    scheduleCenterAfterScroll(minutesList);
+                });
                 minutesList.dataset.added = true;
+            }
+
+            // FIX FOR PERIOD LIST AUTO-CENTERING
+            if (!periodList.dataset.added) {
+                periodList.addEventListener('scroll', () => {
+                    updateSelectedFromScroll(periodList, 'period');
+                    scheduleCenterAfterScroll(periodList);
+                });
+                periodList.dataset.added = true;
+            }
+        }
+
+
+        // Debounced centering: after user stops scrolling, center the .selected item
+        function scheduleCenterAfterScroll(container) {
+            try {
+                // clear previous timer
+                if (container._centerTimer) clearTimeout(container._centerTimer);
+                container._centerTimer = setTimeout(() => {
+                    // find selected item in this container
+                    const sel = container.querySelector('.time-picker-item.selected');
+                    if (sel) {
+                        // Smoothly center the selected item
+                        sel.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    } else {
+                        // If none selected, try to compute closest and center it
+                        const items = Array.from(container.querySelectorAll('.time-picker-item'));
+                        if (items.length) {
+                            const center = container.getBoundingClientRect().top + container.clientHeight / 2;
+                            let closest = null;
+                            let minDist = Infinity;
+                            items.forEach(item => {
+                                const rect = item.getBoundingClientRect();
+                                const mid = rect.top + rect.height / 2;
+                                const dist = Math.abs(center - mid);
+                                if (dist < minDist) { minDist = dist; closest = item; }
+                            });
+                            if (closest) closest.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        }
+                    }
+                }, 120);
+            } catch (e) {
+                console.error('scheduleCenterAfterScroll error', e);
             }
         }
 
         function handleInfiniteScroll(container, type) {
+            // Disable infinite scroll for AM/PM list
+            if (type === 'period') {
+                updateSelectedFromScroll(container, type);
+                return;
+            }
+
             if (container.dataset.isAdjusting === 'true') return;
+
             const scrollTop = container.scrollTop;
             const scrollHeight = container.scrollHeight;
             const clientHeight = container.clientHeight;
             const maxScroll = scrollHeight - clientHeight;
             const buffer = clientHeight * 0.5;
+
             if (scrollTop < buffer) {
                 container.dataset.isAdjusting = 'true';
                 const offset = scrollTop;
@@ -636,15 +773,73 @@ let currentSectionId = null;
                 container.scrollTop = (scrollHeight / 2) + offset;
                 setTimeout(() => { delete container.dataset.isAdjusting; }, 100);
             }
+
             updateSelectedFromScroll(container, type);
         }
+
 
         function updateSelectedFromScroll(container, type) {
             const items = Array.from(container.querySelectorAll('.time-picker-item'));
             const center = container.getBoundingClientRect().top + container.clientHeight / 2;
+
             let closest = null;
             let minDist = Infinity;
+
             items.forEach(item => {
+                // skip blank spacers
+                if (item.classList.contains('time-picker-spacer')) return;
+
+                const rect = item.getBoundingClientRect();
+                const mid = rect.top + rect.height / 2;
+                const dist = Math.abs(center - mid);
+
+                if (dist < minDist) {
+                    minDist = dist;
+                    closest = item;
+                }
+            });
+
+            if (!closest) return;
+
+            if (type === 'period') {
+                selectedPeriod = closest.dataset.value;
+                updateSelectionVisual('period', selectedPeriod);
+            } else {
+                const val = parseInt(closest.dataset.value);
+                if (!isNaN(val)) {
+                    if (type === 'hour') selectedHour = val;
+                    if (type === 'minute') selectedMinute = val;
+                    updateSelectionVisual(type, val);
+                }
+            }
+        }
+
+
+        function updateSelectionVisual(type, value) {
+            const id = type === 'hour' ? 'hoursList'
+                    : type === 'minute' ? 'minutesList'
+                    : 'periodList';
+
+            const list = document.getElementById(id);
+            if (!list) return;
+
+            const items = Array.from(list.querySelectorAll('.time-picker-item'));
+            const center = list.getBoundingClientRect().top + list.clientHeight / 2;
+
+            items.forEach(item => item.classList.remove('selected'));
+
+            const matching = items.filter(item => {
+                if (item.classList.contains('time-picker-spacer')) return false;   // ignore blanks
+                if (type === 'period') return item.dataset.value === value;
+                return parseInt(item.dataset.value) === value;
+            });
+
+            if (!matching.length) return;
+
+            let closest = matching[0];
+            let minDist = Infinity;
+
+            matching.forEach(item => {
                 const rect = item.getBoundingClientRect();
                 const mid = rect.top + rect.height / 2;
                 const dist = Math.abs(center - mid);
@@ -653,45 +848,8 @@ let currentSectionId = null;
                     closest = item;
                 }
             });
-            if (closest) {
-                const value = parseInt(closest.dataset.value);
-                if (!isNaN(value)) {
-                    if (type === 'hour') selectedHour = value;
-                    if (type === 'minute') selectedMinute = value;
-                    updateSelectionVisual(type, value);
-                }
-            }
-        }
 
-        function updateSelectionVisual(type, value) {
-            try {
-                const id = type === 'hour' ? 'hoursList' : type === 'minute' ? 'minutesList' : 'periodList';
-                const list = document.getElementById(id);
-                if (!list) return;
-                const items = Array.from(list.querySelectorAll('.time-picker-item'));
-                const center = list.getBoundingClientRect().top + list.clientHeight / 2;
-                items.forEach(item => item.classList.remove('selected'));
-                const matching = items.filter(i => {
-                    if (type === 'period') return i.dataset.value === value;
-                    return parseInt(i.dataset.value) === value;
-                });
-                if (matching.length) {
-                    let closest = matching[0];
-                    let minDist = Infinity;
-                    matching.forEach(item => {
-                        const rect = item.getBoundingClientRect();
-                        const mid = rect.top + rect.height / 2;
-                        const dist = Math.abs(center - mid);
-                        if (dist < minDist) {
-                            minDist = dist;
-                            closest = item;
-                        }
-                    });
-                    if (closest) closest.classList.add('selected');
-                }
-            } catch (e) {
-                console.error('updateSelectionVisual error', e);
-            }
+            closest.classList.add('selected');
         }
 
         function confirmTimeSelection() {
