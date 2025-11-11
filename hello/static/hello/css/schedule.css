@@ -882,12 +882,16 @@ body {
 
 .modal-content {
     background-color: #FFFFFF;
-    margin: 5% auto;
+    margin: 2% auto;
     padding: 0;
     border-radius: 12px;
     width: 90%;
-    max-width: 600px;
+    max-width: 700px;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
 }
 
 .modal-header {
@@ -896,6 +900,7 @@ body {
     align-items: center;
     padding: 24px 30px;
     border-bottom: 1px solid #E0E0E0;
+    flex-shrink: 0; /* Add this line */
 }
 
 .modal-header h2 {
@@ -1684,8 +1689,9 @@ input:checked + .toggle-slider:before {
     display: flex;
     gap: 0;
     border-bottom: 2px solid #E9ECEF;
-    margin-bottom: 24px;
+    margin-bottom: 0; /* Change from 24px to 0 */
     padding: 0 30px;
+    flex-shrink: 0; /* Add this line */
 }
 
 .tab-btn {
@@ -1725,10 +1731,19 @@ input:checked + .toggle-slider:before {
     display: none;
     padding: 30px;
     animation: fadeIn 0.3s ease;
+    overflow-y: auto;
+    flex: 1;
+    min-height: 500px; /* Add this line */
 }
 
 .tab-content.active {
     display: block;
+}
+
+/* Remove extra padding from forms inside tabs */
+.tab-content form {
+    margin: 0;
+    padding: 0;
 }
 
 @keyframes fadeIn {

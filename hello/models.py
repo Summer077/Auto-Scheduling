@@ -260,15 +260,6 @@ class Schedule(models.Model):
             start_hour, start_min = map(int, self.start_time.split(':'))
             end_hour, end_min = map(int, self.end_time.split(':'))
             self.duration = (end_hour * 60 + end_min) - (start_hour * 60 + start_min)
-
-        if self.faculty:
-            current_units = sum(
-                s.course.credit_units for s in self.faculty.schedules.exclude(pk=self.pk)
-            )
-            if current_units + self.course.credit_units > 25:
-                raise ValidationError(
-                    f"{self.faculty.first_name} {self.faculty.last_name} would exceed 25-unit limit"
-                )
         
         self.full_clean()
         super().save(*args, **kwargs)

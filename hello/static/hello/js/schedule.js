@@ -180,7 +180,13 @@ let currentSectionId = null;
             .then(res => res.json())
             .then(data => {
                 if (data.success) {
-                    showAlert('Schedule created successfully!', 'success');
+                    // Check for warnings
+                    if (data.warnings && data.warnings.length > 0) {
+                        showAlert('Schedule created with conflicts: ' + data.warnings.join(', '), 'warning');
+                    } else {
+                        showAlert('Schedule created successfully!', 'success');
+                    }
+                    
                     closeModal('scheduleModal');
                     if (currentSectionId) {
                         setTimeout(() => {
@@ -201,7 +207,6 @@ let currentSectionId = null;
                 showAlert('Error creating schedule', 'error');
             });
         }
-
         // Edit schedule functions
         function openEditScheduleModal(scheduleId) {
             currentEditScheduleId = scheduleId;
@@ -404,6 +409,7 @@ let currentSectionId = null;
                     <div class="schedule-details">${schedule.start_time} - ${schedule.end_time}</div>
                     <div class="schedule-details">Room: ${schedule.room}</div>
                     <div class="schedule-details">Section: ${schedule.section_name}</div>
+                    <div class="schedule-details">Faculty: ${schedule.faculty || 'TBA'}</div>
                 `
 
                 dayColumn.appendChild(block)
