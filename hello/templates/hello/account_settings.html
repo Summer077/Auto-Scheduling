@@ -85,6 +85,8 @@ function openAccountSettings(event) {
 function closeAccountSettings() {
     const modal = document.getElementById('accountSettingsModal');
     if (modal) modal.style.display = 'none';
+    // Navigate back to staff schedule page
+    window.location.href = "{% url 'staff_schedule' %}";
 }
 
 function toggleDropdown(event) {
