@@ -12,18 +12,76 @@
 <!-- Top Navigation Bar -->
     <nav class="top-nav">
         <div class="page-title">DASHBOARD</div>
-        <div class="admin-section" onclick="toggleDropdown()">
-            <div class="admin-avatar"></div>
-            <span class="admin-name">{{ user.first_name|default:user.username|title }}</span>
+        <div class="account-section" onclick="toggleDropdown()">
+            <div class="account-avatar"></div>
+            <span class="account-name">{{ user.first_name|default:user.username|title }}</span>
             <svg class="dropdown-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
                 <path d="M7 10l5 5 5-5z"/>
             </svg>
             <div class="dropdown-menu" id="dropdownMenu">
+                <a href="#">Account Settings</a>
                 <a href="{% url 'admin_logout' %}">Logout</a>
             </div>
         </div>
     </nav>
-
+    <!-- Account Settings Popup -->
+    <div id="accountSettingsModal" class="account-settings-modal" style="display:none;">
+        <div class="account-settings-content">
+            <h2>Account Settings</h2>
+            <div class="profile-section">
+                <div class="profile-pic"></div>
+                <div class="profile-info">
+                    <span>Profile Picture</span>
+                    <span class="profile-note">PNG, JPEG under 15MB</span>
+                </div>
+                <div class="profile-actions">
+                    <button type="button" class="upload-btn">Upload new picture</button>
+                    <button type="button" class="delete-btn">Delete</button>
+                </div>
+            </div>
+            <form class="account-form">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>First Name</label>
+                        <input type="text" value="{{ faculty.first_name }}">
+                    </div>
+                    <div class="form-group">
+                        <label>Last Name</label>
+                        <input type="text" value="{{ faculty.last_name }}">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Gender</label>
+                        <select>
+                            <option value="">Select Gender</option>
+                            <option value="M" {% if faculty.gender == 'M' %}selected{% endif %}>Male</option>
+                            <option value="F" {% if faculty.gender == 'F' %}selected{% endif %}>Female</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Email</label>
+                        <input type="email" value="{{ faculty.email }}">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Current password</label>
+                        <input type="password">
+                    </div>
+                    <div class="form-group">
+                        <label>New password</label>
+                        <input type="password">
+                    </div>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="cancel-btn">Cancel</button>
+                    <button type="submit" class="save-btn">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
         <!-- Sidebar Navigation -->
     <aside class="sidebar">
         <a href="{% url 'staff_dashboard' %}" class="nav-item{% if request.resolver_match.url_name == 'staff_dashboard' %} active{% endif %}">
@@ -207,16 +265,42 @@
     </div>
 
     <script>
+        // Show Account Settings popup
+        document.querySelector('.dropdown-menu a').addEventListener('click', function(e) {
+            if (this.textContent.includes('Account Settings')) {
+                e.preventDefault();
+                document.getElementById('accountSettingsModal').style.display = 'flex';
+            }
+        });
+
+        // Hide popup on Cancel
+        document.querySelector('.cancel-btn').addEventListener('click', function() {
+            document.getElementById('accountSettingsModal').style.display = 'none';
+        });
         // Simple script for navigation
         document.addEventListener('DOMContentLoaded', function() {
             const navItems = document.querySelectorAll('.nav-item');
-            
             navItems.forEach(item => {
                 item.addEventListener('click', function() {
                     navItems.forEach(i => i.classList.remove('active'));
                     this.classList.add('active');
                 });
             });
+        });
+
+        // Dropdown toggle for account-section
+        function toggleDropdown() {
+            const menu = document.getElementById('dropdownMenu');
+            menu.classList.toggle('show');
+        }
+
+        // Hide dropdown when clicking outside
+        document.addEventListener('click', function(event) {
+            const accountSection = document.querySelector('.account-section');
+            const dropdownMenu = document.getElementById('dropdownMenu');
+            if (!accountSection.contains(event.target)) {
+                dropdownMenu.classList.remove('show');
+            }
         });
     </script>
 </body>
