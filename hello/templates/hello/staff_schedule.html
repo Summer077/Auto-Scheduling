@@ -12,17 +12,19 @@
     <!-- Top Navigation Bar -->
     <nav class="top-nav">
         <div class="page-title">SCHEDULE</div>
-    <div class="admin-section" onclick="toggleDropdown(event)">
-            <div class="admin-avatar"></div>
-            <span class="admin-name">{{ faculty.first_name|default:"FACULTY" }}</span>
+    <div class="account-section" onclick="toggleDropdown(event)">
+            <div class="account-avatar" {% if faculty.profile_picture %}style="background-image: url('{{ faculty.profile_picture.url }}'); background-size: cover; background-position: center;"{% endif %}></div>
+            <span class="account-name">{{ user.first_name|default:user.username|title }}</span>
             <svg class="dropdown-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
                 <path d="M7 10l5 5 5-5z"/>
             </svg>
             <div class="dropdown-menu account-dropdown-menu">
+                <a href="#" onclick="openAccountSettings(event)">Account Settings</a>
                 <a href="{% url 'admin_logout' %}">Logout</a>
             </div>
         </div>
     </nav>
+    {% include 'hello/account_settings.html' %}
 
     <!-- Sidebar Navigation (staff only: Dashboard & Schedule) -->
     <aside class="sidebar">
@@ -233,6 +235,15 @@
             const trigger = event ? (event.currentTarget || event.target.closest('.account-section') || event.target.closest('.admin-section')) : null;
             const dropdown = (trigger && (trigger.querySelector('.account-dropdown-menu') || trigger.querySelector('.dropdown-menu'))) || document.querySelector('.account-dropdown-menu') || document.querySelector('.dropdown-menu');
             if (dropdown) dropdown.classList.toggle('show');
+        }
+
+        // Function to open account settings modal
+        function openAccountSettings(event) {
+            event.preventDefault();
+            const modal = document.getElementById('accountSettingsModal');
+            if (modal) {
+                modal.style.display = 'flex';
+            }
         }
 
         // Print schedule

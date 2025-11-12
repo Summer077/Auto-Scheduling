@@ -1,4 +1,4 @@
-from django.urls import path
+from django.urls import path, reverse_lazy
 from django.contrib.auth import views as auth_views
 from . import views
 
@@ -54,7 +54,28 @@ urlpatterns = [
     path('admin/logout/', views.admin_logout, name='admin_logout'),
     path('admin/password-reset/', 
          auth_views.PasswordResetView.as_view(
-             template_name='hello/password_reset.html'
+             template_name='hello/password_reset.html',
+             email_template_name='hello/password_reset_email.html',
+             success_url=reverse_lazy('password_reset_done')
          ), 
          name='password_reset'),
+    path('admin/password-reset/done/',
+         auth_views.PasswordResetDoneView.as_view(
+             template_name='hello/password_reset_done.html'
+         ),
+         name='password_reset_done'),
+    path('admin/reset/<uidb64>/<token>/',
+         auth_views.PasswordResetConfirmView.as_view(
+             template_name='hello/password_reset_confirm.html',
+             success_url=reverse_lazy('password_reset_complete')
+         ),
+         name='password_reset_confirm'),
+    path('admin/reset/done/',
+         auth_views.PasswordResetCompleteView.as_view(
+             template_name='hello/password_reset_complete.html'
+         ),
+         name='password_reset_complete'),
+    
+    # API endpoints
+    path('api/user-faculty-data/', views.get_user_faculty_data, name='get_user_faculty_data'),
 ]

@@ -286,8 +286,15 @@ def admin_dashboard(request):
             'course', 'section', 'faculty', 'room'
         ).all()
     
+    # Try to get faculty profile for current user (may not exist for pure admin accounts)
+    try:
+        current_faculty = Faculty.objects.get(user=request.user)
+    except Faculty.DoesNotExist:
+        current_faculty = None
+    
     context = {
         'user': request.user,
+        'faculty': current_faculty,
         'faculty_count': faculty_count,
         'section_count': section_count,
         'faculty_list': faculty_list,
@@ -344,8 +351,15 @@ def faculty_view(request):
     # Get all courses for specialization selection
     courses = Course.objects.all().order_by('course_code')
     
+    # Try to get faculty profile for current user (may not exist for pure admin accounts)
+    try:
+        current_faculty = Faculty.objects.get(user=request.user)
+    except Faculty.DoesNotExist:
+        current_faculty = None
+    
     context = {
         'user': request.user,
+        'faculty': current_faculty,
         'faculties': faculties,
         'courses': courses,
     }
@@ -696,8 +710,15 @@ def room_view(request):
     # Get all rooms
     rooms = Room.objects.all().order_by('campus', 'room_number')
     
+    # Try to get faculty profile for current user (may not exist for pure admin accounts)
+    try:
+        current_faculty = Faculty.objects.get(user=request.user)
+    except Faculty.DoesNotExist:
+        current_faculty = None
+    
     context = {
         'user': request.user,
+        'faculty': current_faculty,
         'rooms': rooms,
     }
     
@@ -892,8 +913,15 @@ def schedule_view(request):
     section_list = Section.objects.all().order_by('year_level', 'semester', 'name')
     room_list = Room.objects.all().order_by('campus', 'room_number')
     
+    # Try to get faculty profile for current user (may not exist for pure admin accounts)
+    try:
+        current_faculty = Faculty.objects.get(user=request.user)
+    except Faculty.DoesNotExist:
+        current_faculty = None
+    
     context = {
         'user': request.user,
+        'faculty': current_faculty,
         'sections': sections,
         'all_courses': all_courses,
         'faculty_list': faculty_list,
@@ -1354,8 +1382,15 @@ def section_view(request):
     faculty_list = Faculty.objects.all().order_by('last_name', 'first_name')
     room_list = Room.objects.all().order_by('campus', 'room_number')
     
+    # Try to get faculty profile for current user (may not exist for pure admin accounts)
+    try:
+        current_faculty = Faculty.objects.get(user=request.user)
+    except Faculty.DoesNotExist:
+        current_faculty = None
+    
     context = {
         'user': request.user,
+        'faculty': current_faculty,
         'sections': sections,
         'curricula': curricula,
         'all_courses': all_courses,
@@ -1721,13 +1756,19 @@ def course_view(request):
                 grouped[key]['total_units'] += (course.credit_units or 0)
 
             grouped_courses = grouped
-
         except Curriculum.DoesNotExist:
             selected_curriculum = None
+
+    # Try to get faculty profile for current user (may not exist for pure admin accounts)
+    try:
+        current_faculty = Faculty.objects.get(user=request.user)
+    except Faculty.DoesNotExist:
+        current_faculty = None
 
     # Provide the context expected by the template
     context = {
         'user': request.user,
+        'faculty': current_faculty,
         'curricula': curricula,
         'selected_curriculum': selected_curriculum,
         'selected_year': int(selected_year) if selected_year and selected_year.isdigit() else None,
@@ -2500,7 +2541,7 @@ def edit_schedule(request, schedule_id):
 
 @login_required(login_url='admin_login')
 def save_account_settings(request):
-    """Handle account settings update for logged-in faculty member"""
+    """Handle account settings update for logged-in user (admin or faculty)"""
     print(f"DEBUG: save_account_settings called with method {request.method}")
     if request.method != 'POST':
         return JsonResponse({
@@ -2510,13 +2551,18 @@ def save_account_settings(request):
     
     print(f"DEBUG: Starting save_account_settings for user {request.user.username}")
     try:
-        # Get the faculty profile for the logged-in user
-        faculty = Faculty.objects.get(user=request.user)
-    except Faculty.DoesNotExist:
+        # Try to get the faculty profile, but it's optional (for admin users)
+        try:
+            faculty = Faculty.objects.get(user=request.user)
+        except Faculty.DoesNotExist:
+            faculty = None
+            print(f"DEBUG: No Faculty profile found for user {request.user.username} (admin user)")
+    
+    except Exception as e:
         return JsonResponse({
             'success': False,
-            'error': 'Faculty profile not found'
-        }, status=404)
+            'error': f'Error accessing user profile: {str(e)}'
+        }, status=500)
     
     # Get form data
     first_name = request.POST.get('firstName', '').strip()
@@ -2526,6 +2572,7 @@ def save_account_settings(request):
     current_password = request.POST.get('currentPassword', '')
     new_password = request.POST.get('newPassword', '')
     profile_picture = request.FILES.get('profilePicture', None)
+    delete_profile_pic = request.POST.get('deleteProfilePic', '').lower() == 'true'
     
     print(f"DEBUG: Form data received - new_password='{new_password}', current_password='{current_password}'")
     print(f"DEBUG: new_password type: {type(new_password)}, value: '{new_password}', len: {len(new_password) if new_password else 0}")
@@ -2539,13 +2586,17 @@ def save_account_settings(request):
         errors.append('Last name is required')
     if not email:
         errors.append('Email is required')
-    if gender not in ['M', 'F', '']:
+    if gender and gender not in ['M', 'F']:
         errors.append('Invalid gender selection')
     
     # Validate email format and uniqueness
     if email:
-        # Check if email is unique (excluding current faculty's email)
-        if Faculty.objects.filter(email=email).exclude(id=faculty.id).exists():
+        # Check if email is unique (excluding current user's email)
+        email_exists = User.objects.filter(email=email).exclude(id=request.user.id).exists()
+        if not email_exists and faculty:
+            email_exists = Faculty.objects.filter(email=email).exclude(id=faculty.id).exists()
+        
+        if email_exists:
             errors.append('This email is already in use')
         # Basic email validation
         if '@' not in email:
@@ -2606,6 +2657,105 @@ def save_account_settings(request):
         }, status=400)
     
     try:
+        # Update faculty profile if it exists
+        if faculty:
+            if first_name:
+                faculty.first_name = first_name
+            if last_name:
+                faculty.last_name = last_name
+            if email:
+                faculty.email = email
+            if gender:
+                faculty.gender = gender
+            
+            faculty.save()
+        
+        # Always update user profile
+        request.user.first_name = first_name
+        request.user.last_name = last_name
+        request.user.email = email
+        
+        # Update password if provided
+        if new_password:
+            print(f"DEBUG: Setting password for {request.user.username} to new value: '{new_password}'")
+            print(f"DEBUG: Before set_password - user.password hash: {request.user.password}")
+            request.user.set_password(new_password)
+            print(f"DEBUG: After set_password - user.password hash: {request.user.password}")
+        else:
+            print(f"DEBUG: No password change (new_password is empty)")
+        
+        print(f"DEBUG: About to save user {request.user.username}")
+        request.user.save()
+        # If password was changed, update the session auth hash so the user isn't logged out
+        if new_password:
+            try:
+                update_session_auth_hash(request, request.user)
+                print(f"DEBUG: Session auth hash updated for user {request.user.username}")
+            except Exception as e:
+                print(f"DEBUG: Failed to update session auth hash: {e}")
+        print(f"DEBUG: User {request.user.username} saved successfully")
+        
+        # Verify it was actually saved by re-fetching from database
+        refreshed_user = User.objects.get(pk=request.user.pk)
+        print(f"DEBUG: Refreshed user from DB - password hash: {refreshed_user.password}")
+        print(f"DEBUG: Can refresh user authenticate with new password? {refreshed_user.check_password(new_password)}")
+        
+        # Handle delete request or profile picture upload (only for faculty)
+        if faculty:
+            # If user requested deletion, delete persisted profile picture
+            if delete_profile_pic:
+                print(f"DEBUG: User {request.user.username} requested to delete profile picture")
+                if faculty.profile_picture:
+                    faculty.profile_picture.delete(save=False)
+                    faculty.profile_picture = None
+                    faculty.save()
+                    print(f"DEBUG: Profile picture deleted for {request.user.username}")
+
+            # Handle profile picture upload (takes precedence if a file was provided)
+            elif profile_picture:
+                # Validate file type
+                allowed_types = ['image/jpeg', 'image/png']
+                if profile_picture.content_type not in allowed_types:
+                    return JsonResponse({
+                        'success': False,
+                        'errors': ['Only PNG and JPEG images are allowed']
+                    }, status=400)
+                
+                # Validate file size (15MB)
+                if profile_picture.size > 15 * 1024 * 1024:
+                    return JsonResponse({
+                        'success': False,
+                        'errors': ['File size must be under 15MB']
+                    }, status=400)
+                
+                # Delete old profile picture if it exists
+                if faculty.profile_picture:
+                    faculty.profile_picture.delete()
+                
+                # Save new profile picture
+                faculty.profile_picture = profile_picture
+                faculty.save()
+
+        messages.success(request, 'Account settings saved successfully!')
+
+        return JsonResponse({
+            'success': True,
+            'message': 'Account settings saved successfully'
+        })
+        
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'errors': [f'Error saving account settings: {str(e)}']
+        }, status=500)
+    if errors:
+        print(f"DEBUG: Returning error response with status 400: {errors}")
+        return JsonResponse({
+            'success': False,
+            'errors': errors
+        }, status=400)
+    
+    try:
         # Update faculty profile
         if first_name:
             faculty.first_name = first_name
@@ -2648,30 +2798,43 @@ def save_account_settings(request):
         print(f"DEBUG: Refreshed user from DB - password hash: {refreshed_user.password}")
         print(f"DEBUG: Can refresh user authenticate with new password? {refreshed_user.check_password(new_password)}")
         
-        # Handle profile picture upload
-        if profile_picture:
-            # Validate file type
-            allowed_types = ['image/jpeg', 'image/png']
-            if profile_picture.content_type not in allowed_types:
-                return JsonResponse({
-                    'success': False,
-                    'errors': ['Only PNG and JPEG images are allowed']
-                }, status=400)
+        # Handle profile picture upload or delete
+        if faculty:
+            # Check if user wants to delete profile picture
+            if delete_profile_pic:
+                print(f"DEBUG: User {request.user.username} requested to delete profile picture")
+                if faculty.profile_picture:
+                    faculty.profile_picture.delete()
+                    faculty.profile_picture = None
+                    faculty.save()
+                    print(f"DEBUG: Profile picture deleted for {request.user.username}")
             
-            # Validate file size (15MB)
-            if profile_picture.size > 15 * 1024 * 1024:
-                return JsonResponse({
-                    'success': False,
-                    'errors': ['File size must be under 15MB']
-                }, status=400)
-            
-            # Delete old profile picture if it exists
-            if faculty.profile_picture:
-                faculty.profile_picture.delete()
-            
-            # Save new profile picture
-            faculty.profile_picture = profile_picture
-            faculty.save()
+            # Handle profile picture upload
+            elif profile_picture:
+                print(f"DEBUG: User {request.user.username} uploading new profile picture")
+                # Validate file type
+                allowed_types = ['image/jpeg', 'image/png']
+                if profile_picture.content_type not in allowed_types:
+                    return JsonResponse({
+                        'success': False,
+                        'errors': ['Only PNG and JPEG images are allowed']
+                    }, status=400)
+                
+                # Validate file size (15MB)
+                if profile_picture.size > 15 * 1024 * 1024:
+                    return JsonResponse({
+                        'success': False,
+                        'errors': ['File size must be under 15MB']
+                    }, status=400)
+                
+                # Delete old profile picture if it exists
+                if faculty.profile_picture:
+                    faculty.profile_picture.delete()
+                
+                # Save new profile picture
+                faculty.profile_picture = profile_picture
+                faculty.save()
+                print(f"DEBUG: New profile picture saved for {request.user.username}")
         
         messages.success(request, 'Account settings saved successfully!')
         
@@ -2685,3 +2848,27 @@ def save_account_settings(request):
             'success': False,
             'errors': [f'Error saving account settings: {str(e)}']
         }, status=500)
+
+
+@login_required
+def get_user_faculty_data(request):
+    """API endpoint to fetch current user's faculty data for account settings"""
+    try:
+        faculty = Faculty.objects.get(user=request.user)
+        profile_pic_url = faculty.profile_picture.url if faculty.profile_picture else None
+        return JsonResponse({
+            'first_name': faculty.first_name,
+            'last_name': faculty.last_name,
+            'email': faculty.email,
+            'gender': faculty.gender or '',
+            'profile_picture_url': profile_pic_url,
+        })
+    except Faculty.DoesNotExist:
+        # User is an admin without a faculty profile
+        return JsonResponse({
+            'first_name': request.user.first_name,
+            'last_name': request.user.last_name,
+            'email': request.user.email,
+            'gender': '',
+            'profile_picture_url': None,
+        })

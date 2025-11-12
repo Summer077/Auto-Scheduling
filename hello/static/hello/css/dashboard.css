@@ -51,6 +51,21 @@ body {
     background: #F8F9FA;
 }
 
+.account-section {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+    position: relative;
+    padding: 8px 12px;
+    border-radius: 8px;
+    transition: background 0.3s;
+}
+
+.account-section:hover {
+    background: #F8F9FA;
+}
+
 .admin-avatar {
     width: 40px;
     height: 40px;
@@ -58,7 +73,22 @@ body {
     background: #ADB5BD;
 }
 
+.account-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: #ADB5BD center/cover;
+    background-size: cover;
+}
+
 .admin-name {
+    font-family: 'Lexend', sans-serif;
+    font-size: 1rem;
+    font-weight: 500;
+    color: #212529;
+}
+
+.account-name {
     font-family: 'Lexend', sans-serif;
     font-size: 1rem;
     font-weight: 500;

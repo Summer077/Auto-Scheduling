@@ -37,14 +37,16 @@
 
         .print-container {
             background: white;
-            /* make container responsive to available PDF page box and margins */
-            width: 100%;
-            max-width: 8.5in;
-            height: auto;
-            margin: 10px auto;
+            /* Keep letter width but allow taller content to be visible in the browser and for html2pdf */
+            width: 8.5in;
+            min-height: 1600px; /* increased pixel height so lower rows are visible */
+            margin: 20px auto;
             padding: 0.35in;
-            box-shadow: none;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
             box-sizing: border-box;
+            overflow: visible; /* allow content to extend below the container */
+            display: flex;
+            flex-direction: column;
         }
 
         .header {
@@ -305,18 +307,30 @@
             }
             
             .print-container {
-                width: 100%;
+                width: 8.5in;
+                min-height: 1600px; /* keep print area taller if needed to avoid clipping */
                 margin: 0;
-                padding: 0.45in;
+                padding: 0.35in;
                 box-shadow: none;
                 page-break-after: always;
-                /* Slightly scale down for tight fits so rows don't split */
-                transform-origin: top left;
-                transform: scale(0.96);
+                overflow: visible;
             }
 
             body {
                 padding: 0;
+                background: white;
+            }
+            
+            .schedule-arrow-line {
+                background: #000 !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+            
+            .schedule-arrow-head {
+                border-top: 8px solid #000 !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
             }
         }
 
