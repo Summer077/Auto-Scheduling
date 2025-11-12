@@ -39,7 +39,7 @@ SECRET_KEY = 'django-insecure-uts54#%bbb5=2kq!x7r1_^cw5!mns5bil#cobw+ynz$zda(ix#
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['auto-scheduling-5.onrender.com', 'localhost', '127.0.0.1']
 
 
 # Application definition
